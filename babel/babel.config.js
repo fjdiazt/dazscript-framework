@@ -22,11 +22,11 @@ module.exports = {
     '@babel/plugin-transform-private-property-in-object',
     '@babel/plugin-transform-private-methods',
     [
-      './src/framework/babel/trace-babel-plugin',
+      'dazscript-framework/babel/trace-babel-plugin', // Ensure this path is correct
       { default: false, retainLines: false },
     ],
     [
-      './src/framework/babel/trace-log-babel-plugin',
+      'dazscript-framework/babel/trace-log-babel-plugin', // Ensure this path is correct
       { default: false, retainLines: false },
     ],
   ],
