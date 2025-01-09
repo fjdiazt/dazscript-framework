@@ -18,6 +18,13 @@
     "./babel/trace-babel-plugin": "./dist/babel/trace-babel-plugin.js",
     "./babel/trace-log-babel-plugin": "./dist/babel/trace-log-babel-plugin.js"
   },
+  "files": [
+    "tsconfig.json",
+    "webpack.config",
+    "babel.config.js",
+    "dist/**/*",
+    "src/**/*"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/fjdiazt/dazscript-framework"

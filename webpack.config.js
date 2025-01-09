@@ -8,6 +8,11 @@ module.exports = (env, argv) => {
     ? [`./src/${env.file}.dsa.ts`]
     : glob.sync('./src/**/*.dsa.ts');
 
+  const outputPath =
+    env && env.outputPath
+      ? path.resolve(env.outputPath)
+      : path.resolve(__dirname, 'out');
+
   return {
     mode: 'production',
     optimization: {
@@ -50,7 +55,7 @@ module.exports = (env, argv) => {
     },
     output: {
       filename: '[name].dsa',
-      path: path.resolve(__dirname, 'out'),
+      path: outputPath,
       environment: {
         arrowFunction: false,
         bigIntLiteral: false,
