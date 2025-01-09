@@ -14,7 +14,7 @@ module.exports = (env, argv) => {
       usedExports: true,
     },
     entry: entryFiles.reduce((acc, filePath) => {
-      const entry = filePath.replace('.dsa.ts', '').replace('src/', ''); // Remove 'src/' from the path
+      const entry = filePath.replace('.dsa.ts', '').replace('src/', '');
       acc[entry] = `./${filePath}`;
       return acc;
     }, {}),
@@ -37,7 +37,7 @@ module.exports = (env, argv) => {
             {
               and: [path.resolve(__dirname, 'node_modules')],
               not: [
-                path.resolve(__dirname, 'node_modules/dazscript-framework'),
+                path.resolve(__dirname, 'node_modules/dazscript-framework/src'),
               ],
             },
           ],
@@ -50,7 +50,7 @@ module.exports = (env, argv) => {
     },
     output: {
       filename: '[name].dsa',
-      path: path.resolve(__dirname, 'dist'),
+      path: path.resolve(__dirname, 'out'),
       environment: {
         arrowFunction: false,
         bigIntLiteral: false,

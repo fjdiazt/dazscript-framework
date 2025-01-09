@@ -15,8 +15,8 @@
   "exports": {
     "./webpack": "./webpack.config.js",
     "./babel": "./babel.config.js",
-    "./babel/trace-babel-plugin": "./babel/trace-babel-plugin.js",
-    "./babel/trace-log-babel-plugin": "./babel/trace-log-babel-plugin.js"
+    "./babel/trace-babel-plugin": "./dist/babel/trace-babel-plugin.js",
+    "./babel/trace-log-babel-plugin": "./dist/babel/trace-log-babel-plugin.js"
   },
   "repository": {
     "type": "git",

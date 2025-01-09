@@ -2,7 +2,7 @@ import { Observable } from '@dsf/lib/observable';
 import { WidgetBuilderBase, createWidget } from './widget-builder';
 import { WidgetBuilderContext } from './widgets-builder';
 
-export class ComboBoxBuilder extends WidgetBuilderBase<DzComboBox>{
+export class ComboBoxBuilder extends WidgetBuilderBase<DzComboBox> {
     items(items: string[]): this {
         items.forEach((item, idx) => {
             if (!item)

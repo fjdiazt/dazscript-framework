@@ -1,4 +1,4 @@
-import { Direction } from '../shared';
+import { Direction } from '@dsf/dialog/shared';
 import { WidgetBuilderContext } from './widgets-builder';
 
 export default class LayoutBuilder {

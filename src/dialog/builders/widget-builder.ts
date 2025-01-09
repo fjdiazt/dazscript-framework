@@ -2,7 +2,7 @@ import { createUID } from '@dsf/lib/guid';
 import { Observable } from '@dsf/lib/observable';
 import { WidgetBuilderContext } from './widgets-builder';
 
-export abstract class WidgetBuilderBase<T extends DzWidget> implements IWidgetBuilder<T>{
+export abstract class WidgetBuilderBase<T extends DzWidget> implements IWidgetBuilder<T> {
     constructor(protected readonly widget: T) { }
 
     enabled<T>(when: boolean | Observable<T>): this {

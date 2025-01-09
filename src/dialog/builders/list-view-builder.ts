@@ -2,7 +2,7 @@ import { warn } from '@dsf/common/log';
 import { clearColumns, filter, getDataItem, setDataItem } from '@dsf/helpers/list-view-helper';
 import { Delayed } from '@dsf/lib/delayed';
 import { Observable } from '@dsf/lib/observable';
-import { TreeNode } from 'shared/models/tree-node';
+import { TreeNode } from '@dsf/lib/tree-node';
 import { IWidgetBuilder, createWidget } from './widget-builder';
 import { WidgetBuilderContext } from './widgets-builder';
 

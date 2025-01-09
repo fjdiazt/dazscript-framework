@@ -1,7 +1,7 @@
 import { Observable } from '@dsf/lib/observable';
-import { IWidgetBuilder } from './widget-builder';
-import LayoutBuilder from './layout-builder';
 import { Direction } from '../shared';
+import LayoutBuilder from './layout-builder';
+import { IWidgetBuilder } from './widget-builder';
 import { WidgetBuilderContext } from './widgets-builder';
 
 export class TabBuilder implements IWidgetBuilder<DzTabWidget> {
