@@ -22,13 +22,30 @@ module.exports = (env, argv) => {
       rules: [
         {
           test: /\.ts$/,
-          use: ['babel-loader', 'ts-loader'],
-          exclude: /node_modules/,
+          use: [
+            {
+              loader: 'babel-loader',
+            },
+            {
+              loader: 'ts-loader',
+              options: {
+                allowTsInNodeModules: true,
+              },
+            },
+          ],
+          exclude: [
+            {
+              and: [path.resolve(__dirname, 'node_modules')],
+              not: [
+                path.resolve(__dirname, 'node_modules/dazscript-framework'),
+              ],
+            },
+          ],
         },
       ],
     },
     resolve: {
-      extensions: ['.tsx', '.ts', '.js'],
+      extensions: ['.ts'],
       plugins: [new TsconfigPathsPlugin()],
     },
     output: {
