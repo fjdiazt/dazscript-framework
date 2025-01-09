@@ -1,8 +1,7 @@
-import { debug } from '@dsf/common/log';
+import { getState, restoreState } from '@dsf/helpers/splitter-helper';
+import { Observable } from '@dsf/lib/observable';
 import { WidgetBuilderBase, createWidget } from './widget-builder';
 import { WidgetBuilderContext } from './widgets-builder';
-import { Observable } from '@dsf/lib/observable';
-import { getState, restoreState } from '@dsf/helpers/splitter-helper';
 
 export class SplitterBuilder extends WidgetBuilderBase<DzSplitter> {
     private _items: DzWidget[] = []

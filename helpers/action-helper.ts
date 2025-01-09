@@ -1,5 +1,5 @@
 import { debug, warn } from '@dsf/common/log'
-import { mainWindow } from '@dsf/lib/global'
+import { mainWindow } from '@dsf/core/global'
 import { isGUID } from './string-helper'
 
 const actionMgr = mainWindow.getActionMgr()

@@ -1,5 +1,4 @@
-import * as global from '@dsf/lib/global'
-import { mainWindow } from '@dsf/lib/global';
+import { mainWindow } from '@dsf/core/global';
 
 export const getActiveCamera = (): DzCamera => {
     return mainWindow.getViewportMgr().getActiveViewport().get3DViewport().getCamera()

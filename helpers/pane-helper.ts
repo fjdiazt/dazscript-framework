@@ -1,4 +1,4 @@
-import { mainWindow } from '@dsf/lib/global'
+import { mainWindow } from '@dsf/core/global'
 
 const findPane = <T extends DzPane>(className: string): T => {
     return mainWindow.getPaneMgr().findPane(className) as T

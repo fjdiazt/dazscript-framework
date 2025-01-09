@@ -12,12 +12,9 @@
     "dsa",
     "dse"
   ],
-  "scripts": {
-    "dsf-init": "node ./shared/dsf-init.js"
-  },
   "exports": {
-    "./webpack": "./webpack.config.js",
-    "./babel": "./babel/babel.config.js",
+    "./webpack": "./config/webpack.config.js",
+    "./babel": "./config/babel.config.js",
     "./babel/trace-babel-plugin": "./babel/trace-babel-plugin.js",
     "./babel/trace-log-babel-plugin": "./babel/trace-log-babel-plugin.js"
   },

@@ -1,4 +1,4 @@
-import * as global from '@dsf/lib/global'
+import * as global from '@dsf/core/global'
 
 export const debug = (message: any) => {
     App.debug(format(message))

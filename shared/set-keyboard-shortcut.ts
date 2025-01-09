@@ -25,7 +25,6 @@ const keys = [
     'F20', 'F21', 'F22', 'F23', 'F24',
 ];
 
-
 class KeyboardShortcutDialog extends BasicDialog {
     private key = new Observable('')
 

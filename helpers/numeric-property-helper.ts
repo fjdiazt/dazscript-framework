@@ -1,4 +1,4 @@
-import { scene } from '@dsf/lib/global';
+import { scene } from '@dsf/core/global';
 import { PropertyKey, PropertyKeys } from '@dsf/models/frame-keys';
 import { isNumeric, toFloat } from './property-helper';
 import { timeToFrame } from './scene-helper';

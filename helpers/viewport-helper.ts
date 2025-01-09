@@ -1,4 +1,4 @@
-import { mainWindow } from '@dsf/lib/global'
+import { mainWindow } from '@dsf/core/global'
 
 export const selectUniversalRotateTool = (coordinateSpace?: number): DzUniversalRotateTool => {
     const viewportMgr = mainWindow.getViewportMgr()

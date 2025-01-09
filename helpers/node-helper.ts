@@ -1,4 +1,4 @@
-import { app, sceneHelper } from '@dsf/lib/global';
+import { app, sceneHelper } from '@dsf/core/global';
 import { TreeNode } from 'shared/models/tree-node';
 import { group } from './array-helper';
 import { entries } from './record-helper';

@@ -1,4 +1,4 @@
-import { app } from '@dsf/lib/global';
+import { app } from '@dsf/core/global';
 
 export function trace(enabled: boolean = true) {
     return function (target: any, key?: string, descriptor?: PropertyDescriptor) {

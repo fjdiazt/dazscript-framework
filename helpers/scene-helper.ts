@@ -1,4 +1,4 @@
-import { scene } from '@dsf/lib/global'
+import { scene } from '@dsf/core/global'
 import { contains, distinct } from './array-helper'
 import { getRoot } from './node-helper'
 import { getParametersPane } from './pane-helper'

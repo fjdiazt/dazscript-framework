@@ -1,4 +1,4 @@
-import { sceneHelper } from '@dsf/lib/global'
+import { sceneHelper } from '@dsf/core/global'
 
 /**
  * Sets the DzPropertyGroup path (and appropriate geometryregion_dz) for the given property.

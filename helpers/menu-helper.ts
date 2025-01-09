@@ -1,4 +1,4 @@
-import { mainWindow } from '@dsf/lib/global'
+import { mainWindow } from '@dsf/core/global'
 
 const actionMgr = mainWindow.getActionMgr()
 const paneMgr = mainWindow.getPaneMgr()
