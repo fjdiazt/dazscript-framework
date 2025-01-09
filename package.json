@@ -12,6 +12,9 @@
     "dsa",
     "dse"
   ],
+  "scripts": {
+    "dsf-init": "node ./shared/dsf-init.js"
+  },
   "exports": {
     "./webpack": "./webpack.config.js",
     "./babel": "./babel/babel.config.js",
