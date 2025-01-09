@@ -13,8 +13,8 @@
     "dse"
   ],
   "exports": {
-    "./webpack": "./config/webpack.config.js",
-    "./babel": "./config/babel.config.js",
+    "./webpack": "./webpack.config.js",
+    "./babel": "./babel.config.js",
     "./babel/trace-babel-plugin": "./babel/trace-babel-plugin.js",
     "./babel/trace-log-babel-plugin": "./babel/trace-log-babel-plugin.js"
   },
