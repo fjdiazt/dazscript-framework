@@ -74,7 +74,7 @@ export default class LineEditBuilder extends WidgetBuilderBase<DzLineEdit> {
         return this
     }
 
-    text(text_: string | Observable<string>): this {
+    value(text_: string | Observable<string>): this {
         if (typeof text_ === 'string') {
             this.widget.text = text_
         }

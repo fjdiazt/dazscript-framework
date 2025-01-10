@@ -4,6 +4,14 @@
   "author": "Freddy Diaz",
   "license": "MPL-2.0",
   "description": "",
+  "scripts": {
+    "prebuild": "npm run installer",
+    "build": "webpack --env outputPath=./out",
+    "postbuild": "npm run icons",
+    "watch": "webpack --env outputPath=./out --watch",
+    "icons": "copyfiles -u 1 src/**/*.png out/",
+    "installer": "node ./dist/scripts/install-generator.js -p ./src/samples -m /DazScriptFramework"
+  },
   "keywords": [
     "daz3d",
     "daz studio",
@@ -53,5 +61,10 @@
     "typescript": "^5.2.2",
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "eslint": "^9.17.0",
+    "typescript": "^5.7.3"
   }
 }

@@ -31,11 +31,23 @@ export class NodeSelectionComboBoxBuilder extends WidgetBuilderBase<DzNodeSelect
         return this
     }
 
-    bind(node: Observable<DzNode>): this {
+    value(node: Observable<DzNode>): this {
         this.widget.nodeSelectionChanged.scriptConnect(() => {
             node.value = this.widget.getSelectedNode()
         })
+        this.selected(node)
         return this
+    }
+
+    changed(then: (node: DzNode) => void): this {
+        this.widget.nodeSelectionChanged.scriptConnect(() => {
+            then(this.widget.getSelectedNode())
+        })
+        return this
+    }
+
+    refresh(): void {
+        this.widget.update()
     }
 
     build(then?: (comboBox: DzNodeSelectionComboBox) => void): DzNodeSelectionComboBox {

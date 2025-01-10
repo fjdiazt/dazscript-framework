@@ -63,14 +63,14 @@ class KeyboardShortcutDialog extends BasicDialog {
 
         add.group('Assign Keyboard Shortcut').build((layout) => {
             layout.spacing = 5
-            add.edit().text(model.actionLabel).readOnly(true)
+            add.edit().value(model.actionLabel).readOnly(true)
             add.comboEdit().focus().items([...letters, ...keys]).changed(this.key).edited(this.key)
             add.checkbox('Control').value(model.control)
             add.checkbox('Option / Alt').value(model.alt)
             add.checkbox('Shift').value(model.shift)
             add.checkbox('Command / Windows').value(model.windows)
             add.group('Shortcut:').style({ flat: true }).build(() => {
-                add.edit().text(model.shortcut).readOnly(true)
+                add.edit().value(model.shortcut).readOnly(true)
             })
         })
     }

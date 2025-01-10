@@ -1,3 +1,5 @@
 node_modules
 out
 package-lock.json
+src/Install.dsa.ts
+src/Uninstall.dsa.ts

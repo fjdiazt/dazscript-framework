@@ -23,6 +23,6 @@ export class InputDialog extends BasicDialog {
     protected build(): void {
         let add = this.add
 
-        add.edit().text(this.model.value$).validator(this.model.validator).focus()
+        add.edit().value(this.model.value$).validator(this.model.validator).focus()
     }
 }
