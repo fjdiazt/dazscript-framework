@@ -28,7 +28,7 @@
   },
   "files": [
     "tsconfig.json",
-    "webpack.config",
+    "webpack.config.js",
     "babel.config.js",
     "dist/**/*",
     "src/**/*"
