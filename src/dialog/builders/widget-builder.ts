@@ -23,6 +23,21 @@ export abstract class WidgetBuilderBase<T extends DzWidget> implements IWidgetBu
         return this
     }
 
+    clickFocus(): this {
+        this.widget.getWidget().focusPolicy = DzWidget.ClickFocus
+        return this
+    }
+
+    tabFocus(): this {
+        this.widget.getWidget().focusPolicy = DzWidget.TabFocus
+        return this
+    }
+
+    noFocus(): this {
+        this.widget.getWidget().focusPolicy = DzWidget.NoFocus
+        return this
+    }
+
     toolTip(toolTip: string): this {
         this.widget.toolTip = toolTip
         this.widget.whatsThis = toolTip
