@@ -18,6 +18,10 @@ export const remove = (source: string, search: string): string => {
     return source.replace(search, "")
 }
 
+export const trimEnd = (source: string, search: string): string => {
+    return source.endsWith(search) ? source.slice(0, -search.length) : source
+}
+
 export const count = (source: string, search: string): number => {
     return source.split(search).length - 1
 }
