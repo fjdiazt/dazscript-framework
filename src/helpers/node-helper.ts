@@ -143,47 +143,67 @@ export const getScales = (node: DzNode): DzFloatProperty[] => {
     return [node.getXScaleControl(), node.getYScaleControl(), node.getZScaleControl(), node.getScaleControl()];
 }
 
-export const getPropertiesTree = <T = DzProperty>(node: DzNode, map?: (property: DzProperty) => T, filter?: (property: DzProperty) => boolean): TreeNode<T>[] => {
-    let items = entries(group(sceneHelper.getPropertiesOnNode(node), (p) => p.getPath())).map(x => ({ path: x[0], properties: x[1] }))
+export const getPropertiesTree = <T = DzProperty>(node: DzNode, map?: (property: DzProperty) => T/*, filter?: (property: DzProperty) => boolean*/, showProgress: boolean = false): TreeNode<T>[] => {
+    if (showProgress) startProgress(`Collecting Properties`, 3)
+    let root: TreeNode<T>;
 
-    const root = new TreeNode<T>('root', '')
-    const pathMap: { [key: string]: TreeNode<T> } = { '': root }
+    // Fetch properties and group them by their path
+    const properties = sceneHelper.getPropertiesOnNode(node);
+    if (showProgress) stepProgress()
 
-    items.forEach(element => {
-        const paths = element.path.split('/')
-        let currentPath = ''
+    const grouped = group(properties, (p) => p.getPath());
+    if (showProgress) stepProgress()
 
-        paths.forEach((path, index) => {
-            currentPath += `${index === 0 ? '' : '/'}${path}`
+    // Root TreeNode
+    root = new TreeNode<T>('root', '');
+    const pathMap: Record<string, TreeNode<T>> = { '': root };
+
+    // Process grouped entries
+    const groupedEntries = entries(grouped);
+    if (showProgress) stepProgress()
+
+    if (showProgress) startProgress(`Processing ${groupedEntries.length} properties`, groupedEntries.length)
+    for (const [path, props] of groupedEntries) {
+        const paths = path.split('/');
+        let currentPath = '';
+
+        // Create nodes for the path hierarchy
+        for (let i = 0; i < paths.length; i++) {
+            currentPath = paths.slice(0, i + 1).join('/');
             if (!pathMap[currentPath]) {
-                const newNode = new TreeNode<T>(path, currentPath)
-                pathMap[currentPath] = newNode
+                const newNode = new TreeNode<T>(paths[i], currentPath);
+                pathMap[currentPath] = newNode;
 
-                if (index !== 0) {
-                    const parentPath = currentPath.substring(0, currentPath.lastIndexOf('/'))
-                    const parentNode = pathMap[parentPath]
-                    parentNode?.addChild(newNode)
-                    newNode.parent = parentNode
+                if (i > 0) {
+                    const parentPath = paths.slice(0, i).join('/');
+                    const parentNode = pathMap[parentPath];
+                    parentNode?.addChild(newNode);
+                    newNode.parent = parentNode;
                 }
             }
-        })
+        }
 
-        element.properties.forEach(property => {
-            const currentNode = pathMap[property.getPath()]
-            const newNode = new TreeNode<T>(
-                property.getLabel(),
-                property.getPath(),
-                map?.(property) ?? property as T
-            )
+        // Add property nodes to the current path
+        const currentNode = pathMap[path];
+        if (currentNode) {
+            for (const property of props) {
+                const newNode = new TreeNode<T>(
+                    property.getLabel(),
+                    property.getPath(),
+                    map?.(property) ?? (property as T)
+                );
+                currentNode.addChild(newNode);
+                newNode.parent = currentNode;
+            }
+        }
+        if (showProgress) stepProgress()
+    }
+    if (showProgress) finishProgress()
+    if (showProgress) finishProgress()
 
-            currentNode?.addChild(newNode)
-            newNode.parent = currentNode
-        })
-    })
-
-    const rootChildren = pathMap[''].children
-    return rootChildren && rootChildren.length > 0 ? rootChildren : root.children
-}
+    // Return root children or an empty array if none exist
+    return root.children.length > 0 ? root.children : [];
+};
 
 export const getPropertiesPathsTree = (node: DzNode): TreeNode<string>[] => {
     let items = entries(group(sceneHelper.getPropertiesOnNode(node), (p) => p.getPath())).map(x => ({ path: x[0], properties: x[1] }))

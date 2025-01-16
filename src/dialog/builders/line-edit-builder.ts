@@ -61,9 +61,10 @@ export default class LineEditBuilder extends WidgetBuilderBase<DzLineEdit> {
         return this.min(min).max(max)
     }
 
-    readOnly(onOff: boolean | Observable<boolean>): this {
-        if (typeof onOff === 'boolean') {
-            this.widget.readOnly = onOff
+    readOnly(onOff?: Observable<boolean> | null): this {
+        if (onOff == null) {
+            this.widget.readOnly = true
+            return this
         }
         else {
             this.widget.readOnly = onOff.value

@@ -1,3 +1,4 @@
+import { AlignmentFlags } from '@dst/types/common/alignmentFlags';
 import { WidgetBuilderBase, createWidget } from './widget-builder';
 import { WidgetBuilderContext } from './widgets-builder';
 
@@ -9,6 +10,16 @@ export default class LabelBuilder extends WidgetBuilderBase<DzLabel> {
 
     text(text: string): this {
         this.widget.text = text;
+        return this;
+    }
+
+    minWidth(width: number): this {
+        this.widget.minWidth = width
+        return this;
+    }
+
+    align(alignment: AlignmentFlags): this {
+        this.widget.alignment = alignment
         return this;
     }
 

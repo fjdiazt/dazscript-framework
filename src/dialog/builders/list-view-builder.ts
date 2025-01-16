@@ -10,7 +10,8 @@ type ListViewFilterOptions = {
     keywords: Observable<string>,
     field: (listItem: DzListViewItem) => string,
     selectOnFilter?: boolean,
-    filters?: (viewItem: DzListViewItem) => boolean
+    filters?: (viewItem: DzListViewItem) => boolean,
+    delay?: { min: number, max: number }
 }
 
 export enum ListViewRefreshOptions {
@@ -309,7 +310,7 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
         context.filter.keywords.connect((keywords) => {
             new Delayed(() => {
                 filterList(keywords)
-            }, 100, 400).trigger()
+            }, context.filter.delay?.min ?? 100, context.filter.delay?.max ?? 400).trigger()
         })
     }
 

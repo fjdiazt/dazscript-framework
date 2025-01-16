@@ -5,7 +5,7 @@ import { ComboBoxBuilder } from './combo-box-builder'
 import { ComboEditBuilder } from './combo-edit-builder'
 import GroupBoxBuilder from './groupbox-builder'
 import LabelBuilder from './label-builder'
-import LayoutBuilder from './layout-builder'
+import LayoutBuilder, { LayoutOrientation } from './layout-builder'
 import LineEditBuilder from './line-edit-builder'
 import { ListViewBuilder } from './list-view-builder'
 import { NodeSelectionComboBoxBuilder } from './node-selection-builder'
@@ -36,16 +36,18 @@ export class WidgetsBuilder {
         this.splitterContext = new SplitterBuilderContext(this.context)
     }
 
-    vertical(then?: (layout: DzVBoxLayout) => void): DzVBoxLayout {
+    vertical(then: (layout: DzVBoxLayout) => void, orientation: LayoutOrientation = LayoutOrientation.LeftToRight): DzVBoxLayout {
         return LayoutBuilder
             .create(this.context)
+            .orientation(orientation)
             .direction('vertical')
             .build(then)
     }
 
-    horizontal(then?: (layout: DzHBoxLayout) => void): DzHBoxLayout {
+    horizontal(then: (layout: DzHBoxLayout) => void, orientation: LayoutOrientation = LayoutOrientation.LeftToRight): DzHBoxLayout {
         return LayoutBuilder
             .create(this.context)
+            .orientation(orientation)
             .direction('horizontal')
             .build(then)
     }
@@ -97,6 +99,10 @@ export class WidgetsBuilder {
     comboEdit(): ComboEditBuilder {
         return new ComboEditBuilder(this.context)
     }
+
+    // pathComboBox(checkBoxes: boolean = false): PathComboBoxBuilder {
+    //     return new PathComboBoxBuilder(this.context, checkBoxes)
+    // }
 
     /**
      *
