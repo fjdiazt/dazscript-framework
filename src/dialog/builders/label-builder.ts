@@ -1,4 +1,4 @@
-import { AlignmentFlags } from '@dst/types/common/alignmentFlags';
+import { AlignmentFlags } from '@dst/common/alignmentFlags';
 import { WidgetBuilderBase, createWidget } from './widget-builder';
 import { WidgetBuilderContext } from './widgets-builder';
 

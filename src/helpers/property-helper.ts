@@ -15,7 +15,7 @@ export const setPath = (property: DzProperty, path: string) => {
  * @returns The internal name of property (or its alias target), or “Unknown”.
  */
 export const getName = (property: DzProperty): string => {
-    return sceneHelper.getInternalName(property)
+    return sceneHelper.getInternalName(property).valueOf()
 }
 
 /**
