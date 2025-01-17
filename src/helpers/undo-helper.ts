@@ -5,3 +5,4 @@ const acceptUndoFor = (caption: string, callback: () => void) => {
 }
 
 export { acceptUndoFor as acceptUndo }
+

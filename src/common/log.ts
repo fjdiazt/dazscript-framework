@@ -43,7 +43,6 @@ export const dump = (obj: any) => {
     App.flushLogBuffer()
 }
 
-
 const format = (message: string, level?: 'ERROR' | 'TRACE' | 'DUMP' | 'INFO') => {
     if (message == null) {
         return ''

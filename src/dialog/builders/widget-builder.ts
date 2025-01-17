@@ -24,17 +24,17 @@ export abstract class WidgetBuilderBase<T extends DzWidget> implements IWidgetBu
     }
 
     clickFocus(): this {
-        this.widget.getWidget().focusPolicy = DzWidget.ClickFocus
+        this.widget.getWidget().focusPolicy = QtFocusPolicy.ClickFocus
         return this
     }
 
     tabFocus(): this {
-        this.widget.getWidget().focusPolicy = DzWidget.TabFocus
+        this.widget.getWidget().focusPolicy = QtFocusPolicy.TabFocus
         return this
     }
 
     noFocus(): this {
-        this.widget.getWidget().focusPolicy = DzWidget.NoFocus
+        this.widget.getWidget().focusPolicy = QtFocusPolicy.NoFocus
         return this
     }
 

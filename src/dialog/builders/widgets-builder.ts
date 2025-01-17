@@ -1,6 +1,7 @@
 import { Observable } from '@dsf/lib/observable'
 import { ButtonBuilder } from './button-builder'
 import CheckBoxBuilder from './checkbox-builder'
+import ColorPickerBuilder from './color-picker-builder'
 import { ComboBoxBuilder } from './combo-box-builder'
 import { ComboEditBuilder } from './combo-edit-builder'
 import GroupBoxBuilder from './groupbox-builder'
@@ -11,6 +12,7 @@ import { ListViewBuilder } from './list-view-builder'
 import { NodeSelectionComboBoxBuilder } from './node-selection-builder'
 import { PopupMenuBuilder } from './popup-menu-builder'
 import RadioButtonBuilder from './radio-builder'
+import SliderBuilder from './slider-builder'
 import { SplitterBuilder, SplitterBuilderContext } from './splitter-builder'
 import { TabBuilder, TabBuilderContext } from './tab-builder'
 import { createWidget } from './widget-builder'
@@ -103,6 +105,14 @@ export class WidgetsBuilder {
     // pathComboBox(checkBoxes: boolean = false): PathComboBoxBuilder {
     //     return new PathComboBoxBuilder(this.context, checkBoxes)
     // }
+
+    slider(): SliderBuilder {
+        return new SliderBuilder(this.context)
+    }
+
+    color(): ColorPickerBuilder {
+        return new ColorPickerBuilder(this.context)
+    }
 
     /**
      *

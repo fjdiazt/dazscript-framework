@@ -9,6 +9,7 @@ export default class GroupBoxBuilder implements IWidgetBuilder<DzGroupBox> {
     private _direction: Direction = 'vertical'
     private _style: { flat?: boolean }
     private _visible: Observable<boolean>
+    private _columns: number = 1
 
     constructor(private context: WidgetBuilderContext) {
     }
@@ -42,11 +43,17 @@ export default class GroupBoxBuilder implements IWidgetBuilder<DzGroupBox> {
         return this
     }
 
-    build(then?: (layout: DzVBoxLayout | DzHBoxLayout) => void): DzGroupBox {
+    columns(value: number): this {
+        this._columns = value
+        return this
+    }
+
+    build(then?: (layout: DzVBoxLayout | DzHBoxLayout, groupBox: DzGroupBox) => void): DzGroupBox {
         let groupBox = createWidget(this.context).build(DzGroupBox)
 
         groupBox.title = this._title?.value
         groupBox.flat = this._style?.flat
+        groupBox.columns = this._columns
 
         this._title?.connect((text) => {
             groupBox.title = text
@@ -55,7 +62,9 @@ export default class GroupBoxBuilder implements IWidgetBuilder<DzGroupBox> {
         new LayoutBuilder(this.context)
             .parent(groupBox)
             .direction(this._direction)
-            .build(then)
+            .build((layout) => {
+                then?.(layout, groupBox)
+            })
 
         if (this._visible) {
             if (this._visible.value === false)

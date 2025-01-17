@@ -14,7 +14,7 @@ export class PopupMenuBuilder extends WidgetBuilderBase<DzPopupMenu> {
     }
 
     parent(parent: DzWidget): this {
-        this.widget.reparent(parent, new Point(0, 0))
+        this.widget.reparent(parent)
         return this
     }
 
