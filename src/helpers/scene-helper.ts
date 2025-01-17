@@ -42,13 +42,12 @@ export const getSelectedFigure = (): DzSkeleton | null => {
  * Given the selected nodes in the scene, return the figures they are part of
  * @returns the selected figures
  */
-export const getSelectedFigures = (callback: (figure: DzSkeleton) => void | boolean = () => true): DzSkeleton[] => {
+export const getSelectedFigures = (): DzSkeleton[] => {
     let nodes: DzSkeleton[] = []
     for (let node of scene.getSelectedNodeList()) {
         let skeleton = node.getSkeleton?.()
         if (!skeleton || contains(nodes, node)) continue
         nodes.push(skeleton)
-        if (!!callback?.(skeleton)) break
     }
     return nodes
 }
