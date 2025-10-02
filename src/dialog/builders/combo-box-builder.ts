@@ -14,10 +14,13 @@ export class ComboBoxBuilder extends WidgetBuilderBase<DzComboBox> {
     }
 
     selected(bind: Observable<string>): this {
-        this.widget.currentText = bind.value
+        if (bind.value && this.widget.findText(bind.value) >= 0) {
+            this.widget.currentText = bind.value
+        }
         bind.connect((text) => {
-            if (this.widget.findText(text) >= 0)
+            if (this.widget.findText(text) >= 0) {
                 this.widget.currentText = text
+            }
         })
         this.widget.textChanged.scriptConnect((text) => {
             bind.value = text

@@ -128,9 +128,12 @@ export const getTransforms = (node: DzNode, include: { rotations?: boolean, tran
 export const getRotations = (node: DzNode): DzFloatProperty[] => {
     if (!node) return [];
 
-    const xRotate = sceneHelper.findPropertyOnNode('XRotate', node) as DzFloatProperty
-    const yRotate = sceneHelper.findPropertyOnNode('YRotate', node) as DzFloatProperty
-    const zRotate = sceneHelper.findPropertyOnNode('ZRotate', node) as DzFloatProperty
+    const xRotate = (sceneHelper.findPropertyOnNode('XRotate2', node)
+        ?? sceneHelper.findPropertyOnNode('XRotate', node)) as DzFloatProperty
+    const yRotate = (sceneHelper.findPropertyOnNode('YRotate2', node)
+        ?? sceneHelper.findPropertyOnNode('YRotate', node)) as DzFloatProperty
+    const zRotate = (sceneHelper.findPropertyOnNode('ZRotate2', node)
+        ?? sceneHelper.findPropertyOnNode('ZRotate', node)) as DzFloatProperty
 
     return [xRotate, yRotate, zRotate];
 }
@@ -143,7 +146,7 @@ export const getScales = (node: DzNode): DzFloatProperty[] => {
     return [node.getXScaleControl(), node.getYScaleControl(), node.getZScaleControl(), node.getScaleControl()];
 }
 
-export const getPropertiesTree = <T = DzProperty>(node: DzNode, map?: (property: DzProperty) => T/*, filter?: (property: DzProperty) => boolean*/, showProgress: boolean = false): TreeNode<T>[] => {
+export const getPropertiesTree = <T = DzProperty>(node: DzNode, map?: (property: DzProperty) => T, filter?: (property: DzProperty) => boolean, showProgress: boolean = false): TreeNode<T>[] => {
     if (showProgress) startProgress(`Collecting Properties`, 3)
     let root: TreeNode<T>;
 
@@ -187,6 +190,7 @@ export const getPropertiesTree = <T = DzProperty>(node: DzNode, map?: (property:
         const currentNode = pathMap[path];
         if (currentNode) {
             for (const property of props) {
+                if (filter && !filter(property)) continue
                 const newNode = new TreeNode<T>(
                     property.getLabel(),
                     property.getPath(),

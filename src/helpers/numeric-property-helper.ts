@@ -11,7 +11,7 @@ import { timeToFrame } from './scene-helper';
  * @param interpolation the animation interpolation of DzProperty
  * @deprecated use adjust instead
  */
-export const adjustFn = (property: DzFloatProperty | DzIntProperty, value: number, interpolation?: number, time?: DzTime) => {
+export const adjustFn = (property: DzFloatProperty | DzIntProperty | DzBoolProperty, value: number, interpolation?: number, time?: DzTime) => {
     return () => {
         interpolation = interpolation ?? DzProperty.InterpConstant
         time = time ?? scene.getTime()
@@ -26,7 +26,7 @@ export const adjustFn = (property: DzFloatProperty | DzIntProperty, value: numbe
  * @param time the animation time to adjust the property at or current time if not specified
  * @param interpolation the animation interpolation of DzProperty
  */
-export const adjust = (property: DzFloatProperty | DzIntProperty, value: number, interpolation?: number, time?: DzTime) => {
+export const adjust = (property: DzFloatProperty | DzIntProperty | DzBoolProperty, value: number, interpolation?: number, time?: DzTime) => {
     interpolation = interpolation ?? DzProperty.InterpConstant
     time = time ?? scene.getTime()
 

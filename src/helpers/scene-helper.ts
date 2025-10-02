@@ -72,6 +72,10 @@ export const getSelectedPropertiesOfType = <TProperty extends DzProperty>(type: 
     return getSelectedProperties().filter(p => p.inherits(type)) as TProperty[]
 }
 
+export const getSelectedPropertiesOfTypes = <TProperty extends DzProperty>(types: string[]): TProperty[] => {
+    return getSelectedProperties().filter(p => types.some(type => p.inherits(type))) as TProperty[]
+}
+
 export const clearSelection = () => {
     for (let node of scene.getSelectedNodeList()) {
         node.select(false)
