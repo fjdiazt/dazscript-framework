@@ -86,14 +86,30 @@ export const currentTime = (): DzTime => {
     return scene.getTime()
 }
 
+/**
+ * @deprecated Use scene.getFrame instead
+ * @returns the current frame number (0-based)
+ */
 export const getCurrentFrame = (): number => {
     return scene.getTime().valueOf() / scene.getTimeStep().valueOf()
 }
 
+export const getEndFrame = (): number => {
+    return scene.getAnimRange().end / scene.getTimeStep().valueOf()
+}
+
+/**
+ * @deprecated Use getEndFrame
+ * @returns the last frame number (0-based)
+ */
 export const getLastFrame = (): number => {
     return scene.getAnimRange().end / scene.getTimeStep().valueOf()
 }
 
 export const timeToFrame = (time: DzTime): number => {
     return time.valueOf() / scene.getTimeStep().valueOf()
+}
+
+export const frameToTime = (frame: number): DzTime => {
+    return new DzTime(scene.getTimeStep().valueOf() * frame)
 }

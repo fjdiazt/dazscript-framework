@@ -36,6 +36,11 @@ export default class GroupBoxBuilder implements IWidgetBuilder<DzGroupBox> {
         return this
     }
 
+    flat(): this {
+        this._style = { flat: true }
+        return this
+    }
+
     visible(value: boolean | Observable<boolean>): this {
         this._visible = typeof value === 'boolean'
             ? new Observable(value)
