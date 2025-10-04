@@ -8,6 +8,7 @@ import GroupBoxBuilder from './groupbox-builder'
 import LabelBuilder from './label-builder'
 import LayoutBuilder, { LayoutOrientation } from './layout-builder'
 import LineEditBuilder from './line-edit-builder'
+import { ListBoxBuilder } from './list-box-builder'
 import { ListViewBuilder } from './list-view-builder'
 import { NodeSelectionComboBoxBuilder } from './node-selection-builder'
 import { PopupMenuBuilder } from './popup-menu-builder'
@@ -123,9 +124,13 @@ export class WidgetsBuilder {
         return new ListViewBuilder(this.context)
     }
 
-    get list(): { view: <TItem, TData = TItem>() => ListViewBuilder<TItem, TData> } {
+    get list(): {
+        view: <TItem, TData = TItem>() => ListViewBuilder<TItem, TData>
+        box: () => ListBoxBuilder
+    } {
         return {
-            view: <TItem, TData = TItem>() => new ListViewBuilder<TItem, TData>(this.context)
+            view: <TItem, TData = TItem>() => new ListViewBuilder<TItem, TData>(this.context),
+            box: () => new ListBoxBuilder(this.context)
         }
     }
 

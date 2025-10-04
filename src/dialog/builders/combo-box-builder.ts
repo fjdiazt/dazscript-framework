@@ -3,6 +3,10 @@ import { WidgetBuilderBase, createWidget } from './widget-builder';
 import { WidgetBuilderContext } from './widgets-builder';
 
 export class ComboBoxBuilder extends WidgetBuilderBase<DzComboBox> {
+    constructor(context: WidgetBuilderContext) {
+        super(createWidget(context).build(DzComboBox))
+    }
+
     items(items: string[]): this {
         items.forEach((item, idx) => {
             if (!item)
@@ -26,10 +30,6 @@ export class ComboBoxBuilder extends WidgetBuilderBase<DzComboBox> {
             bind.value = text
         })
         return this
-    }
-
-    constructor(context: WidgetBuilderContext) {
-        super(createWidget(context).build(DzComboBox))
     }
 
     build(then?: (comboBox: DzComboBox) => void) {
