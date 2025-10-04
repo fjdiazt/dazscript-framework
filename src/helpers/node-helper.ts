@@ -125,17 +125,26 @@ export const getTransforms = (node: DzNode, include: { rotations?: boolean, tran
     return transforms
 }
 
-export const getRotations = (node: DzNode): DzFloatProperty[] => {
+export const getRotations = (node: DzNode, includeExtraRotations: boolean = true): DzFloatProperty[] => {
     if (!node) return [];
 
-    const xRotate = (sceneHelper.findPropertyOnNode('XRotate2', node)
-        ?? sceneHelper.findPropertyOnNode('XRotate', node)) as DzFloatProperty
-    const yRotate = (sceneHelper.findPropertyOnNode('YRotate2', node)
-        ?? sceneHelper.findPropertyOnNode('YRotate', node)) as DzFloatProperty
-    const zRotate = (sceneHelper.findPropertyOnNode('ZRotate2', node)
-        ?? sceneHelper.findPropertyOnNode('ZRotate', node)) as DzFloatProperty
+    const xRotate = sceneHelper.findPropertyOnNode('XRotate', node) as DzFloatProperty;
+    const xRotate2 = sceneHelper.findPropertyOnNode('XRotate2', node) as DzFloatProperty;
+    const yRotate = sceneHelper.findPropertyOnNode('YRotate', node) as DzFloatProperty;
+    const yRotate2 = sceneHelper.findPropertyOnNode('YRotate2', node) as DzFloatProperty;
+    const zRotate = sceneHelper.findPropertyOnNode('ZRotate', node) as DzFloatProperty;
+    const zRotate2 = sceneHelper.findPropertyOnNode('ZRotate2', node) as DzFloatProperty;
 
-    return [xRotate, yRotate, zRotate];
+    if (includeExtraRotations) {
+        return [xRotate, xRotate2, yRotate, yRotate2, zRotate, zRotate2].filter(Boolean);
+    }
+
+    // Prefer Rotate2 if available, otherwise fallback to Rotate
+    return [
+        xRotate2 ?? xRotate,
+        yRotate2 ?? yRotate,
+        zRotate2 ?? zRotate
+    ].filter(Boolean);
 }
 
 export const getTranslations = (node: DzNode): DzFloatProperty[] => {
