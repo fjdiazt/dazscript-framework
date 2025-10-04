@@ -3,7 +3,12 @@ import { BasicDialog } from './basic-dialog';
 import { InputValidator } from './input-validator';
 
 export class InputDialogModel {
+    /**
+     * @deprecated use `text$` instead
+     */
     value$: Observable<string> = new Observable()
+    get text$(): Observable<string> { return this.value$ }
+
     validator: InputValidator | null = null
 
     getNumericValue(): number {
