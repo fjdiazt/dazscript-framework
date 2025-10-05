@@ -12,7 +12,7 @@ export const getSurfacesPane = (): DzSurfacesPane => {
     return findPane<DzSurfacesPane>("DzSurfacesPane")
 }
 
-export const getAuxViewPort = (): DzAuxViewportPane => {
+export const getAuxViewPortPane = (): DzAuxViewportPane => {
     return findPane<DzAuxViewportPane>("DzAuxViewportPane")
 }
 

@@ -29,7 +29,7 @@ function processLine(x: string): void {
 // Keep track of classes avoiding duplicates
 var classesFound = {};
 
-export function dz_dump(obj: any) {
+export default function dz_dump(obj: any): void {
     if (!obj || obj === null) {
         print('null object');
         App.flushLogBuffer()
