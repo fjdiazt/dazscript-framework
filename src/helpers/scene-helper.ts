@@ -1,6 +1,6 @@
 import { scene } from '@dsf/core/global'
 import { contains, distinct } from './array-helper'
-import { getRoot } from './node-helper'
+import { getRoot, isFigure } from './node-helper'
 import { getParametersPane } from './pane-helper'
 
 export const getSelectedOf = <T>(typeName: string): DzNode[] => {
@@ -20,6 +20,12 @@ export const getSelectedNode = (): DzNode | null => {
 export const getTopParent = (node: DzNode): DzNode => {
     var parent = node.getNodeParent();
     return parent ? getTopParent(parent) : node;
+}
+
+export const getParentFigure = (node: DzNode): DzSkeleton | null => {
+    if (!node) return null;
+    if (isFigure(node)) return node as DzSkeleton;
+    return getParentFigure(node.getNodeParent());
 }
 
 export const getNodes = (): DzNode[] => {
@@ -66,6 +72,10 @@ export const getSelectedRoots = (): DzNode[] => {
 
 export const getSelectedProperties = (): DzProperty[] => {
     return getParametersPane()?.getNodeEditor()?.getPropertySelections(true) ?? []
+}
+
+export const getSelectedNumericProperties = (): (DzFloatProperty | DzIntProperty | DzBoolProperty)[] => {
+    return getParametersPane()?.getNodeEditor()?.getPropertySelections(true).map(p => p as DzFloatProperty | DzIntProperty | DzBoolProperty) ?? []
 }
 
 export const getSelectedPropertiesOfType = <TProperty extends DzProperty>(type: string): TProperty[] => {
