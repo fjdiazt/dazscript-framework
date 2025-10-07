@@ -26,8 +26,6 @@ export class InputDialog extends BasicDialog {
     }
 
     protected build(): void {
-        let add = this.add
-
-        add.edit().value(this.model.value$).validator(this.model.validator).focus()
+        this.add.edit().value(this.model.value$).validator(this.model.validator).focus()
     }
 }

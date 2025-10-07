@@ -26,6 +26,14 @@ export abstract class BasicDialog {
         return this.dialog.exec()
     }
 
+    ok(): boolean {
+        return this.run() === true
+    }
+
+    cancel(): boolean {
+        return this.run() === false
+    }
+
     close() {
         this.dialog.close()
     }

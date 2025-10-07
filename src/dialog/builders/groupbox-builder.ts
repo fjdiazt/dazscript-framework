@@ -31,6 +31,11 @@ export default class GroupBoxBuilder implements IWidgetBuilder<DzGroupBox> {
         return this
     }
 
+    orientation(direction: Direction): this {
+        this._direction = direction
+        return this
+    }
+
     style(options: { flat?: boolean }): this {
         this._style = options
         return this
