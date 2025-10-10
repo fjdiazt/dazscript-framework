@@ -2,6 +2,7 @@ import { app, sceneHelper } from '@dsf/core/global';
 import { TreeNode } from '@dsf/lib/tree-node';
 import { group } from './array-helper';
 import { entries } from './record-helper';
+import { contains } from './string-helper';
 
 export const isBone = (node: DzNode): boolean => {
     return node.iskindof('DzBone')
@@ -108,7 +109,7 @@ export const isHairType = (node: DzNode): boolean => {
     const figure = getFigure(node)!
     const assetMgr = app.getAssetMgr()
     const type = assetMgr.getTypeForNode(figure)
-    return assetMgr.isHairType(type)
+    return assetMgr.isHairType(type) || contains(type.valueOf(), 'Hair')
 }
 
 export const isGeoShell = (node: DzNode): boolean => {

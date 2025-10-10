@@ -97,7 +97,6 @@ export const currentTime = (): DzTime => {
 }
 
 /**
- * @deprecated Use scene.getFrame instead
  * @returns the current frame number (0-based)
  */
 export const getCurrentFrame = (): number => {
