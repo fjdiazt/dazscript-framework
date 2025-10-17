@@ -9,7 +9,6 @@ export const createPath = (dirPath: string): boolean => {
         return true
     } catch (error) {
         log.error(`Error while creating directory ${dirPath}`)
-        log.debug(error)
         return false
     }
 }
