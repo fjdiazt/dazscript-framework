@@ -140,8 +140,8 @@ const removeCustomAction = (action: CustomAction) => {
     var toolbar = paneMgr.findToolBar(action.toolbar)
     if (!toolbar) return
     toolbar.clear()
-    paneMgr.removeToolBar(action.toolbar)
-    debug(`Toolbar Removed`)
+    // paneMgr.removeToolBar(action.toolbar)
+    // debug(`Toolbar Removed`)
 }
 
 export const installCustomActions = (actions: CustomAction[]) => {

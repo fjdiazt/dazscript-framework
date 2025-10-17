@@ -1,7 +1,7 @@
 import { scene } from '@dsf/core/global'
-import { contains, distinct } from './array-helper'
+import { contains, distinct, group } from './array-helper'
 import { getRoot, isFigure } from './node-helper'
-import { getParametersPane } from './pane-helper'
+import { getPaneNodeEditor, getParametersPane, getParametersPaneNodeEditor } from './pane-helper'
 
 export const getSelectedOf = <T>(typeName: string): DzNode[] => {
     let nodes = []
@@ -84,6 +84,23 @@ export const getSelectedPropertiesOfType = <TProperty extends DzProperty>(type: 
 
 export const getSelectedPropertiesOfTypes = <TProperty extends DzProperty>(types: string[]): TProperty[] => {
     return getSelectedProperties().filter(p => types.some(type => p.inherits(type))) as TProperty[]
+}
+
+export const getSelectedPropertyGroups = (pane?: DzAbstractNodeEditorPane): string[] => {
+    var propertyGroups: string[] = [];
+    var paneNodeEditor = pane ? getPaneNodeEditor(pane) : getParametersPaneNodeEditor();
+
+    var selectedProperties = paneNodeEditor?.getPropertySelections(true)
+    if (selectedProperties.length == 0)
+        selectedProperties = paneNodeEditor?.getPropertySelections(false)
+
+    if (selectedProperties.length == 0)
+        return propertyGroups
+
+    var pathsGroup = group<DzProperty, string>(selectedProperties, p => p.getPath().valueOf().substr(1) + "/")
+    propertyGroups = Object.keys(pathsGroup)
+
+    return propertyGroups
 }
 
 export const clearSelection = () => {

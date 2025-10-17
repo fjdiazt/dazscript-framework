@@ -107,8 +107,8 @@ export class WidgetsBuilder {
     //     return new PathComboBoxBuilder(this.context, checkBoxes)
     // }
 
-    slider(): SliderBuilder {
-        return new SliderBuilder(this.context)
+    slider(type: 'float' | 'integer' = 'float'): SliderBuilder {
+        return new SliderBuilder(this.context, type)
     }
 
     color(): ColorPickerBuilder {

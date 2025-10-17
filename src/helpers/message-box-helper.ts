@@ -4,7 +4,7 @@ export const info = (msg: string) => {
     MessageBox.information(msg, "", "Ok")
 }
 
-export const error = (message: string, writeLog?: boolean) => {
+export const error = (message: string, writeLog: boolean = true) => {
     if (writeLog) log.debug(message)
     MessageBox.critical(message, "Error", "Ok")
 }

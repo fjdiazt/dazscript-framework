@@ -19,3 +19,11 @@ export const getAuxViewPortPane = (): DzAuxViewportPane => {
 export const getParametersPane = (): DzParametersPane => {
     return findPane<DzParametersPane>("DzParametersPane")
 }
+
+export const getParametersPaneNodeEditor = (): DzPropertySideNavHierarchy => {
+    return findPane<DzParametersPane>("DzParametersPane")?.getNodeEditor() ?? null
+}
+
+export const getPaneNodeEditor = (pane: DzAbstractNodeEditorPane): DzPropertySideNavHierarchy => {
+    return pane.getNodeEditor ? pane.getNodeEditor() : null
+}

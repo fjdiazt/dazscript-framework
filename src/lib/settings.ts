@@ -1,3 +1,4 @@
+import { debug } from '@dsf/common/log';
 import { Observable } from './observable';
 
 export class AppSettings {
@@ -16,10 +17,12 @@ export class AppSettings {
     setPaths(paths: { settingsPath?: string, appDataPath?: string }) {
         if (!paths.settingsPath && !paths.appDataPath) return
         if (paths.settingsPath) {
+            debug(`Updating settings path to: ${paths.settingsPath}`)
             this._settingsPath = paths.settingsPath
             this.appSettings = new DzAppSettings(paths.settingsPath)
         }
         if (paths.appDataPath) {
+            debug(`Updating app data path to: ${paths.appDataPath}`)
             this._appDataPath = `${App.getAppDataPath()}/${paths.appDataPath}`
         }
     }

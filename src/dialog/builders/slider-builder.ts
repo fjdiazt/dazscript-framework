@@ -2,9 +2,9 @@ import { Observable } from '@dsf/lib/observable'
 import { WidgetBuilderBase, createWidget } from './widget-builder'
 import { WidgetBuilderContext } from './widgets-builder'
 
-export default class SliderBuilder extends WidgetBuilderBase<DzFloatSlider> {
-    constructor(context: WidgetBuilderContext) {
-        super(createWidget(context).build(DzFloatSlider))
+export default class SliderBuilder extends WidgetBuilderBase<DzFloatSlider | DzIntSlider> {
+    constructor(context: WidgetBuilderContext, readonly type: 'float' | 'integer') {
+        super(createWidget(context).build(type === 'float' ? DzFloatSlider : DzIntSlider))
     }
 
     value(value$: number | Observable<number>): this {

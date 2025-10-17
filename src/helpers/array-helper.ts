@@ -66,7 +66,12 @@ export const append = <T>(array: T[], item: T): T[] => {
   return array
 }
 
-export const flatten = <T>(array: (T | T[])[]): T[] => {
+/**
+ * @deprecated Probably inefficient, avoid using in performance critical code
+ * @param array
+ * @returns
+ */
+export const flattenOld = <T>(array: (T | T[])[]): T[] => {
   const flattened: T[] = [];
   const stack: (T | T[])[] = [...array];
 
@@ -82,6 +87,26 @@ export const flatten = <T>(array: (T | T[])[]): T[] => {
   }
 
   return flattened.reverse(); // Reverse the array to maintain original order.
+}
+
+/**
+ * Flattens only one level of nested arrays
+ * @param array
+ * @returns
+ */
+export const flatten = <T>(array: (T | T[])[]): T[] => {
+  const out: T[] = [];
+  for (let i = 0; i < array.length; i++) {
+    const item = array[i];
+    if (Array.isArray(item)) {
+      for (let j = 0; j < item.length; j++) {
+        out.push(item[j]);
+      }
+    } else {
+      out.push(item);
+    }
+  }
+  return out;
 }
 
 export const any = <T>(array: T[], f?: (item: T) => boolean): boolean => {

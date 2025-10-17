@@ -24,7 +24,12 @@ const findCustomAction = (name: string): DzCustomAction | null => {
 }
 
 export const triggerAction = (name: string) => {
-    findAction(name)?.trigger()
+    const action = findAction(name)
+    if (!action) {
+        warn(`Power Menu - Action not found: "${name}"`)
+    }
+    debug(`Power Menu - Trigger Action: "${action?.text}" (${name})`)
+    action?.trigger()
 }
 
 export const setActionShortcut = (name: string, shortcut: string) => {
