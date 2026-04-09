@@ -114,7 +114,9 @@ export const isClothingType = (node: DzNode): boolean => {
 }
 
 export const isHairType = (node: DzNode): boolean => {
-    if (!isFigure(node)) return false
+    if (!isFigure(node)) {
+        return node.className() === 'DzStrandHairNode'
+    }
     const figure = getFigure(node)!
     const assetMgr = app.getAssetMgr()
     const type = assetMgr.getTypeForNode(figure)

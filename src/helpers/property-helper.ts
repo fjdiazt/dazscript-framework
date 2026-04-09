@@ -18,6 +18,15 @@ export const getName = (property: DzProperty): string => {
     return sceneHelper.getInternalName(property).valueOf()
 }
 
+export const ensureNameIsUnique = (property: DzProperty): string => {
+    const name = getName(property)
+    const uniqueName = sceneHelper.getUniqueMorphName(sceneHelper.getNode(property), name)
+    if (name !== uniqueName) {
+        sceneHelper.setInternalName(property, uniqueName.valueOf())
+    }
+    return uniqueName.valueOf()
+}
+
 /**
  * Unlocks a property temporarily and executes the specified callback while it's unlocked
  * @param property the property to unlock

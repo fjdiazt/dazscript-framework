@@ -1,7 +1,7 @@
 import { mainWindow } from '@dsf/core/global';
 
-export const getActiveCamera = (): DzCamera => {
-    return mainWindow.getViewportMgr().getActiveViewport().get3DViewport().getCamera()
+export const getActiveCamera = (): DzBasicCamera => {
+    return mainWindow.getViewportMgr().getActiveViewport().get3DViewport().getCamera() as DzBasicCamera
 }
 
 export const setActiveCamera = (camera: string | DzCamera) => {

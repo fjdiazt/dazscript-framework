@@ -32,6 +32,10 @@ export const getNodes = (): DzNode[] => {
     return scene.getNodeList()
 }
 
+export const getRootNodes = (): DzNode[] => {
+    return getNodes().map(n => getRoot(n)).filter(n => n !== null)
+}
+
 export const getFigures = (): DzSkeleton[] => {
     return distinct(getNodes().map(n => n.getSkeleton?.()), (n => n?.getLabel().valueOf())).filter(n => n !== null)
 }

@@ -8,6 +8,10 @@ export const selectUniversalRotateTool = (coordinateSpace?: number): DzUniversal
     return tool
 }
 
+export const getActiveViewport = (): DzViewport => {
+    return mainWindow.getViewportMgr().getActiveViewport()
+}
+
 export const getAuxViewport = (): DzViewport | null => {
     const viewportMgr = mainWindow.getViewportMgr()
     for (let i = 0; i < viewportMgr.getNumViewports(); i++) {
