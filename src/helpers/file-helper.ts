@@ -79,7 +79,7 @@ export const saveToFileOld = (path: string, fileName: string, content: string): 
 export const deleteFile = (filePath: string): boolean => {
     try {
         var file = new DzFile(filePath)
-        if (!file.exists()) return
+        if (!file.exists()) return false
         file.remove(filePath)
         file.deleteLater()
         return true

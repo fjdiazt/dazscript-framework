@@ -1,12 +1,12 @@
 export class CustomAction {
-    name: string
-    text: string
-    description: string
-    filePath: string
-    menuPath: string
-    icon?: string
-    toolbar?: string
-    sort?: number
-    group?: string
-    shortcut?: string
+    name?: string | null
+    text?: string | null
+    description?: string | null
+    filePath?: string | null
+    menuPath?: string | null
+    icon?: string | null
+    toolbar?: string | null
+    sort?: number | null
+    group?: string | null
+    shortcut?: string | null
 }

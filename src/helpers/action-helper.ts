@@ -16,6 +16,10 @@ export const findAction = (name: string): DzAction | null => {
         : actionMgr.findAction(name)
 }
 
+export const actionExists = (name: string): boolean => {
+    return findAction(name) !== null
+}
+
 const findCustomAction = (name: string): DzCustomAction | null => {
     let index = actionMgr.findCustomAction(name)
     return index >= 0
@@ -66,10 +70,13 @@ export const getActionPixmap = (action: string, icon: string, maxSize?: number):
             let image: DzImageTexture = (App.getImageMgr() as any)['getImage(QString)'](icon)
             if (image) {
                 let size = image.getOriginalImageSize();
-                let pixmap = size.width > maxSize || size.height > maxSize
-                    ? image.getPreviewPixmap(Math.min(size.width, maxSize), Math.min(size.height, maxSize))
-                    : new Pixmap(image.getFilename())
-
+                let pixmap: QPixmap
+                // Only clamp if maxSize is provided and image is larger
+                if (maxSize && (size.width > maxSize || size.height > maxSize)) {
+                    pixmap = image.getPreviewPixmap(Math.min(size.width, maxSize), Math.min(size.height, maxSize))
+                } else {
+                    pixmap = new Pixmap(image.getFilename())
+                }
                 return pixmap
             }
         }

@@ -30,3 +30,11 @@ export const isGUID = (str: string): boolean => {
     const GUIDPattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
     return GUIDPattern.test(str);
 }
+
+export const getFileNameWithoutExtension = (filePath: string | null | undefined): string | null => {
+    if (!filePath) return null
+    const lastSlash = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'))
+    const fileWithExt = filePath.substring(lastSlash + 1)
+    const lastDot = fileWithExt.lastIndexOf('.')
+    return lastDot > 0 ? fileWithExt.substring(0, lastDot) : fileWithExt
+}
