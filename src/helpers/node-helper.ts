@@ -251,7 +251,7 @@ export const getPropertiesInPath = (node: DzNode, path: string, recursive: boole
     if (!path) return getProperties(node);
 
     var groupTree = node.getPropertyGroups();
-    var propertyGroup: DzPropertyGroup;
+    var propertyGroup: DzPropertyGroup | null = null;
     var name = "";
     var index = -1;
     var subPath = path;
@@ -270,6 +270,8 @@ export const getPropertiesInPath = (node: DzNode, path: string, recursive: boole
 
         if (propertyGroup === null) break;
     }
+
+    if (!propertyGroup) return [];
 
     return getPropertiesInGroup(propertyGroup, traverse, recursive);
 }
