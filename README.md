@@ -327,3 +327,39 @@ my-daz-scripts/
 - Regular `.ts` files are utility, model, or helper classes
 - Run `npm run build` to compile TypeScript → Daz Scripts
 - Run `npm run watch` during development for live rebuild
+
+## Development & Publishing
+
+This project uses **semantic-release** for automatic versioning and npm publishing.
+
+### Commit Message Conventions
+
+Use conventional commit messages to control version bumping:
+
+- **`fix: description`** → Patch version bump (0.1.15 → 0.1.16)
+  - Bug fixes, patches, or minor improvements
+  - Example: `fix: resolve dialog builder layout issue`
+
+- **`feat: description`** → Minor version bump (0.1.15 → 0.2.0)
+  - New features or significant enhancements
+  - Example: `feat: add tree view builder component`
+
+- **`BREAKING CHANGE: description`** → Major version bump (0.1.15 → 1.0.0)
+  - Add to commit body for breaking changes
+  - Example: `feat: refactor action decorator API\n\nBREAKING CHANGE: action() now requires explicit menu path`
+
+- **No prefix** → No version bump
+  - Documentation, style, or non-publishing changes
+  - Example: `update README examples`
+
+### Publishing
+
+Every push to the `master` branch automatically triggers:
+
+1. **Analyze** commit messages since last release
+2. **Update** version in `package.json`
+3. **Build** the project (`npm run build`)
+4. **Create** a GitHub release with changelog
+5. **Publish** to npm
+
+No manual steps required—just commit with proper conventions and push!

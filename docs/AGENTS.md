@@ -703,3 +703,40 @@ data$.value = 'updated'  // Triggers log
 9. **npm run prebuild runs first** - Generates Install.dsa before build
 10. **Tab binding uses numeric indices** - PresetType enum often matches tab order
 
+---
+
+## 📝 Commit Conventions & Publishing
+
+This project uses **semantic-release** for automatic versioning and npm publishing.
+
+### Conventional Commits
+
+Use commit message prefixes to control versioning:
+
+| Prefix | Bump Type | Example |
+|--------|-----------|---------|
+| `fix:` | Patch (0.1.15 → 0.1.16) | `fix: resolve dialog builder layout issue` |
+| `feat:` | Minor (0.1.15 → 0.2.0) | `feat: add tree view builder component` |
+| `BREAKING CHANGE:` in body | Major (0.1.15 → 1.0.0) | `feat: refactor action decorator\n\nBREAKING CHANGE: ...` |
+| No prefix | No version bump | `docs: update README examples` |
+
+### Publishing Workflow
+
+Every push to `master` automatically:
+
+1. **Analyzes** commit messages since last release
+2. **Bumps version** in `package.json`
+3. **Builds** the project (`npm run build`)
+4. **Creates** GitHub release with changelog
+5. **Publishes** to npm
+
+**No manual steps required** — just commit with proper conventions and push.
+
+### When Writing Commit Messages
+
+- Use present tense: `add feature` not `added feature`
+- Be specific: `fix: prevent memory leak in dialog builder` not `fix: stuff`
+- For breaking changes, include `BREAKING CHANGE:` in commit body
+- Use `fix:` for patches, `feat:` for new features/enhancements
+- Use no prefix for docs, tests, or non-publishing changes
+
