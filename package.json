@@ -5,6 +5,7 @@
   "license": "MPL-2.0",
   "description": "",
   "scripts": {
+    "prepare": "cp scripts/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push",
     "prebuild": "npm run installer",
     "build": "webpack --env outputPath=./out",
     "postbuild": "npm run icons",

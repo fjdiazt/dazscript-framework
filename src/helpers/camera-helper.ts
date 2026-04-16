@@ -5,7 +5,7 @@ export const getActiveCamera = (): DzBasicCamera => {
 }
 
 export const setActiveCamera = (camera: string | DzCamera) => {
-    mainWindow.getViewportMgr().getActiveViewport().get3DViewport().setCamera(camera);
+    mainWindow.getViewportMgr().getActiveViewport().get3DViewport().setCamera(camera as any);
 }
 
 export const getPerspectiveCamera = (): DzCamera => {

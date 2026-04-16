@@ -15,8 +15,8 @@ export default class SliderBuilder extends WidgetBuilderBase<DzFloatSlider | DzI
             this.widget.value = value$.value
             value$.connect((value) => {
                 this.widget.value = value
-            })
-            this.widget.valueChanged.scriptConnect((value) => {
+            });
+            (this.widget.valueChanged as unknown as ISignalT<number>).scriptConnect((value) => {
                 value$.value = value
             })
         }
