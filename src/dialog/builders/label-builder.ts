@@ -12,6 +12,11 @@ export default class LabelBuilder extends WidgetBuilderBase<DzLabel> {
         return this;
     }
 
+    wordWrap(enabled: boolean = true): this {
+        this.widget.wordWrap = enabled
+        return this
+    }
+
     minWidth(width: number): this {
         this.widget.minWidth = width
         return this;

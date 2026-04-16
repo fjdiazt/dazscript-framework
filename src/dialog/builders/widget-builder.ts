@@ -78,8 +78,8 @@ export interface IWidgetBuilder<T extends DzWidget> {
 }
 
 export class WidgetBuilder {
-    private _parent: DzWidget | DzLayout;
-    private _args: any[] | null;
+    private _parent: DzWidget | DzLayout | null = null;
+    private _args: any[] | null = null;
 
     constructor(public readonly context: WidgetBuilderContext) { }
 
