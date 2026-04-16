@@ -9,6 +9,10 @@ export const error = (message: string, writeLog: boolean = true) => {
     MessageBox.critical(message, "Error", "Ok")
 }
 
+export const warning = (message: string) => {
+    MessageBox.warning(message, "Warning", "Ok")
+}
+
 export const confirm = (message?: string): { ok: boolean, cancel: boolean } => {
     var response = MessageBox.question(message ?? "Confirm?", "", "Ok", "Cancel");
 

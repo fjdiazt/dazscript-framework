@@ -62,12 +62,14 @@ export class AppSettings {
     }
 
     protected getArray(name: keyof this, defaultValue: string[]): string[] {
-        return this.appSettings.getStringValue(String(name), defaultValue.join(',')).split(',')
+        const value = this.appSettings.getStringValue(String(name), defaultValue.join(','))
+        if (!value) return []
+        return value.split(',').filter(Boolean)
     }
 
-    // protected setArray(name: keyof this, value: string[]): void {
-    //     this.appSettings.setStringValue(String(name), value.join(','))
-    // }
+    protected setArray(name: keyof this, value: string[]): void {
+        this.appSettings.setStringValue(String(name), value.join(','))
+    }
 
     // protected getJson<T>(name: keyof this, defaultValue: T): T {
     //     return JSON.parse(this.getString(name, JSON.stringify(defaultValue)))
@@ -94,9 +96,9 @@ export class AppSettings {
         return new Observable(this.getFloat(name, defaultValue), (value) => this.setFloat(name, value))
     }
 
-    // bindArray(name: keyof this, defaultValue: string[] = []): Observable<string[]> {
-    //     return new Observable(this.getArray(name, defaultValue), (value) => this.setArray(name, value))
-    // }
+    bindArray(name: keyof this, defaultValue: string[] = []): Observable<string[]> {
+        return new Observable(this.getArray(name, defaultValue), (value) => this.setArray(name, value))
+    }
 
     // bindJson<T>(name: keyof this, defaultValue: T): Observable<T> {
     //     return new Observable(this.getJson(name, defaultValue), (value) => this.setJson(name, value))
