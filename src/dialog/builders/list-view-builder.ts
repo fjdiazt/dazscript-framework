@@ -210,12 +210,12 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
         if (!listItem) return
 
         listItem.open = context.expanded?.value === true
+        let data = context.data?.(item)
+        if (data) {
+            setDataItem(listItem, data)
+        }
 
         context.text(item).forEach((text, idx) => {
-            let data = context.data?.(item)
-            if (data) {
-                setDataItem(listItem, data)
-            }
             if (!text || idx >= context.columns.value.length)
                 return;
             listItem.setText(idx, text)
@@ -233,6 +233,7 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
 
     const buildList = (items: TreeNode<TItem>[], selectedId?: number) => {
         rowId = -1
+        context.decorated = false
         if (!context.text)
             return warn('No text function provided for list builder')
 
