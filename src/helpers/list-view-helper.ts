@@ -16,11 +16,13 @@ export const getDataItem = <T>(listItem: DzListViewItem): T | null => {
 
 export const filter = (listView: DzListView, filterOn: (viewItem: DzListViewItem) => string, keywords: string, options?: { selectOnFilter?: boolean, filters?: (viewItem: DzListViewItem) => boolean }) => {
     listView.clearSelection()
+    const normalizedKeywords = keywords?.toLowerCase() ?? ''
+    const words = normalizedKeywords.split(" ")
+
     listView.getItems(DzListView.All).forEach(item => item.visible = true)
 
     const matchFilter = (text: string): boolean => {
         text = text.toLowerCase()
-        var words = keywords?.toLowerCase().split(" ") ?? []
 
         return !keywords || keywords.trim() == "" ||
             words.every(w => {
