@@ -1,11 +1,15 @@
 import { BasicDialog } from '@dsf/dialog/basic-dialog';
-import { setActionShortcut } from '@dsf/helpers/action-helper';
+import { debug } from '@dsf/common/log';
+import { findAction, findActionsForShortcut, setActionShortcut } from '@dsf/helpers/action-helper';
 import { contains } from '@dsf/helpers/array-helper';
+import { confirm } from '@dsf/helpers/message-box-helper';
 import { Observable } from '@dsf/lib/observable';
 
 class KeyboardShortcutModel {
     actionLabel: string
+    actionName: string
     shortcut = new Observable('')
+    conflict = new Observable('')
     control = new Observable(false)
     alt = new Observable(false)
     shift = new Observable(false)
@@ -51,6 +55,10 @@ class KeyboardShortcutDialog extends BasicDialog {
         this.key.connect((text) => {
             model.shortcut.value = this.getShortcut(text)
         })
+        model.shortcut.connect((shortcut) => {
+            debug(`[ShortcutDialog] action="${model.actionName}" shortcut="${shortcut}"`)
+            model.conflict.value = this.getConflictMessage(shortcut)
+        })
 
         const metaKeys = [model.control, model.alt, model.shift, model.windows];
         for (const observable of metaKeys) {
@@ -72,6 +80,13 @@ class KeyboardShortcutDialog extends BasicDialog {
             add.group('Shortcut:').style({ flat: true }).build(() => {
                 add.edit().value(model.shortcut).readOnly()
             })
+            add.group('Status:').style({ flat: true }).build(() => {
+                const conflictLabel = add.label('').wordWrap()
+                model.conflict.connect((text) => {
+                    conflictLabel.build().text = text || 'Shortcut is available.'
+                })
+                conflictLabel.build().text = model.conflict.value || 'Shortcut is available.'
+            })
         })
     }
 
@@ -87,16 +102,45 @@ class KeyboardShortcutDialog extends BasicDialog {
 
         return keys.join('+')
     }
+
+    private getConflictMessage(shortcut: string): string {
+        if (!shortcut) return ''
+
+        const conflicts = findActionsForShortcut(shortcut)
+            .filter(action => action && action.name !== this.model.actionName)
+
+        debug(
+            `[ShortcutDialog] conflictCheck action="${this.model.actionName}" shortcut="${shortcut}" conflicts=${conflicts.map(action => action.text || action.name).join(', ')}`
+        )
+
+        if (conflicts.length === 0) return ''
+
+        return `Already assigned to: ${conflicts.map(action => action.text || action.name).join(', ')}`
+    }
 }
 
 export const setKeyboardShortcut = (actionLabel: string, actionName: string) => {
     let model = new KeyboardShortcutModel()
     model.actionLabel = actionLabel
+    model.actionName = actionName
 
     let dialog = new KeyboardShortcutDialog(model)
     let result = dialog.run()
 
     if (!result || !model.shortcut) return
+
+    const conflicts = findActionsForShortcut(model.shortcut.value)
+        .filter(action => action && action.name !== actionName)
+
+    debug(
+        `[ShortcutDialog] save action="${actionName}" shortcut="${model.shortcut.value}" conflicts=${conflicts.map(action => action.text || action.name).join(', ')}`
+    )
+
+    if (conflicts.length > 0) {
+        const conflictText = conflicts.map(action => action.text || action.name).join(', ')
+        const response = confirm(`"${model.shortcut.value}" is already assigned to: ${conflictText}\n\nReplace it?`)
+        if (!response.ok) return
+    }
 
     setActionShortcut(actionName, model.shortcut.value)
 }

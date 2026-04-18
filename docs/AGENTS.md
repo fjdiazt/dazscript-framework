@@ -558,6 +558,15 @@ import {
    if (response.cancel) return  // User cancelled
    ```
 
+7. **Prefer spread syntax over `Array.from()` for iterable-to-array conversion**
+   ```typescript
+   // ❌ Bad
+   const items = Array.from(actions)
+
+   // ✅ Good
+   const items = [...actions]
+   ```
+
 ---
 
 ## 🔍 Debugging Tips
