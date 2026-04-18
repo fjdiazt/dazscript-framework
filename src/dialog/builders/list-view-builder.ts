@@ -1,8 +1,8 @@
 import { warn } from '@dsf/common/log';
 import { clearColumns, filter, getDataItem, setDataItem } from '@dsf/helpers/list-view-helper';
+import { Delayed } from '@dsf/lib/delayed';
 import { Observable } from '@dsf/lib/observable';
 import { TreeNode } from '@dsf/lib/tree-node';
-import { createFilterScheduler } from './list-view-filter-scheduler';
 import { IWidgetBuilder, createWidget } from './widget-builder';
 import { WidgetBuilderContext } from './widgets-builder';
 
@@ -236,7 +236,6 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
     const filterList = (keywords?: string) => {
         filter(listView, context.filter.field, keywords ?? context.filter?.keywords?.value, { selectOnFilter: context.filter.selectOnFilter ?? true, filters: context.filter.filters })
     }
-    const scheduleFilter = createFilterScheduler(filterList)
 
     const buildList = (items: TreeNode<TItem>[], selectedId?: number) => {
         rowId = -1
@@ -316,7 +315,9 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
 
     if (context.filter) {
         context.filter.keywords.connect((keywords) => {
-            scheduleFilter(keywords, context.filter.delay)
+            new Delayed(() => {
+                filterList(keywords)
+            }, context.filter.delay?.min ?? 100, context.filter.delay?.max ?? 400).trigger()
         })
     }
 
