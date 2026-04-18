@@ -4,6 +4,7 @@ export type MenuItem = {
     name: string
     label: string
     path: string
+    filePath?: string
     icon: string
     hidden: boolean
 }

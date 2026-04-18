@@ -20,6 +20,28 @@ export const actionExists = (name: string): boolean => {
     return findAction(name) !== null
 }
 
+export const getCustomActionFilePath = (name: string): string | null => {
+    let index = actionMgr.findCustomAction(name)
+    if (index < 0) return null
+
+    let filePath = actionMgr.getCustomActionFile(index)
+    return filePath ? filePath.toString() : null
+}
+
+export const findCustomActionByFilePath = (filePath: string): DzCustomAction | null => {
+    let count = actionMgr.getNumCustomActions()
+
+    for (let i = 0; i < count; i++) {
+        let customActionFile = actionMgr.getCustomActionFile(i)
+        if (!customActionFile) continue
+        if (customActionFile.toString() !== filePath) continue
+
+        return actionMgr.getCustomActionByIndex(i)
+    }
+
+    return null
+}
+
 const findCustomAction = (name: string): DzCustomAction | null => {
     let index = actionMgr.findCustomAction(name)
     return index >= 0
