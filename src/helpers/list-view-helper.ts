@@ -16,22 +16,31 @@ export const getDataItem = <T>(listItem: DzListViewItem): T | null => {
 
 export const filter = (listView: DzListView, filterOn: (viewItem: DzListViewItem) => string, keywords: string, options?: { selectOnFilter?: boolean, filters?: (viewItem: DzListViewItem) => boolean }) => {
     listView.clearSelection()
-    listView.getItems(DzListView.All).forEach(item => item.visible = true)
+    const normalizedKeywords = keywords?.toLowerCase() ?? ''
+    const words = normalizedKeywords.split(' ').filter(word => word.length > 0)
 
-    const matchFilter = (text: string): boolean => {
-        text = text.toLowerCase()
-        var words = keywords?.toLowerCase().split(" ") ?? []
+    const matchFilter = (normalizedText: string): boolean => {
+        if (!keywords || keywords.trim() == "") return true
 
-        return !keywords || keywords.trim() == "" ||
-            words.every(w => {
-                return w.length >= 1 || !isNaN(Number(w))
-                    ? contains(text, w)
-                    : text.startsWith(w)
-            });
+        return words.every(word => {
+            return contains(normalizedText, word)
+        })
+    }
+
+    const getNormalizedText = (viewItem: DzListViewItem): string => {
+        const cacheKey = '__dsfNormalizedFilterText'
+        const rawText = filterOn(viewItem) ?? ''
+        const cached = (viewItem as any)[cacheKey] as { raw: string, normalized: string } | undefined
+
+        if (cached && cached.raw === rawText) return cached.normalized
+
+        const normalized = rawText.toLowerCase()
+        ; (viewItem as any)[cacheKey] = { raw: rawText, normalized }
+        return normalized
     }
 
     const setListViewItemVisibility = (viewItem: DzListViewItem): boolean => {
-        let keywordMatch = matchFilter(filterOn(viewItem))
+        let keywordMatch = matchFilter(getNormalizedText(viewItem))
         let filtersMatch = !options?.filters || options.filters?.(viewItem) === true
         viewItem.visible = keywordMatch && filtersMatch
 
@@ -42,6 +51,8 @@ export const filter = (listView: DzListView, filterOn: (viewItem: DzListViewItem
 
         return viewItem.visible;
     }
+
+    const roots = listView.getItems(DzListView.All).filter(viewItem => !viewItem.parent())
 
     const filterListViewItem = (viewItem: DzListViewItem): boolean => {
         var visible = false;
@@ -58,7 +69,7 @@ export const filter = (listView: DzListView, filterOn: (viewItem: DzListViewItem
         return viewItem.visible;
     }
 
-    listView.getItems(DzListView.All).forEach(viewItem => {
+    roots.forEach(viewItem => {
         viewItem.visible = true
         filterListViewItem(viewItem)
     });

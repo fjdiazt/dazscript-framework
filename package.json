@@ -9,6 +9,8 @@
     "build": "webpack --env outputPath=./out",
     "postbuild": "npm run icons",
     "watch": "webpack --env outputPath=./out --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "icons": "copyfiles -u 1 src/**/*.png out/",
     "installer": "node ./dist/scripts/install-generator.js -p ./src/samples -m /DazScriptFramework"
   },
@@ -65,6 +67,7 @@
   "devDependencies": {
     "@types/node": "^22.10.5",
     "eslint": "^9.17.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^4.1.4"
   }
 }
