@@ -51,7 +51,7 @@ export class TreeNode<T = null> {
         }
     }
 
-    values(): (T | null)[] {
+    values(): T[] {
         let result: T[] = [];
 
         const collect = (node: TreeNode<T>) => {
