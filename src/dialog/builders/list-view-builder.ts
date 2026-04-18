@@ -236,6 +236,7 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
     const filterList = (keywords?: string) => {
         filter(listView, context.filter.field, keywords ?? context.filter?.keywords?.value, { selectOnFilter: context.filter.selectOnFilter ?? true, filters: context.filter.filters })
     }
+    let delayedFilter: Delayed | null = null
 
     const buildList = (items: TreeNode<TItem>[], selectedId?: number) => {
         rowId = -1
@@ -315,9 +316,12 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
 
     if (context.filter) {
         context.filter.keywords.connect((keywords) => {
-            new Delayed(() => {
-                filterList(keywords)
-            }, context.filter.delay?.min ?? 100, context.filter.delay?.max ?? 400).trigger()
+            if (!delayedFilter) {
+                delayedFilter = new Delayed(() => {
+                    filterList(context.filter?.keywords?.value)
+                }, context.filter.delay?.min ?? 100, context.filter.delay?.max ?? 400)
+            }
+            delayedFilter.trigger()
         })
     }
 
