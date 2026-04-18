@@ -62,6 +62,11 @@ export class ListViewBuilder<TItem, TData> implements IWidgetBuilder<DzListView>
         return this
     }
 
+    sortOnBuild(onOff: boolean = true): this {
+        this.context.sortOnBuild = onOff
+        return this
+    }
+
     expanded(onOff: boolean | Observable<boolean>): this {
         if (typeof onOff === 'boolean')
             this.context.expanded = new Observable(onOff)
@@ -107,6 +112,7 @@ class ListViewBuilderContext<TItem, TData> {
     text: (item: TreeNode<TItem>) => string[]
     data: (item: TreeNode<TItem>) => TData
     sorting: number = 0
+    sortOnBuild: boolean = false
     selected: Observable<TData>
     filter: ListViewFilterOptions
     doubleClicked: Observable<TData>
@@ -260,7 +266,7 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
 
         listView.rootIsDecorated = context.decorated
         listView.setSorting(context.sorting)
-        if (context.sorting >= 0) listView.sort()
+        if (context.sorting >= 0 && context.sortOnBuild) listView.sort()
 
         if (context.filter?.keywords.value || context.filter?.filters)
             filterList()
