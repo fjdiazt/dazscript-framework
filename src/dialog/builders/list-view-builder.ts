@@ -288,7 +288,6 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
         }
 
         listView.rootIsDecorated = context.decorated
-        listView.setSorting(context.sorting, context.sortAscending)
         if (context.sorting >= 0 && context.sortOnBuild) listView.sort()
 
         if (context.filter?.keywords.value || context.filter?.filters)
@@ -316,6 +315,7 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
         buildColumns(columns)
     })
 
+    listView.setSorting(context.sorting, context.sortAscending)
     buildList(context.items?.value)
     context.items.connect((items) => {
         buildList(items, listView.selectedItem()?.id)
