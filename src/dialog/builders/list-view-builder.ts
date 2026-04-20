@@ -118,7 +118,7 @@ export class ListViewBuilder<TItem, TData> implements IWidgetBuilder<DzListView>
 
 class ListViewBuilderContext<TItem, TData> {
     columns: Observable<string[]> = new Observable([])
-    columnsWidth: (index: number, width: number) => number
+    columnsWidth?: (index: number, width: number, listView: any) => number
     items: Observable<TreeNode<TItem>[]> = new Observable([])
     text: (item: TreeNode<TItem>) => string[]
     data: (item: TreeNode<TItem>) => TData
@@ -149,7 +149,7 @@ class ListViewBindBuilder<TItem, TData> {
     * @param columns
     * @returns
     */
-    columns(columns: string[] | Observable<string[]>, width?: (index: number, width: number) => number): this {
+    columns(columns: string[] | Observable<string[]>, width?: (index: number, width: number, listView: any) => number): this {
         this.context.columns = columns instanceof Observable
             ? columns
             : new Observable(columns)
@@ -283,7 +283,7 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
 
         if (context.columnsWidth) {
             context.columns?.value.forEach((_, index) => {
-                listView.setColumnWidth(index, context.columnsWidth(index, listView.columnWidth(index)))
+                listView.setColumnWidth(index, context.columnsWidth!(index, listView.columnWidth(index), listView))
             })
         }
 
