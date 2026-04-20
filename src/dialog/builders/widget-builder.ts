@@ -67,6 +67,16 @@ export abstract class WidgetBuilderBase<T extends DzWidget> implements IWidgetBu
         return this
     }
 
+    height(value: number): this {
+        this.widget.height = value
+        return this
+    }
+
+    minHeight(value: number): this {
+        this.widget.minHeight = value
+        return this
+    }
+
     build(): T {
         return this.widget
     }
@@ -74,6 +84,8 @@ export abstract class WidgetBuilderBase<T extends DzWidget> implements IWidgetBu
 
 export interface IWidgetBuilder<T extends DzWidget> {
     visible(value: boolean | Observable<boolean>): this
+    height(value: number): this
+    minHeight(value: number): this
     build(): T
 }
 

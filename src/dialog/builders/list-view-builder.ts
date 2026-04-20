@@ -34,6 +34,16 @@ export class ListViewBuilder<TItem, TData> implements IWidgetBuilder<DzListView>
         return this
     }
 
+    height(value: number): this {
+        this.context.height = value
+        return this
+    }
+
+    minHeight(value: number): this {
+        this.context.minHeight = value
+        return this
+    }
+
     /**
      * Binds the list rows to a collection of items
      * @param items
@@ -121,6 +131,8 @@ class ListViewBuilderContext<TItem, TData> {
     refreshWhen: Observable<void>
     expanded: Observable<boolean>
     visible: Observable<boolean> = new Observable(true)
+    height: number | null = null
+    minHeight: number | null = null
     decorated: boolean
     flat: Observable<boolean>
     refreshWhat: ListViewRefreshOptions = ListViewRefreshOptions.All
@@ -199,6 +211,14 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
             else
                 listView.hide()
         })
+    }
+
+    if (context.height !== null) {
+        listView.height = context.height
+    }
+
+    if (context.minHeight !== null) {
+        listView.minHeight = context.minHeight
     }
 
     const buildColumns = (columns: string[]) => {

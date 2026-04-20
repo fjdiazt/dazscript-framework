@@ -9,6 +9,8 @@ export class TabBuilder implements IWidgetBuilder<DzTabWidget> {
     private titleText: string;
     private tabIndex_: Observable<number>;
     private currentChanged: (index: number) => void;
+    private height_: number | null = null;
+    private minHeight_: number | null = null;
 
     constructor(private layoutBuilder: LayoutBuilder, private context: TabBuilderContext) {
     }
@@ -17,6 +19,16 @@ export class TabBuilder implements IWidgetBuilder<DzTabWidget> {
         this.context.visible = typeof value === 'boolean'
             ? new Observable(value)
             : value
+        return this
+    }
+
+    height(value: number): this {
+        this.height_ = value
+        return this
+    }
+
+    minHeight(value: number): this {
+        this.minHeight_ = value
         return this
     }
 
@@ -51,6 +63,8 @@ export class TabBuilder implements IWidgetBuilder<DzTabWidget> {
 
     build(then?: (layout: DzVBoxLayout | DzHBoxLayout, tabWidget: DzTabWidget) => void): DzTabWidget {
         return this.context.add((tabWidget) => {
+            if (this.height_ !== null) tabWidget.height = this.height_
+            if (this.minHeight_ !== null) tabWidget.minHeight = this.minHeight_
             let tab = new DzWidget(this.context.widgetContext.dialog)
             tabWidget.addTab(tab, this.titleText)
             this.context.widgetContext.layout.addWidget(tabWidget)
