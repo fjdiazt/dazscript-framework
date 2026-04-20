@@ -64,11 +64,12 @@ export class ListViewBuilder<TItem, TData> implements IWidgetBuilder<DzListView>
         return this
     }
 
-    sorting(sort: boolean | number): this {
+    sorting(sort: boolean | number, order: 'asc' | 'desc' = 'asc'): this {
         if (typeof sort === 'boolean')
             this.context.sorting = sort ? 0 : -1
         else
             this.context.sorting = sort
+        this.context.sortAscending = order === 'asc'
         return this
     }
 
@@ -122,6 +123,7 @@ class ListViewBuilderContext<TItem, TData> {
     text: (item: TreeNode<TItem>) => string[]
     data: (item: TreeNode<TItem>) => TData
     sorting: number = 0
+    sortAscending: boolean = true
     sortOnBuild: boolean = false
     selected: Observable<TData>
     filter: ListViewFilterOptions
@@ -286,7 +288,7 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
         }
 
         listView.rootIsDecorated = context.decorated
-        listView.setSorting(context.sorting)
+        listView.setSorting(context.sorting, context.sortAscending)
         if (context.sorting >= 0 && context.sortOnBuild) listView.sort()
 
         if (context.filter?.keywords.value || context.filter?.filters)
