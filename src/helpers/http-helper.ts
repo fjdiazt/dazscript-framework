@@ -23,6 +23,7 @@ export interface HttpRequestOptions {
     contentType?: string
     body?: string | ByteArray | object
     auth?: HttpAuthOptions
+    transport?: any
 }
 
 export interface HttpResponse<T = any> {
@@ -72,7 +73,7 @@ export const request = <T = any>(options: HttpRequestOptions): HttpResponse<T> =
         port = parseInt(portStr)
     }
 
-    const http = new DzHttpHelper()
+    const http = options.transport ?? new DzHttpHelper()
     http.setConnectionMode(options.connectionMode ?? 'https')
     http.setHost(hostOnly)
     if (port > 0) {
