@@ -124,7 +124,7 @@ class ListViewBuilderContext<TItem, TData> {
     data: (item: TreeNode<TItem>) => TData
     sorting: number = 0
     sortAscending: boolean = true
-    sortOnBuild: boolean = false
+    sortOnBuild: boolean = true
     selected: Observable<TData>
     filter: ListViewFilterOptions
     doubleClicked: Observable<TData>
@@ -238,8 +238,8 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
         if (!listItem) return
 
         listItem.open = context.expanded?.value === true
-        let data = context.data?.(item)
-        if (data) {
+        let data = context.data ? context.data(item) : item.value
+        if (data != null) {
             setDataItem(listItem, data)
         }
 
@@ -304,6 +304,41 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
         }
     }
 
+    const updateList = (items: TreeNode<TItem>[]) => {
+        if (!context.text) return
+        if (!items) return
+
+        const existingByPath: Record<string, DzListViewItem> = {}
+        listView.getItems(DzListView.All).forEach((li) => {
+            const data = getDataItem<any>(li)
+            const path = data?.id ?? String(li.id)
+            existingByPath[path] = li
+        })
+
+        const incomingPaths: Record<string, boolean> = {}
+        items.forEach((item) => {
+            incomingPaths[item.path] = true
+            const existing = existingByPath[item.path]
+            if (existing) {
+                context.text(item).forEach((text, idx) => {
+                    existing.setText(idx, text ?? '')
+                })
+                const data = context.data?.(item)
+                if (data) setDataItem(existing, data)
+            } else {
+                buildItem(item, listView)
+            }
+        })
+
+        listView.getItems(DzListView.All).forEach((li) => {
+            const data = getDataItem<any>(li)
+            const path = data?.id ?? String(li.id)
+            if (!incomingPaths[path]) listView.deleteItem(li)
+        })
+
+        listView.sort()
+    }
+
     const onSelectionChanged = (callback: (item: DzListViewItem, data: TData) => void) => {
         (listView as any)["selectionChanged()"].scriptConnect(() => {
             callback(listView.selectedItem(), getDataItem(listView.selectedItem()))
@@ -318,7 +353,7 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
     listView.setSorting(context.sorting, context.sortAscending)
     buildList(context.items?.value)
     context.items.connect((items) => {
-        buildList(items, listView.selectedItem()?.id)
+        updateList(items)
     })
 
     context.refreshWhen?.connect(() => {
