@@ -9,6 +9,7 @@ export default class GroupBoxBuilder implements IWidgetBuilder<DzGroupBox> {
     private _direction: Direction = 'vertical'
     private _style: { flat?: boolean }
     private _visible: Observable<boolean>
+    private _enabled: Observable<boolean>
     private _columns: number = 1
     private _height: number | null = null
     private _minHeight: number | null = null
@@ -50,6 +51,13 @@ export default class GroupBoxBuilder implements IWidgetBuilder<DzGroupBox> {
 
     visible(value: boolean | Observable<boolean>): this {
         this._visible = typeof value === 'boolean'
+            ? new Observable(value)
+            : value
+        return this
+    }
+
+    enabled(value: boolean | Observable<boolean>): this {
+        this._enabled = typeof value === 'boolean'
             ? new Observable(value)
             : value
         return this
@@ -98,6 +106,13 @@ export default class GroupBoxBuilder implements IWidgetBuilder<DzGroupBox> {
                     groupBox.show()
                 else
                     groupBox.hide()
+            })
+        }
+
+        if (this._enabled) {
+            groupBox.enabled = this._enabled.value
+            this._enabled.connect((enabled) => {
+                groupBox.enabled = enabled
             })
         }
 
