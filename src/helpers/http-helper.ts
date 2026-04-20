@@ -86,10 +86,6 @@ export const request = <T = any>(options: HttpRequestOptions): HttpResponse<T> =
         http.setQueryString(options.queryString)
     }
 
-    if (options.contentType) {
-        http.setContentType(options.contentType)
-    }
-
     const headers = buildHeaders(options)
     const keys = Object.keys(headers)
     if (keys.length > 0) {
@@ -102,6 +98,11 @@ export const request = <T = any>(options: HttpRequestOptions): HttpResponse<T> =
 
     try {
         const requestBody = buildRequestBody(options)
+        // buildRequestBody may set options.contentType to 'application/json' as a side
+        // effect when body is an object — so setContentType must come after
+        if (options.contentType) {
+            http.setContentType(options.contentType)
+        }
         const bytes = requestBody ? http.doSynchronousRequest(requestBody) : http.doSynchronousRequest()
         const error = http.getError()
         const text = bytes ? bytes.convertToStringFromUtf8() : ''
