@@ -81,15 +81,6 @@ export const request = <T = any>(options: HttpRequestOptions): HttpResponse<T> =
     http.setPath(options.path)
     http.setRequestMethod(options.method ?? 'GET')
 
-    // Debug logging to trace HTTP helper behavior
-    log.debug(`[HTTP Helper] ConnectionMode: ${options.connectionMode ?? 'https'}`)
-    log.debug(`[HTTP Helper] Host: '${hostOnly}'`)
-    if (port > 0) {
-        log.debug(`[HTTP Helper] Port: ${port}`)
-    }
-    log.debug(`[HTTP Helper] Path: '${options.path}'`)
-    log.debug(`[HTTP Helper] Method: ${options.method ?? 'GET'}`)
-
     if (options.queryString) {
         http.setQueryString(options.queryString)
     }
@@ -101,16 +92,6 @@ export const request = <T = any>(options: HttpRequestOptions): HttpResponse<T> =
     const headers = buildHeaders(options)
     const keys = Object.keys(headers)
     if (keys.length > 0) {
-        log.debug(`[HTTP Helper] Headers: ${keys.join(', ')}`)
-        for (let key of keys) {
-            const value = headers[key]
-            // Don't log full auth header for security, just show presence
-            if (key === 'Authorization') {
-                log.debug(`[HTTP Helper]   ${key}: ${value.substring(0, 20)}...`)
-            } else {
-                log.debug(`[HTTP Helper]   ${key}: ${value}`)
-            }
-        }
         const values: string[] = []
         for (let i = 0; i < keys.length; i++) {
             values.push(headers[keys[i]])
@@ -153,6 +134,7 @@ export const request = <T = any>(options: HttpRequestOptions): HttpResponse<T> =
         }
     }
 }
+
 export const get = <T = any>(options: Omit<HttpRequestOptions, 'method'>): HttpResponse<T> => {
     return request({ ...options, method: 'GET' })
 }
