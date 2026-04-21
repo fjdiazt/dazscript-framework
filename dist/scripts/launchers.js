@@ -15,34 +15,48 @@ function getActionOutputPath(workdir, outDir, sourceFile) {
   return relativeSourceFile.replace(/\.ts$/, '');
 }
 
+function getImplementationRelativePath(outputRelativePath) {
+  const outputDirectory = path.posix.dirname(outputRelativePath);
+  const outputBaseName = path.posix.basename(outputRelativePath, '.dsa');
+  const implementationDirectory = outputDirectory === '.'
+    ? path.posix.join('lib', outputBaseName)
+    : path.posix.join(outputDirectory, 'lib', outputBaseName);
+
+  return path.posix.join(implementationDirectory, 'script.dsa');
+}
+
 function makeLauncherSource(implementationRelativePath) {
   return [
-    '(function () {',
-    `    var __implementationRelativePath = '${implementationRelativePath}';`,
-    "    var __sourceFile = getScriptFileName();",
-    '    var __sourceInfo = new DzFileInfo(__sourceFile);',
-    '    var __sourceDir = typeof (__sourceInfo.canonicalPath) == "function"',
-    '        ? __sourceInfo.canonicalPath()',
-    '        : __sourceInfo.path();',
-    '    __sourceInfo.deleteLater();',
-    "    var __implementationPath = __sourceDir + '/' + __implementationRelativePath;",
-    '    var __implementationFile = new DzFile(__implementationPath);',
-    '    if (!__implementationFile.exists()) {',
-    `        MessageBox.warning('Unable to find script implementation:\\n' + __implementationPath, 'Missing Script', '&OK;', '');`,
-    '        __implementationFile.deleteLater();',
-    '        return;',
+    '// Auto-generated launcher shim.',
+    '// The installed Daz action points at this stable file.',
+    '// The current implementation lives under the sibling lib/ directory.',
+    '',
+    `var implementationRelativePath = '${implementationRelativePath}';`,
+    'var launcherFileName = getScriptFileName();',
+    'var launcherInfo = new DzFileInfo(launcherFileName);',
+    'var launcherDirectory = typeof launcherInfo.canonicalPath == "function"',
+    '    ? launcherInfo.canonicalPath()',
+    '    : launcherInfo.path();',
+    'launcherInfo.deleteLater();',
+    '',
+    "var implementationPath = launcherDirectory + '/' + implementationRelativePath;",
+    'var implementationFile = new DzFile(implementationPath);',
+    'if (!implementationFile.exists()) {',
+    `    MessageBox.warning('Unable to find script implementation:\\n' + implementationPath, 'Missing Script', '&OK;', '');`,
+    '    implementationFile.deleteLater();',
+    '} else {',
+    '    implementationFile.deleteLater();',
+    '',
+    '    var script = new DzScript(implementationPath);',
+    '    if (!script.loadFromFile(implementationPath, true)) {',
+    `        MessageBox.warning('Unable to load script implementation:\\n' + implementationPath, 'Script Load Error', '&OK;', '');`,
+    '        script.deleteLater();',
+    '    } else {',
+    "        var args = typeof getArguments == 'function' ? getArguments() : [];",
+    '        script.execute(args);',
+    '        script.deleteLater();',
     '    }',
-    '    __implementationFile.deleteLater();',
-    '    var __script = new DzScript(__implementationPath);',
-    '    if (!__script.loadFromFile(__implementationPath, true)) {',
-    `        MessageBox.warning('Unable to load script implementation:\\n' + __implementationPath, 'Script Load Error', '&OK;', '');`,
-    '        __script.deleteLater();',
-    '        return;',
-    '    }',
-    "    var __args = typeof getArguments === 'function' ? getArguments() : [];",
-    '    __script.execute(__args);',
-    '    __script.deleteLater();',
-    '})();',
+    '}',
     '',
   ].join('\n');
 }
@@ -60,7 +74,7 @@ function createActionLaunchers(workdir, options) {
   actionEntryFiles.forEach((sourceFile) => {
     const outputRelativePath = getActionOutputPath(workdir, outDir, sourceFile);
     const launcherPath = path.join(outDir, outputRelativePath);
-    const implementationRelativePath = toPosix(path.join('lib', outputRelativePath));
+    const implementationRelativePath = getImplementationRelativePath(outputRelativePath);
     const implementationPath = path.join(outDir, implementationRelativePath);
 
     if (!fs.existsSync(launcherPath)) {

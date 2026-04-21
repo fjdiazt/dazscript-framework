@@ -55,9 +55,9 @@ Use `--scripts-path ./src/scripts` for projects shaped like `scripts/common`, wh
 Built action outputs now use stable launcher shims by default:
 
 - `out/<script>.dsa` is the stable launcher registered with Daz Studio menus, toolbars, and shortcuts
-- `out/lib/<script>.dsa` is the current implementation bundle that the launcher executes
+- `out/<folder>/lib/<script-name>/script.dsa` is the current implementation bundle that the launcher executes
 
-Rebuilding updates the implementation bundle in `out/lib/...`. Because the registered launcher path stays stable, action updates normally do not require reinstalling the action in Daz Studio.
+Rebuilding updates the implementation bundle under the shim's sibling `lib/` folder. Because the registered launcher path stays stable, action updates normally do not require reinstalling the action in Daz Studio.
 
 ## Usage
 
@@ -118,7 +118,7 @@ Common `action(...)` parameters:
 When an action is built, the framework emits two files for it:
 
 - the stable launcher at the original output path
-- the implementation bundle under `out/lib/...`
+- the implementation bundle under a sibling `lib/<script-name>/script.dsa` path
 
 Generated installers register the launcher path, so menu placement, toolbars, shortcuts, and icons keep pointing at a stable target across rebuilds.
 
@@ -317,7 +317,6 @@ my-daz-scripts/
 │   │   └── my-dialog-script.dsa.ts
 │   └── config.ts
 ├── out/                    # Generated launchers, implementations, and copied icons
-│   └── lib/                # Runnable implementation bundles
 ├── package.json
 ├── tsconfig.json
 └── dazscript.config.ts
@@ -326,7 +325,7 @@ my-daz-scripts/
 **Key points:**
 - Scripts ending in `.dsa.ts` compile to `.dsa` files for Daz Studio
 - Regular `.ts` files are utility, model, or helper classes
-- Built action outputs are split into stable launchers plus `out/lib/...` implementations
+- Built action outputs are split into stable launchers plus sibling `lib/<script-name>/script.dsa` implementations
 - Run `npm run build` to compile TypeScript → Daz Scripts
 - Run `npm run watch` during development for live rebuild
 - Rebuild after script changes; reinstalling Daz actions is usually not required because the launcher path stays stable
