@@ -21,13 +21,5 @@ module.exports = {
     '@babel/plugin-proposal-class-properties',
     '@babel/plugin-transform-private-property-in-object',
     '@babel/plugin-transform-private-methods',
-    [
-      'dazscript-framework/babel/trace-babel-plugin', // Ensure this path is correct
-      { default: false, retainLines: false },
-    ],
-    [
-      'dazscript-framework/babel/trace-log-babel-plugin', // Ensure this path is correct
-      { default: false, retainLines: false },
-    ],
   ],
 };
