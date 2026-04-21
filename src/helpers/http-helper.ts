@@ -17,6 +17,7 @@ export interface HttpRequestOptions {
     path: string
     method?: HttpMethod
     connectionMode?: HttpConnectionMode
+    timeoutMs?: number
     responseType?: HttpResponseType
     queryString?: string
     headers?: Record<string, string>
@@ -76,6 +77,9 @@ export const request = <T = any>(options: HttpRequestOptions): HttpResponse<T> =
     const http = options.transport ?? new DzHttpHelper()
     http.setConnectionMode(options.connectionMode ?? 'https')
     http.setHost(hostOnly)
+    if (typeof http.setTimeoutMs === 'function' && options.timeoutMs && options.timeoutMs > 0) {
+        http.setTimeoutMs(options.timeoutMs)
+    }
     if (port > 0) {
         http.setPort(port)
     }
