@@ -6,6 +6,12 @@ module.exports = (env, argv) => {
   const projectRoot =
     env && env.context ? path.resolve(env.context) : process.cwd();
   const sourceRoot = path.resolve(projectRoot, 'src');
+  const projectNodeModules = path.resolve(projectRoot, 'node_modules');
+  const frameworkSourceRoot = path.resolve(
+    projectNodeModules,
+    'dazscript-framework',
+    'src'
+  );
   const isFileSpecified = env && env.file;
   const entryFiles = isFileSpecified
     ? [path.resolve(sourceRoot, `${env.file}.dsa.ts`)]
@@ -48,14 +54,9 @@ module.exports = (env, argv) => {
               },
             },
           ],
-          exclude: [
-            {
-              and: [path.resolve(projectRoot, 'node_modules')],
-              not: [
-                path.resolve(__dirname, 'node_modules/dazscript-framework/src'),
-              ],
-            },
-          ],
+          exclude: (filePath) =>
+            filePath.startsWith(projectNodeModules) &&
+            !filePath.startsWith(frameworkSourceRoot),
         },
       ],
     },
