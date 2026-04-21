@@ -1,6 +1,22 @@
 const path = require('path');
 const glob = require('glob');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+const { createActionLaunchers } = require('./dist/scripts/launchers');
+
+class ActionLauncherPlugin {
+  constructor(options) {
+    this.options = options;
+  }
+
+  apply(compiler) {
+    compiler.hooks.done.tap('ActionLauncherPlugin', () => {
+      createActionLaunchers(this.options.workdir, {
+        outDir: this.options.outDir,
+        scriptsPath: this.options.scriptsPath,
+      });
+    });
+  }
+}
 
 module.exports = (env, argv) => {
   const projectRoot =
@@ -88,5 +104,12 @@ module.exports = (env, argv) => {
         module: false,
       },
     },
+    plugins: [
+      new ActionLauncherPlugin({
+        workdir: projectRoot,
+        outDir: outputPath,
+        scriptsPath: (env && env.scriptsPath) || './src',
+      }),
+    ],
   };
 };

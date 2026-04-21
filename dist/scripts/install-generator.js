@@ -141,6 +141,19 @@ function findTopLevelActionCall(content, filePath) {
   return null;
 }
 
+function findActionEntryFiles(workdir, options) {
+  const scriptsPath = options.scriptsPath.endsWith('/')
+    ? options.scriptsPath
+    : `${options.scriptsPath}/`;
+  const matches = glob.sync(`${scriptsPath}/**/*.dsa.ts`, { cwd: workdir });
+
+  return matches.filter((filePath) => {
+    const absolutePath = path.join(workdir, filePath);
+    const content = fs.readFileSync(absolutePath, 'utf-8').toString();
+    return !!findTopLevelActionCall(content, absolutePath);
+  });
+}
+
 function processScript(filePath, container, defaultMenuPath) {
   const fileInfo = path.parse(filePath);
   const content = fs.readFileSync(filePath, 'utf-8').toString();
@@ -231,14 +244,11 @@ function processScripts(paths, container, defaultMenuPath) {
 }
 
 function generateInstallerFiles(workdir, options) {
-  const scriptsPath = options.scriptsPath.endsWith('/')
-    ? options.scriptsPath
-    : `${options.scriptsPath}/`;
   const defaultMenuPath = options.defaultMenuPath.endsWith('/')
     ? options.defaultMenuPath
     : `${options.defaultMenuPath}/`;
   const container = { scripts: [] };
-  const matches = glob.sync(`${scriptsPath}/**/*.dsa.ts`, { cwd: workdir });
+  const matches = findActionEntryFiles(workdir, options);
 
   processScripts(matches, container, defaultMenuPath);
 
@@ -292,4 +302,5 @@ if (require.main === module) {
 
 module.exports = {
   generateInstallerFiles,
+  findActionEntryFiles,
 };

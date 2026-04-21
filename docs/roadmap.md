@@ -47,27 +47,6 @@ Compatibility notes:
 Priority:
 Medium
 
-### Introduce stable launcher shims for installed actions
-
-Problem:
-After scripts are installed into Daz Studio menus or toolbars, Daz keeps its own registered copy of the action target. Updating the script implementation on disk is not always enough to make Daz pick up the change, so developers often need to reinstall actions to reflect updates.
-
-Current behavior:
-- Generated installers register actions directly against the built `.dsa` files
-- Updating those files may still require reinstalling menu or toolbar actions inside Daz Studio
-
-Proposed direction:
-- Register a stable per-action shim or launcher script in Daz Studio
-- Have that shim call the current implementation script from a predictable location
-- Keep the shim path stable so implementation updates do not require reinstalling actions
-
-Compatibility notes:
-- Needs validation against how Daz resolves script paths for custom actions
-- Should preserve existing action names, shortcuts, toolbar bindings, and menu placement
-
-Priority:
-Medium
-
 ### Provide a base installer and uninstaller UI
 
 Problem:

@@ -13,7 +13,7 @@ The **DazScript Framework** is a TypeScript-based framework for writing Daz Stud
 ## Features
 
 - TypeScript support with full IntelliSense.
-- A powerful set of decorators and helper methods for building interactive scripts.
+- A lightweight `action(...)` entrypoint plus helper methods for building interactive scripts.
 - Easy integration with Daz Studio for quick script deployment.
 
 ## Installation
@@ -51,6 +51,13 @@ npx dazscript init --menu-path /MyScripts --scripts-path ./src --out-dir ./out
 - `--out-dir` sets the webpack build output directory for generated `.dsa` files and copied icons.
 
 Use `--scripts-path ./src/scripts` for projects shaped like `scripts/common`, where runnable `.dsa.ts` files live under `src/scripts/`. Use `--scripts-path ./src` for packages shaped like `scripts/power-menu`, where runnable `.dsa.ts` files live at the source root.
+
+Built action outputs now use stable launcher shims by default:
+
+- `out/<script>.dsa` is the stable launcher registered with Daz Studio menus, toolbars, and shortcuts
+- `out/lib/<script>.dsa` is the current implementation bundle that the launcher executes
+
+Rebuilding updates the implementation bundle in `out/lib/...`. Because the registered launcher path stays stable, action updates normally do not require reinstalling the action in Daz Studio.
 
 ## Usage
 
@@ -107,6 +114,13 @@ Common `action(...)` parameters:
 - `group`: an optional grouping label used by Daz Studio for related actions.
 - `description`: a longer description for the action.
 - `bundle`: generates installer and uninstaller entries as a package bundle instead of a single action entry.
+
+When an action is built, the framework emits two files for it:
+
+- the stable launcher at the original output path
+- the implementation bundle under `out/lib/...`
+
+Generated installers register the launcher path, so menu placement, toolbars, shortcuts, and icons keep pointing at a stable target across rebuilds.
 
 ### Building UIs with Observables & Dialogs
 
@@ -302,7 +316,8 @@ my-daz-scripts/
 │   │   ├── my-dialog.ts
 │   │   └── my-dialog-script.dsa.ts
 │   └── config.ts
-├── out/                    # Generated .dsa files (build output)
+├── out/                    # Generated launchers, implementations, and copied icons
+│   └── lib/                # Runnable implementation bundles
 ├── package.json
 ├── tsconfig.json
 └── dazscript.config.ts
@@ -311,8 +326,10 @@ my-daz-scripts/
 **Key points:**
 - Scripts ending in `.dsa.ts` compile to `.dsa` files for Daz Studio
 - Regular `.ts` files are utility, model, or helper classes
+- Built action outputs are split into stable launchers plus `out/lib/...` implementations
 - Run `npm run build` to compile TypeScript → Daz Scripts
 - Run `npm run watch` during development for live rebuild
+- Rebuild after script changes; reinstalling Daz actions is usually not required because the launcher path stays stable
 
 ## Development & Publishing
 

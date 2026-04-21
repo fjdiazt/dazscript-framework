@@ -2,7 +2,7 @@
 
 ## 📋 Summary
 
-The `/scripts` folder contains **three independent Daz Studio script projects** written in TypeScript. These are production scripts that extend Daz Studio's functionality. Each project is built using Webpack+Babel and compiled from TypeScript (.dsa.ts) into installable Daz Studio scripts (.dsa files). All projects leverage the centralized **dazscript-framework** and **dazscript-types** packages from the root folder for common utilities, helpers, and type definitions.
+The `/scripts` folder contains **three independent Daz Studio script projects** written in TypeScript. These are production scripts that extend Daz Studio's functionality. Each project is built through the shared **dazscript-framework** pipeline and compiled from TypeScript (`.dsa.ts`) into installable Daz Studio scripts (`.dsa`). All projects leverage the centralized **dazscript-framework** and **dazscript-types** packages from the root folder for common utilities, helpers, and type definitions.
 
 ---
 
@@ -20,15 +20,16 @@ scripts/
 
 ## 🔧 Build System
 
-All three projects share the **same build configuration pattern**:
+All three projects share the **same framework-owned build configuration pattern**:
 
 ### Build Pipeline
 ```
 TypeScript Source (.dsa.ts)
         ↓
-    Babel + Webpack (npm run build)
+    dazscript build
         ↓
-    ES5 JavaScript (.dsa)
+    Stable launcher (.dsa)
+    + implementation bundle (out/lib/*.dsa)
         ↓
     Daz Studio Installation Script (Install.dsa)
         ↓
@@ -37,12 +38,12 @@ TypeScript Source (.dsa.ts)
 
 ### Build Steps (identical across all projects)
 1. `npm run prebuild` → Runs `npm run installer` (generates Install.dsa from scripts)
-2. `npm run build` → Webpack transpiles TypeScript → ES5 JavaScript
+2. `npm run build` → Framework webpack pipeline transpiles TypeScript and emits launcher + `lib/` implementation outputs
 3. `npm run postbuild` → Runs `npm run icons` (copies .png icons)
 4. `npm run watch` → Watches for changes and rebuilds
 
 ### Shared Build Dependencies
-- **Module Bundler** - Webpack (configures TypeScript & Babel transpilation)
+- **Module Bundler** - Webpack (via the shared framework config)
 - **JavaScript Transpiler** - Babel (targets ES5 for Daz Studio compatibility)
 - **Language** - TypeScript
 - **dazscript-framework** - Framework package (local file path)
@@ -166,8 +167,8 @@ All projects depend on the centralized framework package:
 ```json
 {
   "dependencies": {
-    "dazscript-framework": "file:C:/src/DazScript.Framework/framework",
-    "dazscript-types": "file:C:/src/DazScript.Framework/dazscript-types"
+    "dazscript-framework": "file:../../scripts-framework",
+    "dazscript-types": "file:../../dazscript-types"
   }
 }
 ```
@@ -190,7 +191,7 @@ Each project generates an `Install.dsa` script that:
 
 1. **Reads** all `*.dsa.ts` files from the project's `src/` directory
 2. **Extracts** top-level `action(...)` metadata to determine menu placement and properties
-3. **Generates** dynamic installation that registers scripts with Daz Studio
+3. **Generates** dynamic installation that registers stable launcher paths with Daz Studio
 4. **Sets** menu paths, descriptions, icons, and toolbar placements
 
 **Installation Command Template:**
@@ -204,8 +205,7 @@ node ./node_modules/dazscript-framework/dist/scripts/install-generator.js -p ./s
 
 All projects use consistent TypeScript settings:
 - **Target:** ES5 (Daz Studio compatibility)
-- **Decorators:** Enabled (for @action and @property)
-- **Module Resolution:** Configured for path aliases (@dsf/*)
+- **Module Resolution:** Configured for path aliases (`@dsf/*`)
 - **Strict Mode:** Enabled for type safety
 
 ---
@@ -214,7 +214,7 @@ All projects use consistent TypeScript settings:
 
 To be recognized as installable scripts:
 - **Main entry scripts:** `NameOfScript.dsa.ts`
-- **Icon files:** `NameOfScript.dsa.png` (optional, referenced in @action)
+- **Icon files:** `NameOfScript.dsa.png` (optional, associated with the action entry)
 - **Utility files:** `*.ts` (not in .dsa.ts format, not auto-installed)
 
 ---
@@ -231,9 +231,9 @@ npm run watch        # Watch mode for development
 
 ### Adding a New Script
 1. Create `NewScript.dsa.ts` in appropriate category folder
-2. Import framework helpers and decorators
-3. Add @action decorator with menu path
-4. Extend BaseScript and implement run()
+2. Import framework helpers
+3. Add a top-level `action(...)` entrypoint with menu metadata
+4. Put the runnable body inline or pass a reusable function/class with `run()`
 5. Run `npm run build` - Install.dsa regenerates automatically
 
 ### Debugging
@@ -245,10 +245,10 @@ npm run watch        # Watch mode for development
 
 ## 📝 Notes for Documentation
 
-- All three projects use the **same Webpack/Babel configuration**
+- All three projects use the **same framework-owned Webpack/Babel configuration**
 - Framework package provides shared utilities and helpers
-- Scripts are **menu-driven** via @action decorators
+- Scripts are **menu-driven** via top-level `action(...)` calls
 - Each project has **independent build** and installation
 - Projects can be built and deployed separately
-- Framework updates automatically propagate to all projects (via local file reference)
+- Framework updates automatically propagate to all projects (via local file reference or link)
 
