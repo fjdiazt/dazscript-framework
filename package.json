@@ -5,7 +5,7 @@
   "license": "MPL-2.0",
   "description": "",
   "scripts": {
-    "prepare": "cp scripts/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push",
+    "prepare": "node ./scripts/install-git-hooks.js",
     "prebuild": "npm run installer",
     "build": "webpack --env outputPath=./out",
     "postbuild": "npm run icons",
@@ -36,7 +36,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/fjdiazt/dazscript-framework"
+    "url": "git+https://github.com/fjdiazt/dazscript-framework.git"
   },
   "peerDependencies": {
     "@babel/core": "^7.23.2",
@@ -54,7 +54,7 @@
     "babel-plugin-transform-typescript-metadata": "^0.3.2",
     "commander": "^11.1.0",
     "cross-env": "^7.0.3",
-    "dazscript-types": "^0.2.0",
+    "dazscript-types": "^0.2.3",
     "glob": "^7.2.0",
     "ts-file-parser": "^0.0.21",
     "ts-loader": "^9.5.0",
@@ -67,7 +67,6 @@
     "@types/node": "^22.10.5",
     "copyfiles": "^2.4.1",
     "eslint": "^9.17.0",
-    "semantic-release": "^23.0.0",
     "typescript": "^5.7.3"
   }
 }
