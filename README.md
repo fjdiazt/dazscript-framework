@@ -57,7 +57,7 @@ Built action outputs now use stable launcher shims by default:
 - `out/<script>.dsa` is the stable launcher registered with Daz Studio menus, toolbars, and shortcuts
 - `out/<folder>/lib/<script-name>/script.dsa` is the current implementation bundle that the launcher executes
 
-Rebuilding updates the implementation bundle under the shim's sibling `lib/` folder. Because the registered launcher path stays stable, action updates normally do not require reinstalling the action in Daz Studio.
+Rebuilding updates the implementation bundle under the shim's sibling `lib/` folder. At runtime, each launcher checks that local `lib/` path first and falls back to `App.getAppDataPath()/...` second. Because the registered launcher path stays stable, action updates normally do not require reinstalling the action in Daz Studio.
 
 ## Usage
 
@@ -121,6 +121,11 @@ When an action is built, the framework emits two files for it:
 - the implementation bundle under a sibling `lib/<script-name>/script.dsa` path
 
 Generated installers register the launcher path, so menu placement, toolbars, shortcuts, and icons keep pointing at a stable target across rebuilds.
+
+If the local `lib/` implementation is missing, the launcher falls back to a namespaced AppData location. By default that namespace is derived from project metadata:
+
+- package `author` + package `name` when available
+- otherwise a `DazScript/<project-folder>` fallback
 
 ### Building UIs with Observables & Dialogs
 

@@ -2,6 +2,7 @@ const path = require('path');
 const glob = require('glob');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const { createActionLaunchers } = require('./dist/scripts/launchers');
+const { loadConfig } = require('./dist/scripts/config-loader');
 
 class ActionLauncherPlugin {
   constructor(options) {
@@ -13,6 +14,7 @@ class ActionLauncherPlugin {
       createActionLaunchers(this.options.workdir, {
         outDir: this.options.outDir,
         scriptsPath: this.options.scriptsPath,
+        appDataPath: this.options.appDataPath,
       });
     });
   }
@@ -21,6 +23,7 @@ class ActionLauncherPlugin {
 module.exports = (env, argv) => {
   const projectRoot =
     env && env.context ? path.resolve(env.context) : process.cwd();
+  const { config: projectConfig } = loadConfig(projectRoot);
   const sourceRoot = path.resolve(projectRoot, 'src');
   const projectNodeModules = path.resolve(projectRoot, 'node_modules');
   const frameworkSourceRoot = path.resolve(
@@ -108,7 +111,10 @@ module.exports = (env, argv) => {
       new ActionLauncherPlugin({
         workdir: projectRoot,
         outDir: outputPath,
-        scriptsPath: (env && env.scriptsPath) || './src',
+        scriptsPath:
+          (env && env.scriptsPath) || projectConfig.scriptsPath || './src',
+        appDataPath:
+          (env && env.appDataPath) || projectConfig.appDataPath,
       }),
     ],
   };
