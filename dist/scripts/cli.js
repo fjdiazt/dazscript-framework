@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 
+const path = require('path');
+const readline = require('readline');
 const { runWebpack } = require('./build');
 const { loadConfig } = require('./config-loader');
 const { copyIcons } = require('./icons');
@@ -21,9 +23,56 @@ Options for init:
   --menu-path <path>    Default menu path. Default: /MyScripts
   --scripts-path <path> Source directory to scan. Default: ./src
   --out-dir <path>      Build output directory. Default: ./out
+  --app-data-path <path> AppData namespace used by launcher fallbacks. Example: Author/Product
   --force               Overwrite generated files
   --help                Show this message
 `);
+}
+
+function askQuestion(rl, question) {
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => resolve(answer));
+  });
+}
+
+async function resolveInitOptions(workdir, options) {
+  if (options.appDataPath) {
+    return options;
+  }
+
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    return options;
+  }
+
+  const defaultProductName = path.basename(workdir);
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  try {
+    let author = '';
+    while (!author) {
+      const answer = await askQuestion(
+        rl,
+        'AppData author namespace (for example Vholf3D): '
+      );
+      author = answer.trim();
+    }
+
+    const productAnswer = await askQuestion(
+      rl,
+      `AppData product namespace [${defaultProductName}]: `
+    );
+    const product = productAnswer.trim() || defaultProductName;
+
+    return {
+      ...options,
+      appDataPath: `${author}/${product}`,
+    };
+  } finally {
+    rl.close();
+  }
 }
 
 function parseOptions(args, defaults) {
@@ -51,6 +100,12 @@ function parseOptions(args, defaults) {
 
     if (arg === '--out-dir') {
       options.outDir = args[index + 1];
+      index += 1;
+      continue;
+    }
+
+    if (arg === '--app-data-path') {
+      options.appDataPath = args[index + 1];
       index += 1;
       continue;
     }
@@ -101,6 +156,7 @@ async function main(argv) {
     menuPath: undefined,
     scriptsPath: undefined,
     outDir: undefined,
+    appDataPath: undefined,
     file: undefined,
   });
 
@@ -109,7 +165,14 @@ async function main(argv) {
     return;
   }
 
+  const commandOptions =
+    command === 'init'
+      ? await resolveInitOptions(workdir, options)
+      : options;
   const resolvedOptions = getResolvedOptions(workdir, options);
+  if (commandOptions !== options) {
+    Object.assign(resolvedOptions, commandOptions);
+  }
   resolvedOptions.menuPath = resolvedOptions.menuPath || '/MyScripts';
   resolvedOptions.scriptsPath = resolvedOptions.scriptsPath || './src';
   resolvedOptions.outDir = resolvedOptions.outDir || './out';

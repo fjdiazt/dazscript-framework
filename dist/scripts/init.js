@@ -49,6 +49,7 @@ export default defineConfig({
   scriptsPath: '${options.scriptsPath}',
   outDir: '${options.outDir}',
   defaultMenuPath: '${options.menuPath}',
+  appDataPath: '${options.appDataPath}',
 });
 `;
 }
@@ -94,11 +95,13 @@ function updatePackageJson(workdir, options) {
 }
 
 function initProject(workdir, rawOptions) {
+  const projectName = path.basename(workdir);
   const options = {
     force: Boolean(rawOptions.force),
     menuPath: normalizePath(rawOptions.menuPath, '/MyScripts'),
     scriptsPath: normalizePath(rawOptions.scriptsPath, './src'),
     outDir: normalizePath(rawOptions.outDir, './out'),
+    appDataPath: normalizePath(rawOptions.appDataPath, `YourName/${projectName}`),
   };
 
   writeFileIfNeeded(

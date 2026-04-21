@@ -32,6 +32,8 @@ After installing the package, scaffold the project files:
 npx dazscript init
 ```
 
+If `--app-data-path` is not provided, `init` prompts for the AppData author namespace up front and uses the current folder name as the default product segment.
+
 This generates:
 
 - `dazscript.config.ts`
@@ -43,14 +45,28 @@ The generated package scripts use the framework CLI directly, so consumer projec
 You can customize the generated defaults:
 
 ```bash
-npx dazscript init --menu-path /MyScripts --scripts-path ./src --out-dir ./out
+npx dazscript init --menu-path /MyScripts --scripts-path ./src --out-dir ./out --app-data-path YourName/my-project
 ```
 
 - `--menu-path` sets which Daz Studio menu the scripts are added to by default. See [The `action(...)` Entrypoint](#the-action-entrypoint) for how a script can override that with `menuPath`.
 - `--scripts-path` tells the installer generator where to scan for runnable `.dsa.ts` entry files.
 - `--out-dir` sets the webpack build output directory for generated `.dsa` files and copied icons.
+- `--app-data-path` sets the AppData namespace used by launcher fallback resolution. Use a unique `Author/Product` path.
 
 Use `--scripts-path ./src/scripts` for projects shaped like `scripts/common`, where runnable `.dsa.ts` files live under `src/scripts/`. Use `--scripts-path ./src` for packages shaped like `scripts/power-menu`, where runnable `.dsa.ts` files live at the source root.
+
+Set `appDataPath` explicitly in `dazscript.config.ts` for every project. It is required for builds that generate launcher shims:
+
+```typescript
+import { defineConfig } from 'dazscript-framework/config';
+
+export default defineConfig({
+  scriptsPath: './src',
+  outDir: './out',
+  defaultMenuPath: '/MyScripts',
+  appDataPath: 'YourName/my-project',
+});
+```
 
 Built action outputs now use stable launcher shims by default:
 
@@ -122,10 +138,7 @@ When an action is built, the framework emits two files for it:
 
 Generated installers register the launcher path, so menu placement, toolbars, shortcuts, and icons keep pointing at a stable target across rebuilds.
 
-If the local `lib/` implementation is missing, the launcher falls back to a namespaced AppData location. By default that namespace is derived from project metadata:
-
-- package `author` + package `name` when available
-- otherwise a `DazScript/<project-folder>` fallback
+If the local `lib/` implementation is missing, the launcher falls back to the configured `appDataPath`. Builds now require this value and validate it as a unique `Author/Product` style path.
 
 ### Building UIs with Observables & Dialogs
 

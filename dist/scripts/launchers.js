@@ -25,57 +25,45 @@ function getImplementationRelativePath(outputRelativePath) {
   return path.posix.join(implementationDirectory, 'script.dsa');
 }
 
-function readJson(filePath) {
-  try {
-    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  } catch (_error) {
-    return null;
-  }
-}
-
-function getPackageAuthor(pkg) {
-  if (!pkg || !pkg.author) {
-    return null;
+function validateAppDataPath(appDataPath, workdir) {
+  if (!appDataPath || typeof appDataPath !== 'string') {
+    throw new Error(
+      `[dazscript] Missing required appDataPath in ${workdir}. ` +
+      `Set appDataPath: 'Author/Product' in dazscript.config.ts.`
+    );
   }
 
-  if (typeof pkg.author === 'string') {
-    return pkg.author.trim() || null;
+  const normalized = toPosix(appDataPath).trim().replace(/^\/+|\/+$/g, '');
+  const segments = normalized.split('/').filter(Boolean);
+
+  if (segments.length < 2) {
+    throw new Error(
+      `[dazscript] Invalid appDataPath "${appDataPath}" in ${workdir}. ` +
+      `Use at least two segments, for example 'Author/Product'.`
+    );
   }
 
-  if (pkg.author && typeof pkg.author.name === 'string') {
-    return pkg.author.name.trim() || null;
+  const blockedSegments = new Set([
+    'appdata',
+    'cache',
+    'data',
+    'lib',
+    'libs',
+    'script',
+    'scripts',
+    'temp',
+    'tmp',
+  ]);
+
+  const invalidSegment = segments.find((segment) => blockedSegments.has(segment.toLowerCase()));
+  if (invalidSegment) {
+    throw new Error(
+      `[dazscript] Invalid appDataPath "${appDataPath}" in ${workdir}. ` +
+      `Path segments like "${invalidSegment}" are too generic. Use a unique Author/Product path.`
+    );
   }
 
-  return null;
-}
-
-function sanitizePathSegment(value, fallback) {
-  if (!value || typeof value !== 'string') {
-    return fallback;
-  }
-
-  const normalized = value
-    .trim()
-    .replace(/^@/, '')
-    .split(/[\\/]/)
-    .filter(Boolean)
-    .pop()
-    .replace(/[:*?"<>|]/g, '-')
-    .trim();
-
-  return normalized || fallback;
-}
-
-function getDefaultAppDataPath(workdir) {
-  const packageJsonPath = path.join(workdir, 'package.json');
-  const packageJson = readJson(packageJsonPath) || {};
-  const author = sanitizePathSegment(getPackageAuthor(packageJson), 'DazScript');
-  const projectName = sanitizePathSegment(
-    typeof packageJson.name === 'string' ? packageJson.name : path.basename(workdir),
-    'Scripts'
-  );
-
-  return `${author}/${projectName}`;
+  return normalized;
 }
 
 function makeLauncherSource(implementationRelativePath, appDataImplementationRelativePath) {
@@ -128,7 +116,7 @@ function ensureParentDir(filePath) {
 
 function createActionLaunchers(workdir, options) {
   const outDir = path.resolve(workdir, options.outDir || './out');
-  const appDataPath = toPosix(options.appDataPath || getDefaultAppDataPath(workdir));
+  const appDataPath = validateAppDataPath(options.appDataPath, workdir);
   const actionEntryFiles = findActionEntryFiles(workdir, {
     scriptsPath: options.scriptsPath || './src',
   });
@@ -170,4 +158,5 @@ function createActionLaunchers(workdir, options) {
 
 module.exports = {
   createActionLaunchers,
+  validateAppDataPath,
 };
