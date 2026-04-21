@@ -7,10 +7,10 @@ This document tracks framework improvements that are worth doing, but are not re
 ### Generate an intermediate action manifest
 
 Problem:
-The installer generator currently discovers `@action(...)` metadata and immediately writes `Install.dsa.ts` and `Uninstall.dsa.ts`. That makes the pipeline harder to debug and test because there is no intermediate artifact showing the normalized action data.
+The installer generator currently discovers `action(...)` metadata and immediately writes `Install.dsa.ts` and `Uninstall.dsa.ts`. That makes the pipeline harder to debug and test because there is no intermediate artifact showing the normalized action data.
 
 Current behavior:
-- Scan source files for action decorators
+- Scan source files for top-level `action(...)` calls
 - Normalize action metadata in memory
 - Write generated installer and uninstaller scripts directly into the project source tree
 

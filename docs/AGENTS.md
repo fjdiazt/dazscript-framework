@@ -46,38 +46,33 @@ Daz Studio scripts run in a restricted ECMA-262 sandbox where many standard Java
 
 **Structure:**
 ```typescript
-import { action } from '@dsf/core/action-decorator';
-import { BaseScript } from '@dsf/core/base-script';
+import { action } from '@dsf/core/action';
+import { acceptUndo } from '@dsf/helpers/undo-helper';
 import { getSelectedNodes } from '@dsf/helpers/scene-helper';
 
 /**
  * Brief description of what the script does
  */
-@action({ 
+action({ 
   text: 'Menu Display Text',
   menuPath: '/Vholf3Dv3/scripts/category/'  // Optional, auto=category name
   // toolbar: 'ToolbarName',                  // Optional
   // shortcut: 'Ctrl+Alt+K',                  // Optional
   // icon: 'scripts/category/name.dsa.png'   // Optional
-})
-class DoSomethingScript extends BaseScript {
-  run() {
+}, () => {
     const nodes = getSelectedNodes()
     if (nodes.length === 0) return
     
-    this.acceptUndo(() => {
+    acceptUndo('Menu Display Text', () => {
       // Perform operations here
     })
-  }
-}
-new DoSomethingScript().exec()
+  })
+})
 ```
 
 **Key Points:**
-- `@action` decorator configures menu placement and metadata
-- `BaseScript` provides `acceptUndo()` for undo/redo support
-- Single `run()` method performs the action
-- Instantiate and call `.exec()` at module level
+- `action(...)` configures menu placement, wraps execution, and acts as the module entrypoint
+- Use `acceptUndo()` directly for undo/redo support
 - Use helpers from `@dsf/helpers/*` for common operations
 - Always wrap state changes in `acceptUndo()`
 
@@ -106,20 +101,15 @@ import { unlock, lock } from '@dsf/helpers/property-helper'
 
 **Entry Script:**
 ```typescript
-import { action } from '@dsf/core/action-decorator';
-import { BaseScript } from '@dsf/core/base-script';
+import { action } from '@dsf/core/action';
 import { PowerMenuModel } from './power-menu/power-menu-model';
 import powerMenuScript from './power-menu/power-menu-script';
 
-@action({ text: 'Power Menu', toolbar: 'Vholf3D_PowerMenu', shortcut: 'F24' })
-export class PowerMenuScript extends BaseScript {
-  protected run(): void {
+action({ text: 'Power Menu', toolbar: 'Vholf3D_PowerMenu', shortcut: 'F24' }, () => {
     let model = new PowerMenuModel()
     model.recentItems$.value = getRecents()
     powerMenuScript(model)
-  }
-}
-new PowerMenuScript().exec()
+})
 ```
 
 **Model Structure:**
@@ -635,7 +625,7 @@ export const currentTab = settings.observable('currentTab', 0)  // Key, default 
 ## 📦 Dependencies
 
 **Always Available (via @dsf/*):**
-- `core/` - action-decorator, base-script, custom-action, global
+- `core/` - action, action-decorator, base-script, custom-action, global
 - `helpers/` - 20+ domain-specific helpers
 - `dialog/` - BasicDialog, builders
 - `lib/` - Observable, TreeNode, Settings, Dictionary, GUID, etc.

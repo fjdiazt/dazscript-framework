@@ -1,6 +1,6 @@
 # DazScript Framework
 
-> ⚠️ **EARLY VERSION** — This framework is in active development (v0.1.15). The API is not yet stable and may change between releases. Not recommended for production use until v1.0 is released.
+> ⚠️ This framework is under active development. The API may still evolve between releases. If you need a stable long-term surface, wait for `v1.0`.
 
 The **DazScript Framework** is a TypeScript-based framework for writing Daz Studio scripts. It provides all the advantages of a typed language such as autocompletion, error checking, and method parameter documentation and hinting. The framework also includes a set of dialog helpers for rapid UI development.
 
@@ -46,7 +46,7 @@ You can customize the generated defaults:
 npx dazscript init --menu-path /MyScripts --scripts-path ./src --out-dir ./out
 ```
 
-- `--menu-path` sets which Daz Studio menu the scripts are added to by default. See [The `@action` Decorator](#the-action-decorator) for how a script can override that with `menuPath`.
+- `--menu-path` sets which Daz Studio menu the scripts are added to by default. See [The `action(...)` Entrypoint](#the-action-entrypoint) for how a script can override that with `menuPath`.
 - `--scripts-path` tells the installer generator where to scan for runnable `.dsa.ts` entry files.
 - `--out-dir` sets the webpack build output directory for generated `.dsa` files and copied icons.
 
@@ -60,42 +60,45 @@ Create a simple script that logs to the console:
 
 ```typescript
 import { debug } from '@dsf/common/log';
-import { action } from '@dsf/core/action-decorator';
-import { BaseScript } from '@dsf/core/base-script';
+import { action } from '@dsf/core/action';
 import { info } from '@dsf/helpers/message-box-helper';
 
-@action({ text: 'Hello World' })
-class HelloWorldScript extends BaseScript {
-    protected run(): void {
-        debug('Hello World!');
-        info('Hello World!');
-    }
-}
-
-new HelloWorldScript().exec();
+action({ text: 'Hello World' }, () => {
+    debug('Hello World!');
+    info('Hello World!');
+});
 ```
 
-### The `@action` Decorator
+### The `action(...)` Entrypoint
 
-Use `@action(...)` on a script class to register how it should appear in Daz Studio.
+Use `action(...)` at module scope to define how a runnable `.dsa.ts` file should appear in Daz Studio and what it should execute.
 
 ```typescript
-@action({
+action({
   text: 'Hello World',
   menuPath: '#{defaultMenuPath}/Examples',
   shortcut: 'CTRL+SHIFT+H',
   toolbar: 'MyToolbar',
   group: 'Examples',
   description: 'Runs the Hello World script',
-})
-class HelloWorldScript extends BaseScript {
-    protected run(): void {
+}, () => {
+    info('Hello World!');
+});
+```
+
+`action(...)` also accepts a reusable class with a `run()` method:
+
+```typescript
+class HelloWorldScript {
+    run(): void {
         info('Hello World!');
     }
 }
+
+action({ text: 'Hello World' }, HelloWorldScript);
 ```
 
-Common `@action(...)` parameters:
+Common `action(...)` parameters:
 
 - `text`: the label shown for the script in Daz Studio.
 - `menuPath`: the menu path where the script should be added. Set it to `false` to skip adding the script to a menu. If omitted, the default menu from `--menu-path` is used.
@@ -153,14 +156,11 @@ export class MyDialog extends BasicDialog {
 #### 3. Connect & Use in Your Script
 
 ```typescript
-import { action } from '@dsf/core/action-decorator';
-import { BaseScript } from '@dsf/core/base-script';
+import { action } from '@dsf/core/action';
 import { getSelectedNode } from '@dsf/helpers/scene-helper';
 import { MyDialog, MyDialogModel } from './my-dialog';
 
-@action({ text: 'My Dialog Script' })
-class MyDialogScript extends BaseScript {
-    protected run(): void {
+action({ text: 'My Dialog Script' }, () => {
         const model = new MyDialogModel();
         const selectedNode = getSelectedNode();
 
@@ -185,10 +185,7 @@ class MyDialogScript extends BaseScript {
         } else {
             console.log('Dialog cancelled');
         }
-    }
-}
-
-new MyDialogScript().exec();
+});
 ```
 
 ### Core Concepts
@@ -325,15 +322,15 @@ This project uses **semantic-release** for automatic versioning and npm publishi
 
 Use conventional commit messages to control version bumping:
 
-- **`fix: description`** → Patch version bump (0.1.15 → 0.1.16)
+- **`fix: description`** → Patch version bump (`x.y.z` → `x.y.(z+1)`)
   - Bug fixes, patches, or minor improvements
   - Example: `fix: resolve dialog builder layout issue`
 
-- **`feat: description`** → Minor version bump (0.1.15 → 0.2.0)
+- **`feat: description`** → Minor version bump (`x.y.z` → `x.(y+1).0`)
   - New features or significant enhancements
   - Example: `feat: add tree view builder component`
 
-- **`BREAKING CHANGE: description`** → Major version bump (0.1.15 → 1.0.0)
+- **`BREAKING CHANGE: description`** → Major version bump (`x.y.z` → `(x+1).0.0`)
   - Add to commit body for breaking changes
   - Example: `feat: refactor action decorator API\n\nBREAKING CHANGE: action() now requires explicit menu path`
 

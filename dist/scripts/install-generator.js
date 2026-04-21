@@ -1,9 +1,9 @@
-const tsFileParser = require('ts-file-parser');
+const ts = require('typescript');
 const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
 
-const nameofActionDecorator = 'action';
+const nameofActionFunction = 'action';
 
 function getPartialPath(filePath) {
   const fileInfo = path.parse(filePath);
@@ -35,95 +35,192 @@ uninstall(${data});
 `;
 }
 
+function literalValue(node) {
+  if (!node) {
+    return undefined;
+  }
+
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
+    return node.text;
+  }
+
+  if (node.kind === ts.SyntaxKind.TrueKeyword) {
+    return true;
+  }
+
+  if (node.kind === ts.SyntaxKind.FalseKeyword) {
+    return false;
+  }
+
+  if (ts.isNumericLiteral(node)) {
+    return Number(node.text);
+  }
+
+  if (ts.isPrefixUnaryExpression(node) && ts.isNumericLiteral(node.operand)) {
+    if (node.operator === ts.SyntaxKind.MinusToken) {
+      return -Number(node.operand.text);
+    }
+
+    if (node.operator === ts.SyntaxKind.PlusToken) {
+      return Number(node.operand.text);
+    }
+  }
+
+  return undefined;
+}
+
+function objectLiteralToObject(node) {
+  if (!node || !ts.isObjectLiteralExpression(node)) {
+    return null;
+  }
+
+  const result = {};
+
+  node.properties.forEach((property) => {
+    if (!ts.isPropertyAssignment(property)) {
+      return;
+    }
+
+    const name = ts.isIdentifier(property.name)
+      ? property.name.text
+      : ts.isStringLiteral(property.name)
+        ? property.name.text
+        : null;
+
+    if (!name) {
+      return;
+    }
+
+    const value = literalValue(property.initializer);
+    if (value !== undefined) {
+      result[name] = value;
+    }
+  });
+
+  return result;
+}
+
+function getCallName(expression) {
+  if (ts.isIdentifier(expression)) {
+    return expression.text;
+  }
+
+  if (ts.isPropertyAccessExpression(expression)) {
+    return expression.name.text;
+  }
+
+  return null;
+}
+
+function findTopLevelActionCall(content, filePath) {
+  const sourceFile = ts.createSourceFile(
+    filePath,
+    content,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+
+  for (const statement of sourceFile.statements) {
+    if (!ts.isExpressionStatement(statement)) {
+      continue;
+    }
+
+    const expression = statement.expression;
+    if (!ts.isCallExpression(expression)) {
+      continue;
+    }
+
+    if (getCallName(expression.expression) !== nameofActionFunction) {
+      continue;
+    }
+
+    return expression;
+  }
+
+  return null;
+}
+
 function processScript(filePath, container, defaultMenuPath) {
   const fileInfo = path.parse(filePath);
   const content = fs.readFileSync(filePath, 'utf-8').toString();
-  const json = tsFileParser.parseStruct(content, {}, filePath);
+  const actionCall = findTopLevelActionCall(content, filePath);
 
-  json.classes.forEach((cls) => {
-    const actionDecorator = cls.decorators.find(
-      (d) => d.name === nameofActionDecorator
+  if (!actionCall) {
+    return;
+  }
+
+  const decorator = objectLiteralToObject(actionCall.arguments[0]) ?? {};
+
+  const script = {
+    name: null,
+    text: fileInfo.name.replace('.dsa', ''),
+    filePath:
+      decorator.bundle === undefined
+        ? getPartialPath(filePath)
+        : fileInfo.name.replace('.ts', ''),
+    menuPath: (() => {
+      const relativeDir = path.parse(getPartialPath(filePath)).dir;
+      return relativeDir && relativeDir !== '.'
+        ? `${defaultMenuPath}${relativeDir}`
+        : defaultMenuPath.replace(/\/$/, '');
+    })(),
+    description: fileInfo.name.replace('.dsa', ''),
+    group: stringOrDefault(decorator.group, undefined),
+    shortcut: stringOrDefault(decorator.shortcut),
+    toolbar: stringOrDefault(decorator.toolbar, undefined),
+  };
+
+  const icon = filePath.replace('.ts', '.png');
+  if (fs.existsSync(icon)) {
+    script.icon =
+      decorator.bundle === undefined
+        ? `${getPartialPath(filePath)}.png`
+        : fileInfo.name.replace('.dsa', '.dsa.png');
+  }
+
+  script.text = stringOrDefault(decorator.text, script.text);
+  if (typeof decorator.menuPath === 'boolean') {
+    script.menuPath = decorator.menuPath === true ? script.menuPath : '';
+  } else {
+    script.menuPath = stringOrDefault(decorator.menuPath, script.menuPath);
+  }
+  script.menuPath = script.menuPath.replace(
+    '#{defaultMenuPath}',
+    defaultMenuPath
+  );
+  script.shortcut = decorator.shortcut;
+
+  console.log(`Adding script: ${script.text}`, script);
+  container.scripts.push(script);
+
+  if (decorator.bundle !== undefined) {
+    let packageInstallerFilePath = `Install.dsa.ts`;
+    let packageUninstallerFilePath = `Uninstall.dsa.ts`;
+
+    if (decorator.bundle !== true) {
+      packageInstallerFilePath = `Install ${decorator.bundle}.dsa.ts`;
+      packageUninstallerFilePath = `Uninstall ${decorator.bundle}.dsa.ts`;
+    }
+
+    let bundleScriptContent = generateInstallerTemplate(
+      JSON.stringify(container.scripts, null, 4)
     );
+    let bundleScriptFilePath = path.join(
+      path.parse(filePath).dir,
+      packageInstallerFilePath
+    );
+    fs.writeFileSync(bundleScriptFilePath, bundleScriptContent);
 
-    if (!actionDecorator) return;
-
-    const decorator = actionDecorator.arguments[0] ?? {};
-
-    const script = {
-      name: null,
-      text: fileInfo.name.replace('.dsa', ''),
-      filePath:
-        decorator.bundle === undefined
-          ? getPartialPath(filePath)
-          : fileInfo.name.replace('.ts', ''),
-      menuPath: (() => {
-        const relativeDir = path.parse(getPartialPath(filePath)).dir;
-        return relativeDir && relativeDir !== '.'
-          ? `${defaultMenuPath}${relativeDir}`
-          : defaultMenuPath.replace(/\/$/, '');
-      })(),
-      description: fileInfo.name.replace('.dsa', ''),
-      group: stringOrDefault(decorator.group, undefined),
-      shortcut: stringOrDefault(decorator.shortcut),
-      toolbar: stringOrDefault(decorator.toolbar, undefined),
-    };
-
-    const icon = filePath.replace('.ts', '.png');
-    if (fs.existsSync(icon)) {
-      script.icon =
-        decorator.bundle === undefined
-          ? `${getPartialPath(filePath)}.png`
-          : fileInfo.name.replace('.dsa', '.dsa.png');
-    }
-
-    if (actionDecorator) {
-      script.text = stringOrDefault(decorator.text, script.text);
-      if (typeof decorator.menuPath === 'boolean') {
-        script.menuPath = decorator.menuPath === true ? script.menuPath : '';
-      } else {
-        script.menuPath = stringOrDefault(decorator.menuPath, script.menuPath);
-      }
-      script.menuPath = script.menuPath.replace(
-        '#{defaultMenuPath}',
-        defaultMenuPath
-      );
-      script.shortcut = decorator.shortcut;
-    }
-
-    console.log(`Adding script: ${script.text}`, script);
-    container.scripts.push(script);
-
-    // Check if the decorator has a "bundle" property
-    if (decorator.bundle !== undefined) {
-      let packageInstallerFilePath = `Install.dsa.ts`;
-      let packageUninstallerFilePath = `Uninstall.dsa.ts`;
-
-      if (decorator.bundle !== true) {
-        // If decorator.bundle is a string, use it as the bundle file name
-        packageInstallerFilePath = `Install ${decorator.bundle}.dsa.ts`;
-        packageUninstallerFilePath = `Uninstall ${decorator.bundle}.dsa.ts`;
-      }
-
-      // Generate a separate file with the specified or default name
-      let bundleScriptContent = generateInstallerTemplate(
-        JSON.stringify(container.scripts, null, 4)
-      );
-      let bundleScriptFilePath = path.join(
-        path.parse(filePath).dir,
-        packageInstallerFilePath
-      );
-      fs.writeFileSync(bundleScriptFilePath, bundleScriptContent);
-
-      bundleScriptContent = generateUninstallerTemplate(
-        JSON.stringify(container.scripts, null, 4)
-      );
-      bundleScriptFilePath = path.join(
-        path.parse(filePath).dir,
-        packageUninstallerFilePath
-      );
-      fs.writeFileSync(bundleScriptFilePath, bundleScriptContent);
-    }
-  });
+    bundleScriptContent = generateUninstallerTemplate(
+      JSON.stringify(container.scripts, null, 4)
+    );
+    bundleScriptFilePath = path.join(
+      path.parse(filePath).dir,
+      packageUninstallerFilePath
+    );
+    fs.writeFileSync(bundleScriptFilePath, bundleScriptContent);
+  }
 }
 
 function processScripts(paths, container, defaultMenuPath) {

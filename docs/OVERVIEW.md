@@ -81,13 +81,10 @@ TypeScript Source (.dsa.ts)
 
 **Example Script:**
 ```typescript
-@action({ text: 'Delete Keyframes' })
-class DeleteKeyframesScript extends BaseScript {
-    run() {
+action({ text: 'Delete Keyframes' }, () => {
         const nodes = getSelectedNodes()
         // ... deletes keyframes for selected nodes
-    }
-}
+})
 ```
 
 **Shared Utilities:** Located in `src/shared/` (camera, config, globals, nodeProperties, nodeTags, scene)
@@ -119,15 +116,12 @@ class DeleteKeyframesScript extends BaseScript {
 
 **Example Usage:**
 ```typescript
-@action({ text: 'Paramate' })
-class ParamateScript extends BaseScript {
-    run() {
+action({ text: 'Paramate' }, () => {
         let figure = getSelectedFigure()
         let model = createModel(figure)
         let dialog = new Dialog(model)
         dialog.run()
-    }
-}
+})
 ```
 
 ---
@@ -155,14 +149,11 @@ class ParamateScript extends BaseScript {
 
 **Example Script:**
 ```typescript
-@action({ text: 'Power Menu', toolbar: 'Vholf3D_PowerMenu', shortcut: 'F24', menuPath: false })
-export class PowerMenuScript extends BaseScript {
-    protected run(): void {
+action({ text: 'Power Menu', toolbar: 'Vholf3D_PowerMenu', shortcut: 'F24', menuPath: false }, () => {
         let model = new PowerMenuModel()
         model.recentItems$.value = getRecents()
         // ...
-    }
-}
+})
 ```
 
 ---
@@ -183,8 +174,7 @@ All projects depend on the centralized framework package:
 
 ### Framework Imports (common patterns)
 ```typescript
-import { action } from '@dsf/core/action-decorator'
-import { BaseScript } from '@dsf/core/base-script'
+import { action } from '@dsf/core/action'
 import { getSelectedFigure } from '@dsf/helpers/scene-helper'
 import { confirm, info } from '@dsf/helpers/message-box-helper'
 // Many more helpers available...
@@ -199,7 +189,7 @@ import { confirm, info } from '@dsf/helpers/message-box-helper'
 Each project generates an `Install.dsa` script that:
 
 1. **Reads** all `*.dsa.ts` files from the project's `src/` directory
-2. **Extracts** @action decorators to determine menu placement and properties
+2. **Extracts** top-level `action(...)` metadata to determine menu placement and properties
 3. **Generates** dynamic installation that registers scripts with Daz Studio
 4. **Sets** menu paths, descriptions, icons, and toolbar placements
 
