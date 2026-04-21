@@ -21,76 +21,36 @@ The **DazScript Framework** is a TypeScript-based framework for writing Daz Stud
 To install the **DazScript Framework**, run the following command:
 
 ```bash
-npm install dazscript-framework
+npm install dazscript-framework dazscript-types
 ```
 
 ## Setup
 
-After installing the package, you will need to configure a few files for your project.
+After installing the package, scaffold the project files:
 
-1. **babel.config.js**
+```bash
+npx dazscript init
+```
 
-   Create the file and add the following content:
+This generates:
 
-   ```javascript
-   const sharedBabelConfig = require('dazscript-framework/babel');
+- `dazscript.config.ts`
+- `tsconfig.json`
+- `package.json` script wiring for `build`, `watch`, `icons`, and `installer`
 
-   module.exports = {
-     ...sharedBabelConfig,
-     presets: [...sharedBabelConfig.presets],
-     plugins: [...sharedBabelConfig.plugins],
-   };
-   ```
+The generated package scripts use the framework CLI directly, so consumer projects do not need their own webpack or Babel setup.
 
-2. **package.json**
+You can customize the generated defaults:
 
-   Add the following scripts to your package.json:
+```bash
+npx dazscript init --menu-path /MyScripts --scripts-path ./src --out-dir ./out
+```
 
-   ```json
-   "scripts": {
-       "prebuild": "npm run installer",
-       "build": "webpack --env outputPath=./out",
-       "postbuild": "npm run icons",
-       "watch": "webpack --env outputPath=./out --watch",
-       "icons": "copyfiles -u 1 src/**/*.png out/",
-       "installer": "node ./node_modules/dazscript-framework/dist/scripts/install-generator.js -p ./src/scripts -m /MyScripts"
-   }
-   ```
+- `--menu-path` sets which Daz Studio menu the scripts are added to by default. See [The `@action` Decorator](#the-action-decorator) for how a script can override that with `menuPath`.
+- `--scripts-path` tells the installer generator where to scan for runnable `.dsa.ts` entry files.
+- `--out-dir` sets the webpack build output directory for generated `.dsa` files and copied icons.
 
-3. **tsconfig.json**
-
-   Create the file and add the following content:
-
-   ```json
-   {
-     "extends": "./node_modules/dazscript-framework/tsconfig.json",
-     "compilerOptions": {
-       "baseUrl": "./",
-       "paths": {
-         "shared/*": ["src/shared/*"],
-         "@dst/*": ["node_modules/dazscript-types/*"],
-         "@dsf/*": ["node_modules/dazscript-framework/src/*"]
-       }
-     },
-     "include": ["node_modules/dazscript-types/**/*", "src/**/*"]
-   }
-   ```
-
-4. **webpack.config.js**
-   Create the file and add the following content:
-
-   ```javascript
-   const sharedWebpackConfig = require('dazscript-framework/webpack');
-
-   module.exports = (env, argv) => {
-     const sharedConfig = sharedWebpackConfig(env, argv);
-
-     return {
-       ...sharedConfig,
-       // You can override or add more customizations here if needed
-     };
-   };
-   ```
+Use `--scripts-path ./src/scripts` for projects shaped like `scripts/common`, where runnable `.dsa.ts` files live under `src/scripts/`. Use `--scripts-path ./src` for packages shaped like `scripts/power-menu`, where runnable `.dsa.ts` files live at the source root.
 
 ## Usage
 
@@ -114,6 +74,36 @@ class HelloWorldScript extends BaseScript {
 
 new HelloWorldScript().exec();
 ```
+
+### The `@action` Decorator
+
+Use `@action(...)` on a script class to register how it should appear in Daz Studio.
+
+```typescript
+@action({
+  text: 'Hello World',
+  menuPath: '#{defaultMenuPath}/Examples',
+  shortcut: 'CTRL+SHIFT+H',
+  toolbar: 'MyToolbar',
+  group: 'Examples',
+  description: 'Runs the Hello World script',
+})
+class HelloWorldScript extends BaseScript {
+    protected run(): void {
+        info('Hello World!');
+    }
+}
+```
+
+Common `@action(...)` parameters:
+
+- `text`: the label shown for the script in Daz Studio.
+- `menuPath`: the menu path where the script should be added. Set it to `false` to skip adding the script to a menu. If omitted, the default menu from `--menu-path` is used.
+- `shortcut`: the keyboard shortcut for the action.
+- `toolbar`: the toolbar name used when the action should appear on a toolbar.
+- `group`: an optional grouping label used by Daz Studio for related actions.
+- `description`: a longer description for the action.
+- `bundle`: generates installer and uninstaller entries as a package bundle instead of a single action entry.
 
 ### Building UIs with Observables & Dialogs
 
@@ -318,8 +308,7 @@ my-daz-scripts/
 ├── out/                    # Generated .dsa files (build output)
 ├── package.json
 ├── tsconfig.json
-├── webpack.config.js
-└── babel.config.js
+└── dazscript.config.ts
 ```
 
 **Key points:**
