@@ -1,7 +1,7 @@
 module.exports = {
   presets: [
     [
-      '@babel/preset-env',
+      require.resolve('@babel/preset-env'),
       {
         targets: {
           esmodules: true,
@@ -10,16 +10,16 @@ module.exports = {
         include: ['@babel/plugin-transform-class-properties'],
       },
     ],
-    '@babel/preset-typescript',
+    require.resolve('@babel/preset-typescript'),
   ],
   plugins: [
-    '@babel/plugin-transform-class-properties',
-    'babel-plugin-transform-typescript-metadata',
-    ['@babel/plugin-proposal-decorators', { version: 'legacy' }],
-    ['@babel/plugin-transform-arrow-functions'],
-    '@babel/plugin-transform-block-scoping',
-    '@babel/plugin-proposal-class-properties',
-    '@babel/plugin-transform-private-property-in-object',
-    '@babel/plugin-transform-private-methods',
+    require.resolve('@babel/plugin-transform-class-properties'),
+    require.resolve('babel-plugin-transform-typescript-metadata'),
+    [require.resolve('@babel/plugin-proposal-decorators'), { version: 'legacy' }],
+    [require.resolve('@babel/plugin-transform-arrow-functions')],
+    require.resolve('@babel/plugin-transform-block-scoping'),
+    require.resolve('@babel/plugin-proposal-class-properties'),
+    require.resolve('@babel/plugin-transform-private-property-in-object'),
+    require.resolve('@babel/plugin-transform-private-methods'),
   ],
 };

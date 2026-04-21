@@ -3,24 +3,33 @@ const glob = require('glob');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 module.exports = (env, argv) => {
+  const projectRoot =
+    env && env.context ? path.resolve(env.context) : process.cwd();
+  const sourceRoot = path.resolve(projectRoot, 'src');
   const isFileSpecified = env && env.file;
   const entryFiles = isFileSpecified
-    ? [`./src/${env.file}.dsa.ts`]
-    : glob.sync('./src/**/*.dsa.ts');
+    ? [path.resolve(sourceRoot, `${env.file}.dsa.ts`)]
+    : glob
+        .sync(path.join(sourceRoot, '**/*.dsa.ts').replace(/\\/g, '/'))
+        .map((filePath) => path.resolve(filePath));
 
   const outputPath =
     env && env.outputPath
-      ? path.resolve(env.outputPath)
+      ? path.resolve(projectRoot, env.outputPath)
       : path.resolve(__dirname, 'out');
 
   return {
+    context: projectRoot,
     mode: 'production',
     optimization: {
       usedExports: true,
     },
     entry: entryFiles.reduce((acc, filePath) => {
-      const entry = filePath.replace('.dsa.ts', '').replace('src/', '');
-      acc[entry] = `./${filePath}`;
+      const entry = path
+        .relative(sourceRoot, filePath)
+        .replace(/\\/g, '/')
+        .replace('.dsa.ts', '');
+      acc[entry] = filePath;
       return acc;
     }, {}),
     module: {
@@ -30,6 +39,7 @@ module.exports = (env, argv) => {
           use: [
             {
               loader: 'babel-loader',
+              options: require('./babel.config.js'),
             },
             {
               loader: 'ts-loader',
@@ -40,7 +50,7 @@ module.exports = (env, argv) => {
           ],
           exclude: [
             {
-              and: [path.resolve(__dirname, 'node_modules')],
+              and: [path.resolve(projectRoot, 'node_modules')],
               not: [
                 path.resolve(__dirname, 'node_modules/dazscript-framework/src'),
               ],
@@ -51,7 +61,18 @@ module.exports = (env, argv) => {
     },
     resolve: {
       extensions: ['.ts'],
-      plugins: [new TsconfigPathsPlugin()],
+      plugins: [
+        new TsconfigPathsPlugin({
+          configFile: path.resolve(projectRoot, 'tsconfig.json'),
+        }),
+      ],
+    },
+    resolveLoader: {
+      modules: [
+        path.resolve(__dirname, 'node_modules'),
+        path.resolve(projectRoot, 'node_modules'),
+        'node_modules',
+      ],
     },
     output: {
       filename: '[name].dsa',

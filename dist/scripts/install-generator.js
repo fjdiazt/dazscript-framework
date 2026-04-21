@@ -2,36 +2,13 @@ const tsFileParser = require('ts-file-parser');
 const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
-const { program } = require('commander');
-
-program
-  .requiredOption(
-    '-p, --scriptsPath <path>',
-    'Specify the path to your scripts'
-  )
-  .option(
-    '-m, --defaultMenuPath [path]',
-    'Specify the default menu path',
-    'My Scripts'
-  )
-  .parse(process.argv);
-let options = program.opts();
 
 const nameofActionDecorator = 'action';
-
-const scriptsPath = options.scriptsPath.endsWith('/')
-  ? options.scriptsPath
-  : options.scriptsPath + '/';
-const defaultMenuPath = options.defaultMenuPath.endsWith('/')
-  ? options.defaultMenuPath
-  : options.defaultMenuPath + '/';
-
-const container = { scripts: [] };
 
 function getPartialPath(filePath) {
   const fileInfo = path.parse(filePath);
   const dir = fileInfo.dir.replace('/src', '').replace(/^\.\//, '');
-  return `${dir}/${fileInfo.name}`;
+  return dir ? `${dir}/${fileInfo.name}` : fileInfo.name;
 }
 
 function compareStrings(a, b) {
@@ -58,7 +35,7 @@ uninstall(${data});
 `;
 }
 
-function processScript(filePath) {
+function processScript(filePath, container, defaultMenuPath) {
   const fileInfo = path.parse(filePath);
   const content = fs.readFileSync(filePath, 'utf-8').toString();
   const json = tsFileParser.parseStruct(content, {}, filePath);
@@ -79,7 +56,12 @@ function processScript(filePath) {
         decorator.bundle === undefined
           ? getPartialPath(filePath)
           : fileInfo.name.replace('.ts', ''),
-      menuPath: `${defaultMenuPath}${path.parse(getPartialPath(filePath)).dir}`,
+      menuPath: (() => {
+        const relativeDir = path.parse(getPartialPath(filePath)).dir;
+        return relativeDir && relativeDir !== '.'
+          ? `${defaultMenuPath}${relativeDir}`
+          : defaultMenuPath.replace(/\/$/, '');
+      })(),
       description: fileInfo.name.replace('.dsa', ''),
       group: stringOrDefault(decorator.group, undefined),
       shortcut: stringOrDefault(decorator.shortcut),
@@ -144,42 +126,73 @@ function processScript(filePath) {
   });
 }
 
-function processScripts(paths) {
+function processScripts(paths, container, defaultMenuPath) {
   paths.forEach((filePath) => {
     console.log(`Processing ${filePath}`);
-    processScript(filePath);
+    processScript(filePath, container, defaultMenuPath);
   });
 }
 
-function generate() {
-  glob(`${scriptsPath}/**/*.dsa.ts`, function (err, paths) {
-    if (err) {
-      console.error('Error while globbing:', err);
-      return;
+function generateInstallerFiles(workdir, options) {
+  const scriptsPath = options.scriptsPath.endsWith('/')
+    ? options.scriptsPath
+    : `${options.scriptsPath}/`;
+  const defaultMenuPath = options.defaultMenuPath.endsWith('/')
+    ? options.defaultMenuPath
+    : `${options.defaultMenuPath}/`;
+  const container = { scripts: [] };
+  const matches = glob.sync(`${scriptsPath}/**/*.dsa.ts`, { cwd: workdir });
+
+  processScripts(matches, container, defaultMenuPath);
+
+  container.scripts = container.scripts.sort((a, b) => {
+    const aKey = a.menuPath + a.filePath;
+    const bKey = b.menuPath + b.filePath;
+    return compareStrings(aKey, bKey);
+  });
+
+  const installerScriptContent = generateInstallerTemplate(
+    JSON.stringify(container.scripts, null, 4)
+  );
+  fs.writeFileSync(path.join(workdir, 'src', 'Install.dsa.ts'), installerScriptContent);
+
+  const uninstallerScriptContent = generateUninstallerTemplate(
+    JSON.stringify(container.scripts, null, 4)
+  );
+  fs.writeFileSync(
+    path.join(workdir, 'src', 'Uninstall.dsa.ts'),
+    uninstallerScriptContent
+  );
+}
+
+if (require.main === module) {
+  const args = process.argv.slice(2);
+  const options = {
+    scriptsPath: './src',
+    defaultMenuPath: 'My Scripts',
+  };
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+
+    if (arg === '--scripts-path' || arg === '-p') {
+      options.scriptsPath = args[index + 1];
+      index += 1;
+      continue;
     }
 
-    processScripts(paths);
+    if (arg === '--menu-path' || arg === '--defaultMenuPath' || arg === '-m') {
+      options.defaultMenuPath = args[index + 1];
+      index += 1;
+      continue;
+    }
 
-    container.scripts = container.scripts.sort((a, b) => {
-      const aKey = a.menuPath + a.filePath;
-      const bKey = b.menuPath + b.filePath;
-      return compareStrings(aKey, bKey);
-    });
+    throw new Error(`Unknown option: ${arg}`);
+  }
 
-    // Generate the InstallerScript class and call install function
-    const installerScriptContent = generateInstallerTemplate(
-      JSON.stringify(container.scripts, null, 4)
-    );
-    let outputFilePath = './src/Install.dsa.ts';
-    fs.writeFileSync(outputFilePath, installerScriptContent);
-
-    const uninstallerScriptContent = generateUninstallerTemplate(
-      JSON.stringify(container.scripts, null, 4)
-    );
-    outputFilePath = './src/Uninstall.dsa.ts';
-    fs.writeFileSync(outputFilePath, uninstallerScriptContent);
-  });
+  generateInstallerFiles(process.cwd(), options);
 }
 
-// Call the generate function at the end of the script
-generate();
+module.exports = {
+  generateInstallerFiles,
+};
