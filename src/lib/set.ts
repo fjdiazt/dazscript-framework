@@ -37,6 +37,14 @@ export default class CustomSet<T> {
     }
 
     values(): T[] {
-        return Object.values(this.items);
+        let values: T[] = [];
+
+        for (const key in this.items) {
+            if (this.items.hasOwnProperty(key)) {
+                values.push(this.items[key]);
+            }
+        }
+
+        return values;
     }
 }

@@ -71,13 +71,19 @@ export class AppSettings {
         this.appSettings.setStringValue(String(name), value.join(','))
     }
 
-    // protected getJson<T>(name: keyof this, defaultValue: T): T {
-    //     return JSON.parse(this.getString(name, JSON.stringify(defaultValue)))
-    // }
+    protected getJson<T>(name: keyof this, defaultValue: T): T {
+        const raw = this.getString(name, JSON.stringify(defaultValue))
+        if (!raw) return defaultValue
+        try {
+            return JSON.parse(raw) as T
+        } catch (_error) {
+            return defaultValue
+        }
+    }
 
-    // protected setJson<T>(name: keyof this, value: T): void {
-    //     this.setString(name, JSON.stringify(value))
-    // }
+    protected setJson<T>(name: keyof this, value: T): void {
+        this.setString(name, JSON.stringify(value))
+    }
 
 
     bindBoolean(name: keyof this, defaultValue: boolean = false): Observable<boolean> {
@@ -100,7 +106,7 @@ export class AppSettings {
         return new Observable(this.getArray(name, defaultValue), (value) => this.setArray(name, value))
     }
 
-    // bindJson<T>(name: keyof this, defaultValue: T): Observable<T> {
-    //     return new Observable(this.getJson(name, defaultValue), (value) => this.setJson(name, value))
-    // }
+    bindJson<T>(name: keyof this, defaultValue: T): Observable<T> {
+        return new Observable(this.getJson(name, defaultValue), (value) => this.setJson(name, value))
+    }
 }

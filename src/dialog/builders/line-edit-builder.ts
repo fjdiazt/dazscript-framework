@@ -12,6 +12,11 @@ export default class LineEditBuilder extends WidgetBuilderBase<DzLineEdit> {
         super(createWidget(context).build(DzLineEdit))
     }
 
+    password(): this {
+        this.widget.echoMode = (DzLineEdit as any).Password ?? 2
+        return this
+    }
+
     placeholder(text: string): this {
         this.widget.placeholderText = text
         return this

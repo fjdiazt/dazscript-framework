@@ -489,6 +489,18 @@ import {
    export const applyPreset = (figure, node, preset) => { /* ... */ }
    ```
 
+9. **Use specific DialogBuilder helpers for widgets**
+   ```typescript
+   // ✅ Good
+   add.button('Run').build()
+   add.checkbox('Enabled').build()
+   add.edit().build()
+   ```
+
+   Do not use `add.widget(...)` when a specific helper already exists.
+   `add.widget(...)` is only acceptable when the widget has no builder helper yet.
+   If a needed widget does not have a specific helper, stop and report that gap instead of bypassing it with `add.widget(...)`.
+
 ### ❌ DON'T:
 
 1. **Don't use console.log() - use log() helper**
@@ -535,7 +547,20 @@ import {
    selectedItem$: Observable<Item>
    ```
 
-5. **Don't Use Complex Logic in build() Methods**
+5. **Don't use `add.widget(...)` for standard widgets**
+   ```typescript
+   // ❌ Bad
+   add.widget(DzPushButton, (widget) => {
+     widget.text = 'Run'
+   })
+
+   // ✅ Good
+   add.button('Run').build()
+   ```
+
+   If the widget has no dedicated builder helper, stop and call that out instead of introducing new raw `add.widget(...)` usage.
+
+6. **Don't Use Complex Logic in build() Methods**
    ```typescript
    // ❌ Bad
    build() {
@@ -556,6 +581,15 @@ import {
    ```typescript
    const response = prompt('Title', 'Message')
    if (response.cancel) return  // User cancelled
+   ```
+
+7. **Prefer spread syntax over `Array.from()` for iterable-to-array conversion**
+   ```typescript
+   // ❌ Bad
+   const items = Array.from(actions)
+
+   // ✅ Good
+   const items = [...actions]
    ```
 
 ---

@@ -34,6 +34,16 @@ export class ListViewBuilder<TItem, TData> implements IWidgetBuilder<DzListView>
         return this
     }
 
+    height(value: number): this {
+        this.context.height = value
+        return this
+    }
+
+    minHeight(value: number): this {
+        this.context.minHeight = value
+        return this
+    }
+
     /**
      * Binds the list rows to a collection of items
      * @param items
@@ -54,11 +64,17 @@ export class ListViewBuilder<TItem, TData> implements IWidgetBuilder<DzListView>
         return this
     }
 
-    sorting(sort: boolean | number): this {
+    sorting(sort: boolean | number, order: 'asc' | 'desc' = 'asc'): this {
         if (typeof sort === 'boolean')
             this.context.sorting = sort ? 0 : -1
         else
             this.context.sorting = sort
+        this.context.sortAscending = order === 'asc'
+        return this
+    }
+
+    sortOnBuild(onOff: boolean = true): this {
+        this.context.sortOnBuild = onOff
         return this
     }
 
@@ -102,11 +118,13 @@ export class ListViewBuilder<TItem, TData> implements IWidgetBuilder<DzListView>
 
 class ListViewBuilderContext<TItem, TData> {
     columns: Observable<string[]> = new Observable([])
-    columnsWidth: (index: number, width: number) => number
+    columnsWidth?: (index: number, width: number, listView: any) => number
     items: Observable<TreeNode<TItem>[]> = new Observable([])
     text: (item: TreeNode<TItem>) => string[]
     data: (item: TreeNode<TItem>) => TData
     sorting: number = 0
+    sortAscending: boolean = true
+    sortOnBuild: boolean = true
     selected: Observable<TData>
     filter: ListViewFilterOptions
     doubleClicked: Observable<TData>
@@ -115,6 +133,8 @@ class ListViewBuilderContext<TItem, TData> {
     refreshWhen: Observable<void>
     expanded: Observable<boolean>
     visible: Observable<boolean> = new Observable(true)
+    height: number | null = null
+    minHeight: number | null = null
     decorated: boolean
     flat: Observable<boolean>
     refreshWhat: ListViewRefreshOptions = ListViewRefreshOptions.All
@@ -129,7 +149,7 @@ class ListViewBindBuilder<TItem, TData> {
     * @param columns
     * @returns
     */
-    columns(columns: string[] | Observable<string[]>, width?: (index: number, width: number) => number): this {
+    columns(columns: string[] | Observable<string[]>, width?: (index: number, width: number, listView: any) => number): this {
         this.context.columns = columns instanceof Observable
             ? columns
             : new Observable(columns)
@@ -195,6 +215,14 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
         })
     }
 
+    if (context.height !== null) {
+        listView.height = context.height
+    }
+
+    if (context.minHeight !== null) {
+        listView.minHeight = context.minHeight
+    }
+
     const buildColumns = (columns: string[]) => {
         clearColumns(listView)
         columns.forEach(column => {
@@ -210,12 +238,12 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
         if (!listItem) return
 
         listItem.open = context.expanded?.value === true
+        let data = context.data ? context.data(item) : item.value
+        if (data != null) {
+            setDataItem(listItem, data)
+        }
 
         context.text(item).forEach((text, idx) => {
-            let data = context.data?.(item)
-            if (data) {
-                setDataItem(listItem, data)
-            }
             if (!text || idx >= context.columns.value.length)
                 return;
             listItem.setText(idx, text)
@@ -230,9 +258,11 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
     const filterList = (keywords?: string) => {
         filter(listView, context.filter.field, keywords ?? context.filter?.keywords?.value, { selectOnFilter: context.filter.selectOnFilter ?? true, filters: context.filter.filters })
     }
+    let delayedFilter: Delayed | null = null
 
     const buildList = (items: TreeNode<TItem>[], selectedId?: number) => {
         rowId = -1
+        context.decorated = false
         if (!context.text)
             return warn('No text function provided for list builder')
 
@@ -253,13 +283,12 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
 
         if (context.columnsWidth) {
             context.columns?.value.forEach((_, index) => {
-                listView.setColumnWidth(index, context.columnsWidth(index, listView.columnWidth(index)))
+                listView.setColumnWidth(index, context.columnsWidth!(index, listView.columnWidth(index), listView))
             })
         }
 
         listView.rootIsDecorated = context.decorated
-        listView.setSorting(context.sorting)
-        if (context.sorting >= 0) listView.sort()
+        if (context.sorting >= 0 && context.sortOnBuild) listView.sort()
 
         if (context.filter?.keywords.value || context.filter?.filters)
             filterList()
@@ -275,6 +304,41 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
         }
     }
 
+    const updateList = (items: TreeNode<TItem>[]) => {
+        if (!context.text) return
+        if (!items) return
+
+        const existingByPath: Record<string, DzListViewItem> = {}
+        listView.getItems(DzListView.All).forEach((li) => {
+            const data = getDataItem<any>(li)
+            const path = data?.id ?? String(li.id)
+            existingByPath[path] = li
+        })
+
+        const incomingPaths: Record<string, boolean> = {}
+        items.forEach((item) => {
+            incomingPaths[item.path] = true
+            const existing = existingByPath[item.path]
+            if (existing) {
+                context.text(item).forEach((text, idx) => {
+                    existing.setText(idx, text ?? '')
+                })
+                const data = context.data?.(item)
+                if (data) setDataItem(existing, data)
+            } else {
+                buildItem(item, listView)
+            }
+        })
+
+        listView.getItems(DzListView.All).forEach((li) => {
+            const data = getDataItem<any>(li)
+            const path = data?.id ?? String(li.id)
+            if (!incomingPaths[path]) listView.deleteItem(li)
+        })
+
+        listView.sort()
+    }
+
     const onSelectionChanged = (callback: (item: DzListViewItem, data: TData) => void) => {
         (listView as any)["selectionChanged()"].scriptConnect(() => {
             callback(listView.selectedItem(), getDataItem(listView.selectedItem()))
@@ -286,9 +350,10 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
         buildColumns(columns)
     })
 
+    listView.setSorting(context.sorting, context.sortAscending)
     buildList(context.items?.value)
     context.items.connect((items) => {
-        buildList(items, listView.selectedItem()?.id)
+        updateList(items)
     })
 
     context.refreshWhen?.connect(() => {
@@ -308,9 +373,12 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
 
     if (context.filter) {
         context.filter.keywords.connect((keywords) => {
-            new Delayed(() => {
-                filterList(keywords)
-            }, context.filter.delay?.min ?? 100, context.filter.delay?.max ?? 400).trigger()
+            if (!delayedFilter) {
+                delayedFilter = new Delayed(() => {
+                    filterList(context.filter?.keywords?.value)
+                }, context.filter.delay?.min ?? 100, context.filter.delay?.max ?? 400)
+            }
+            delayedFilter.trigger()
         })
     }
 

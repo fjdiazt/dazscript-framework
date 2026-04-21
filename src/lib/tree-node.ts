@@ -51,18 +51,22 @@ export class TreeNode<T = null> {
         }
     }
 
-    values(): (T | null)[] {
-        let result: (T | null)[] = [];
+    values(): T[] {
+        let result: T[] = [];
 
-        // Add the current node's value to the result
-        result.push(this.value);
+        const collect = (node: TreeNode<T>) => {
+            if (node.value !== null) {
+                result.push(node.value);
+            }
 
-        // Recursively add values from children
-        for (const child of this.children) {
-            result = result.concat(child.values());
+            for (const child of node.children) {
+                collect(child);
+            }
         }
 
-        return result.filter(value => value !== null) as (T | null)[];
+        collect(this)
+
+        return result;
     }
 
     toJSON(): object {

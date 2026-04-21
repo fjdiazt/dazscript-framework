@@ -1,5 +1,7 @@
 import { contains } from './string-helper'
 
+let filterRunId = 0
+
 export const clearColumns = (listView: DzListView) => {
     for (let i = 0; i < listView.columns; i++) {
         listView.removeColumn(i)
@@ -15,12 +17,18 @@ export const getDataItem = <T>(listItem: DzListViewItem): T | null => {
 }
 
 export const filter = (listView: DzListView, filterOn: (viewItem: DzListViewItem) => string, keywords: string, options?: { selectOnFilter?: boolean, filters?: (viewItem: DzListViewItem) => boolean }) => {
+    filterRunId++
+    const currentRunId = filterRunId
+    const visitKey = '__dsfFilterVisitId'
+
     listView.clearSelection()
+    const normalizedKeywords = keywords?.toLowerCase() ?? ''
+    const words = normalizedKeywords.split(" ")
+
     listView.getItems(DzListView.All).forEach(item => item.visible = true)
 
     const matchFilter = (text: string): boolean => {
         text = text.toLowerCase()
-        var words = keywords?.toLowerCase().split(" ") ?? []
 
         return !keywords || keywords.trim() == "" ||
             words.every(w => {
@@ -35,7 +43,7 @@ export const filter = (listView: DzListView, filterOn: (viewItem: DzListViewItem
         let filtersMatch = !options?.filters || options.filters?.(viewItem) === true
         viewItem.visible = keywordMatch && filtersMatch
 
-        if (options?.selectOnFilter === true && viewItem.visible && !listView.selectedItem()) {
+        if (options?.selectOnFilter === true && viewItem.visible && viewItem.childCount() === 0 && !listView.selectedItem()) {
             listView.setSelected(viewItem, true)
             listView.ensureItemVisible(viewItem)
         }
@@ -44,6 +52,11 @@ export const filter = (listView: DzListView, filterOn: (viewItem: DzListViewItem
     }
 
     const filterListViewItem = (viewItem: DzListViewItem): boolean => {
+        if ((viewItem as any)[visitKey] === currentRunId) {
+            return viewItem.visible
+        }
+        ; (viewItem as any)[visitKey] = currentRunId
+
         var visible = false;
 
         if (viewItem.childCount() > 0) {
@@ -54,7 +67,10 @@ export const filter = (listView: DzListView, filterOn: (viewItem: DzListViewItem
             }
         }
 
-        viewItem.visible = visible || setListViewItemVisibility(viewItem);
+        const selfVisible = setListViewItemVisibility(viewItem)
+        viewItem.visible = viewItem.childCount() > 0
+            ? visible
+            : selfVisible
         return viewItem.visible;
     }
 
