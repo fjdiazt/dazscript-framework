@@ -140,6 +140,8 @@ Generated installers register the launcher path, so menu placement, toolbars, sh
 
 If the local `lib/` implementation is missing, the launcher falls back to the configured `appDataPath`. Builds now require this value and validate it as a unique `Author/Product` style path.
 
+Generated `Install.dsa.ts` and `Uninstall.dsa.ts` scripts now open a searchable selection dialog instead of applying every action blindly. The installer shows all generated actions, the uninstaller shows only currently installed ones, and each row lets you choose menu and toolbar targets independently when that action supports them. The dialog initializes from the current Daz Studio install state and stores the latest applied choices in `DzSettings` under your project's installer settings path.
+
 ### Building UIs with Observables & Dialogs
 
 The framework uses a **Model-View pattern** with reactive data bindings:

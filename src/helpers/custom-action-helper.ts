@@ -2,52 +2,193 @@ import { debug } from '@dsf/common/log'
 import { CustomAction } from '@dsf/core/custom-action'
 import { mainWindow } from '@dsf/core/global'
 import * as array from '@dsf/helpers/array-helper'
-import { getMenu } from './menu-helper'
-import { keys } from './object-helper'
-import { progress } from './progress-helper'
+import { keys } from '@dsf/helpers/object-helper'
+import { progress } from '@dsf/helpers/progress-helper'
 import { getScriptPath } from './script-helper'
+import { getMenu } from './menu-helper'
 
 const actionMgr = mainWindow.getActionMgr()
 const paneMgr = mainWindow.getPaneMgr()
 
-export const findByFilePath = (action: CustomAction, filePath: string): CustomAction | null => {
-    var actionsCount = actionMgr.getNumCustomActions()
-    for (var i = 0; i < actionsCount; i++) {
-        var actionFilePath = actionMgr.getCustomActionFile(i)
+const normalizePath = (value: string | null | undefined): string => {
+    if (!value) return ''
 
-        if (actionFilePath != filePath) continue
+    return String(value)
+        .replace(/\\/g, '/')
+        .replace(/\/+/g, '/')
+        .replace(/\/$/, '')
+        .toLowerCase()
+}
 
-        var name = actionMgr.getCustomActionName(i)
-        var text = actionMgr.getCustomActionText(i)
-        var desc = actionMgr.getCustomActionDesc(i)
-        var icon = actionMgr.getCustomActionIcon(i)
+const getFileName = (value: string | null | undefined): string => {
+    const normalized = normalizePath(value)
+    if (!normalized) return ''
+    const parts = normalized.split('/')
+    return parts[parts.length - 1] ?? ''
+}
 
-        return {
+const getTrailingPathSegments = (value: string | null | undefined, segmentCount: number): string => {
+    const normalized = normalizePath(value)
+    if (!normalized) return ''
+
+    const segments = normalized.split('/').filter(Boolean)
+    if (segments.length === 0) return ''
+
+    return segments.slice(Math.max(segments.length - segmentCount, 0)).join('/')
+}
+
+const getStablePathSuffixes = (action: CustomAction, filePath: string): string[] => {
+    const suffixes: string[] = []
+    const seen: Record<string, true> = {}
+
+    const addSuffixes = (value: string | null | undefined) => {
+        const normalized = normalizePath(value)
+        if (!normalized) return
+
+        const segments = normalized.split('/').filter(Boolean)
+        for (let segmentCount = segments.length; segmentCount >= 1; segmentCount -= 1) {
+            const suffix = segments.slice(segments.length - segmentCount).join('/')
+            if (!suffix || seen[suffix]) continue
+            seen[suffix] = true
+            suffixes.push(suffix)
+        }
+    }
+
+    addSuffixes(filePath)
+    addSuffixes(action.filePath)
+    return suffixes
+}
+
+const pathEndsWithSegments = (filePath: string | null | undefined, trailingSegments: string): boolean => {
+    const normalized = normalizePath(filePath)
+    if (!normalized || !trailingSegments) return false
+    return normalized === trailingSegments || normalized.endsWith(`/${trailingSegments}`)
+}
+
+export type CustomActionInstallState = {
+    action: CustomAction
+    customAction: CustomAction | null
+    installedMenu: boolean
+    installedToolbar: boolean
+}
+
+export type CustomActionTargets = {
+    menu: boolean
+    toolbar: boolean
+}
+
+type CustomActionCandidate = {
+    name: string
+    text: string
+    description: string
+    filePath: string
+    icon: string
+}
+
+const cloneAction = (action: CustomAction): CustomAction => ({
+    ...action,
+})
+
+const resolveActionPaths = (action: CustomAction, scriptsPath: string = getScriptPath()): CustomAction => ({
+    ...action,
+    filePath: `${scriptsPath}/${action.filePath}`,
+    icon: action.icon ? `${scriptsPath}/${action.icon}` : ''
+})
+
+const getCustomActionCandidates = (action: CustomAction): CustomActionCandidate[] => {
+    const candidates: CustomActionCandidate[] = []
+    const actionsCount = actionMgr.getNumCustomActions()
+
+    for (let i = 0; i < actionsCount; i++) {
+        const actionFilePath = actionMgr.getCustomActionFile(i)
+        const name = actionMgr.getCustomActionName(i)
+        const text = actionMgr.getCustomActionText(i)
+        const desc = actionMgr.getCustomActionDesc(i)
+        const icon = actionMgr.getCustomActionIcon(i)
+
+        candidates.push({
             name: name.toString(),
             text: text.toString(),
             description: desc.toString(),
             filePath: actionFilePath.toString(),
-            icon: icon.toString(),
-            menuPath: action.menuPath,
-            group: action.group,
-            shortcut: action.shortcut,
-            sort: action.sort,
-            toolbar: action.toolbar
-        } as CustomAction
+            icon: icon.toString()
+        })
     }
 
-    return null
+    return candidates
+}
+
+const toCustomAction = (candidate: CustomActionCandidate, action: CustomAction): CustomAction => ({
+    name: candidate.name,
+    text: candidate.text,
+    description: candidate.description,
+    filePath: candidate.filePath,
+    icon: candidate.icon,
+    menuPath: action.menuPath,
+    group: action.group,
+    shortcut: action.shortcut,
+    sort: action.sort,
+    toolbar: action.toolbar
+})
+
+const filterUniqueBy = (candidates: CustomActionCandidate[], predicate: (candidate: CustomActionCandidate) => boolean): CustomActionCandidate[] => {
+    const matches = candidates.filter(predicate)
+    return matches.length === 1 ? matches : []
+}
+
+const findByPathHeuristics = (action: CustomAction, filePath: string): CustomActionCandidate[] => {
+    const candidates = getCustomActionCandidates(action)
+    const normalizedTarget = normalizePath(filePath)
+
+    const exactMatches = filterUniqueBy(candidates, candidate => normalizePath(candidate.filePath) === normalizedTarget)
+    if (exactMatches.length > 0) return exactMatches
+
+    const stableSuffixes = getStablePathSuffixes(action, filePath)
+    for (const trailingSegments of stableSuffixes) {
+        if (!trailingSegments) continue
+
+        const suffixMatches = filterUniqueBy(candidates, candidate => pathEndsWithSegments(candidate.filePath, trailingSegments))
+        if (suffixMatches.length > 0) return suffixMatches
+    }
+
+    const expectedFileName = getFileName(filePath)
+    if (action.menuPath) {
+        const menuMatches = filterUniqueBy(candidates, candidate =>
+            getFileName(candidate.filePath) === expectedFileName &&
+            normalizePath(String(findMenuFor(candidate.name, actionMgr.getMenu())?.getPath() ?? '')) === normalizePath(action.menuPath)
+        )
+        if (menuMatches.length > 0) return menuMatches
+    }
+
+    if (action.toolbar) {
+        const toolbarMatches = filterUniqueBy(candidates, candidate =>
+            getFileName(candidate.filePath) === expectedFileName &&
+            isInstalledToToolbar(action.toolbar, candidate.name)
+        )
+        if (toolbarMatches.length > 0) return toolbarMatches
+    }
+
+    return []
+}
+
+export const findAllByFilePath = (action: CustomAction, filePath: string): CustomAction[] => {
+    return findByPathHeuristics(action, filePath).map(candidate => toCustomAction(candidate, action))
+}
+
+export const findByFilePath = (action: CustomAction, filePath: string): CustomAction | null => {
+    const matches = findAllByFilePath(action, filePath)
+    return matches.length > 0 ? matches[0] : null
 }
 
 export const findMenuFor = (actionName: string, topMenu?: DzActionMenu): DzActionMenu | null => {
     topMenu = topMenu ?? actionMgr.getMenu()
     if (!topMenu.hasItems()) return null
     for (let i = 0; i < topMenu.getNumItems(); i++) {
-        let item = topMenu.getItem(i)
+        const item = topMenu.getItem(i)
         if (item.type == DzActionMenuItem.CustomAction && item.action == actionName)
             return item.getParentMenu()
         if (item.type == DzActionMenuItem.SubMenu) {
-            var subMenu = findMenuFor(actionName, item.getSubMenu())
+            const subMenu = findMenuFor(actionName, item.getSubMenu())
             if (subMenu) return subMenu
         }
     }
@@ -55,11 +196,9 @@ export const findMenuFor = (actionName: string, topMenu?: DzActionMenu): DzActio
 }
 
 export const findInMenu = (menu: DzActionMenu, actionName: string): DzActionMenuItem | null => {
-    var item: DzActionMenuItem
-
-    var aItems = menu.getItemList()
-    for (var i = 0; i < aItems.length; i += 1) {
-        item = aItems[i]
+    const items = menu.getItemList()
+    for (let i = 0; i < items.length; i += 1) {
+        const item = items[i]
 
         if (item.type != DzActionMenuItem.CustomAction) {
             continue
@@ -73,91 +212,290 @@ export const findInMenu = (menu: DzActionMenu, actionName: string): DzActionMenu
     return null
 }
 
-export const createCustomAction = (action: CustomAction, update: boolean) => {
-    let existingAction = findByFilePath(action, action.filePath)
+const findToolbarItemIndex = (toolbar: DzToolBar, actionName: string): number => {
+    const toolbarItems = toolbar.getItemList()
+    for (let i = 0; i < toolbarItems.length; i++) {
+        const item = toolbarItems[i]
+        if (item.type !== DzToolBarItem.CustomAction) continue
+        if (item.action !== actionName) continue
+        return i
+    }
+    return -1
+}
 
-    if (existingAction && !update) return
+const findToolbarItem = (toolbarName: string, actionName: string): DzToolBarItem | null => {
+    const toolbar = paneMgr.findToolBar(toolbarName)
+    if (!toolbar) return null
 
-    if (existingAction) {
-        removeCustomAction(existingAction)
+    const toolbarItems = toolbar.getItemList()
+    for (let i = 0; i < toolbarItems.length; i++) {
+        const item = toolbarItems[i]
+        if (item.type !== DzToolBarItem.CustomAction) continue
+        if (item.action !== actionName) continue
+        return item
     }
 
-    let name = actionMgr.addCustomAction(String(action.text), String(action.description), String(action.filePath), true, action.shortcut ?? "", String(action.icon)).toString()
-    action.name = name
+    return null
+}
 
-    if (action.shortcut) {
-        actionMgr.setCustomActionShortcut(actionMgr.findCustomAction(name), action.shortcut)
-        debug(`Created Custom Action: ${action.text} (${action.name}): ${action.filePath}`)
+const isInstalledToToolbar = (toolbarName: string | null | undefined, actionName: string | null | undefined): boolean => {
+    if (!toolbarName || !actionName) return false
+    return findToolbarItem(toolbarName, actionName) !== null
+}
+
+const removeFromMenu = (actionName: string | null | undefined) => {
+    if (!actionName) return
+    const menu = findMenuFor(actionName, actionMgr.getMenu())
+    if (!menu) return
+
+    const menuAction = findInMenu(menu, actionName)
+    if (!menuAction) return
+
+    menu.removeItem(menuAction)
+    debug(`Action ${actionName} removed from menu`)
+}
+
+const removeFromToolbar = (toolbarName: string | null | undefined, actionName: string | null | undefined) => {
+    if (!toolbarName || !actionName) return
+    const toolbar = paneMgr.findToolBar(toolbarName)
+    if (!toolbar) return
+
+    const itemIndex = findToolbarItemIndex(toolbar, actionName)
+    if (itemIndex < 0) return
+
+    toolbar.removeItem(itemIndex)
+    debug(`Action ${actionName} removed from toolbar ${toolbarName} (index ${itemIndex})`)
+
+    const remainingItems = toolbar.getItemList()
+    const hasItems = toolbar.hasItems() || remainingItems.length > 0
+    debug(`Toolbar ${toolbarName} hasItems=${hasItems} remaining=${remainingItems.length} after removing ${actionName}`)
+
+    if (hasItems) {
+        const paths = remainingItems.map((item) => `${item.action}(type=${item.type})`).join(', ')
+        debug(`Toolbar ${toolbarName} remaining items: ${paths}`)
     }
 
-    addToMenu(action)
-    addToToolbar(action)
+    if (!hasItems) {
+        toolbar.setClosed(true)
+        debug(`Toolbar ${toolbarName} closed (setClosed=true)`)
+        toolbar.clear()
+        debug(`Toolbar ${toolbarName} cleared`)
+        paneMgr.removeToolBar(toolbar)
+        debug(`Toolbar ${toolbarName} removeToolBar called`)
+    }
+}
+
+const removeUnderlyingCustomAction = (actionName: string | null | undefined) => {
+    if (!actionName) return
+
+    const index = actionMgr.findCustomAction(actionName)
+    if (index < 0) return
+
+    actionMgr.removeCustomAction(index)
+    debug(`Action ${actionName} removed`)
+}
+
+export const clearToolbar = (toolbarName: string | null | undefined) => {
+    if (!toolbarName) return
+    const toolbar = paneMgr.findToolBar(toolbarName)
+    if (!toolbar) return
+    toolbar.clear()
+    debug(`Toolbar ${toolbarName} cleared`)
+}
+
+export const cleanupEmptyToolbar = (toolbarName: string | null | undefined) => {
+    if (!toolbarName) return
+    const toolbar = paneMgr.findToolBar(toolbarName)
+    if (!toolbar) return
+
+    const hasItems = toolbar.hasItems() || toolbar.getItemList().length > 0
+    debug(`Toolbar ${toolbarName} cleanupCheck hasItems=${hasItems}`)
+    if (hasItems) return
+
+    toolbar.setClosed(true)
+    debug(`Toolbar ${toolbarName} closed (setClosed=true)`)
+    toolbar.clear()
+    debug(`Toolbar ${toolbarName} cleared`)
+    paneMgr.removeToolBar(toolbar)
+    debug(`Toolbar ${toolbarName} removeToolBar called`)
 }
 
 export const addToMenu = (action: CustomAction) => {
-    if (!action.menuPath) return
-    action.menuPath = action.menuPath + '/'
-    var menu = getMenu(action.menuPath, true)
-    var menuAction = findInMenu(menu, action.name)
+    if (!action.menuPath || !action.name) return
+    const menuPath = `${action.menuPath}/`
+    const menu = getMenu(menuPath, true)
+    const menuAction = findInMenu(menu, action.name)
     if (menuAction) return
     menu.insertCustomAction(action.name, action.sort ?? -1)
     debug(`Action "${action.text}" added to menu "${menu.getPath()}"`)
 }
 
 export const addToToolbar = (action: CustomAction) => {
-    if (!action.toolbar) return;
+    if (!action.toolbar || !action.name) return
 
-    var toolbar = paneMgr.findToolBar(action.toolbar);
+    let toolbar = paneMgr.findToolBar(action.toolbar)
 
     if (!toolbar) {
-        toolbar = paneMgr.createToolBar(action.toolbar);
-        toolbar.dock(DzToolBar.ToolBarTop);
+        toolbar = paneMgr.createToolBar(action.toolbar)
+        toolbar.dock(DzToolBar.ToolBarTop)
+    } else {
+        toolbar.setClosed(false)
     }
 
-    if (array.find(toolbar.getItemList(), i => i.action == action.name)) return
+    if (findToolbarItem(action.toolbar, action.name)) return
 
-    debug(`Adding menu to toolbar ${toolbar.name}`)
-    toolbar.insertCustomAction(action.name, action.sort)
+    toolbar.insertCustomAction(action.name, action.sort ?? -1)
+    debug(`Action "${action.text}" added to toolbar "${action.toolbar}"`)
 }
 
-const removeCustomAction = (action: CustomAction) => {
-    if (!action.name) return
-    var menu = findMenuFor(action.name, actionMgr.getMenu())
-    if (menu) {
-        var menuAction = findInMenu(menu, action.name)
-        if (menuAction) {
-            menu.removeItem(menuAction)
-            debug(`Action ${action.text} Removed from menu`)
-        }
+const createOrUpdateCustomAction = (sourceAction: CustomAction, resolvedAction: CustomAction): CustomAction => {
+    const existingActions = findAllByFilePath(sourceAction, resolvedAction.filePath)
+    existingActions.forEach((existingAction) => {
+        removeFromMenu(existingAction.name)
+        removeFromToolbar(existingAction.toolbar, existingAction.name)
+        removeUnderlyingCustomAction(existingAction.name)
+    })
+
+    const name = actionMgr
+        .addCustomAction(
+            String(resolvedAction.text),
+            String(resolvedAction.description),
+            String(resolvedAction.filePath),
+            true,
+            resolvedAction.shortcut ?? "",
+            String(resolvedAction.icon ?? '')
+        )
+        .toString()
+
+    const created = {
+        ...resolvedAction,
+        name
+    } as CustomAction
+
+    if (resolvedAction.shortcut) {
+        actionMgr.setCustomActionShortcut(actionMgr.findCustomAction(name), resolvedAction.shortcut)
     }
 
-    actionMgr.removeCustomAction(actionMgr.findCustomAction(action.name))
-    debug(`Action ${action.text} Removed`)
-    debug(`Toolbar: ${action.toolbar}`)
+    debug(`Created Custom Action: ${created.text} (${created.name}): ${created.filePath}`)
+    return created
+}
 
-    if (!action.toolbar) return
-    debug(`Removing Toolbar ${action.toolbar}`)
-    var toolbar = paneMgr.findToolBar(action.toolbar)
-    if (!toolbar) return
-    toolbar.clear()
-    // paneMgr.removeToolBar(action.toolbar)
-    // debug(`Toolbar Removed`)
+export const getInstalledCustomActionState = (action: CustomAction, scriptsPath: string = getScriptPath()): CustomActionInstallState => {
+    const resolvedAction = resolveActionPaths(action, scriptsPath)
+    const customAction = findByFilePath(action, resolvedAction.filePath)
+    const installedMenu = customAction?.name ? findMenuFor(customAction.name, actionMgr.getMenu()) !== null : false
+    const installedToolbar = customAction?.name ? isInstalledToToolbar(action.toolbar, customAction.name) : false
+
+    if (!customAction) {
+        const expectedPath = String(resolvedAction.filePath ?? '')
+        const expectedFileName = getFileName(expectedPath)
+        const nearbyCandidates: string[] = []
+        const actionsCount = actionMgr.getNumCustomActions()
+
+        for (let i = 0; i < actionsCount; i++) {
+            const candidatePath = String(actionMgr.getCustomActionFile(i))
+            if (!candidatePath) continue
+
+            const candidateFileName = getFileName(candidatePath)
+            if (candidateFileName !== expectedFileName) continue
+
+            nearbyCandidates.push(candidatePath)
+            if (nearbyCandidates.length >= 5) break
+        }
+
+        const normExpected = normalizePath(expectedPath)
+        const scriptsIdx = normExpected.indexOf('/scripts/')
+        const stableSuffix = scriptsIdx >= 0 ? normExpected.slice(scriptsIdx + 1) : normExpected
+
+        debug(
+            `[CustomActionState] action="${action.text}" expected="${expectedPath}" suffix="${stableSuffix}" match="" candidates=${nearbyCandidates.length > 0 ? nearbyCandidates.join(' | ') : '<none>'}`
+        )
+    } else {
+        debug(
+            `[CustomActionState] action="${action.text}" expected="${resolvedAction.filePath}" matched="${customAction.filePath}" menu=${installedMenu} toolbar=${installedToolbar}`
+        )
+    }
+
+    return {
+        action: resolvedAction,
+        customAction,
+        installedMenu,
+        installedToolbar
+    }
+}
+
+export const applyCustomActionTargets = (action: CustomAction, targets: CustomActionTargets, scriptsPath: string = getScriptPath()) => {
+    const resolvedAction = resolveActionPaths(action, scriptsPath)
+    const shouldInstall = targets.menu || targets.toolbar
+
+    if (!shouldInstall) {
+        removeCustomActionTargets(action, { menu: true, toolbar: true }, scriptsPath)
+        return
+    }
+
+    const customAction = createOrUpdateCustomAction(action, resolvedAction)
+
+    if (targets.menu && action.menuPath) {
+        addToMenu(customAction)
+    }
+
+    if (targets.toolbar && action.toolbar) {
+        addToToolbar(customAction)
+    }
+}
+
+export const removeCustomActionTargets = (action: CustomAction, targets: CustomActionTargets, scriptsPath: string = getScriptPath()) => {
+    const resolvedAction = resolveActionPaths(action, scriptsPath)
+    const matches = findAllByFilePath(action, resolvedAction.filePath)
+
+    debug(`[RemoveTargets] action="${action.text}" resolved="${resolvedAction.filePath}" matches=${matches.length} targets={menu:${targets.menu},toolbar:${targets.toolbar}}`)
+
+    if (matches.length === 0) return
+
+    matches.forEach((match) => {
+        const installedMenu = match.name ? findMenuFor(match.name, actionMgr.getMenu()) !== null : false
+        const installedToolbar = match.name ? isInstalledToToolbar(action.toolbar, match.name) : false
+
+        debug(`[RemoveTargets] match="${match.name}" filePath="${match.filePath}" installedMenu=${installedMenu} installedToolbar=${installedToolbar} toolbar="${action.toolbar}"`)
+
+        if (!match.name) return
+
+        if (targets.menu && installedMenu) {
+            removeFromMenu(match.name)
+        }
+
+        if (targets.toolbar && installedToolbar) {
+            removeFromToolbar(action.toolbar, match.name)
+        }
+
+        const menuStillInstalled = !targets.menu && installedMenu
+        const toolbarStillInstalled = !targets.toolbar && installedToolbar
+
+        debug(`[RemoveTargets] removing underlying="${match.name}" menuStillInstalled=${menuStillInstalled} toolbarStillInstalled=${toolbarStillInstalled}`)
+
+        if (!menuStillInstalled && !toolbarStillInstalled) {
+            removeUnderlyingCustomAction(match.name)
+        }
+
+        if (targets.toolbar && action.toolbar) {
+            cleanupEmptyToolbar(action.toolbar)
+        }
+    })
 }
 
 export const installCustomActions = (actions: CustomAction[]) => {
-    uninstallCustomActions(actions)
-    let scriptsPath = getScriptPath()
+    const scriptsPath = getScriptPath()
     debug(`Script path: ${scriptsPath}`)
-    let menuPaths = array.group(actions, (a => a.menuPath ?? ""))
+    const menuPaths = array.group(actions, (a => a.menuPath ?? ""))
     progress('Installing', keys(menuPaths), (menuPath) => {
-        let actions = menuPaths[menuPath] as CustomAction[]
-        let groups = array.group(actions, (action) => action.group ?? "")
+        const groupedActions = menuPaths[menuPath] as CustomAction[]
+        const groups = array.group(groupedActions, (action) => action.group ?? "")
         keys(groups).forEach(group => {
             groups[group].forEach(action => {
-                action.filePath = `${scriptsPath}/${action.filePath}`
-                action.icon = action.icon ? `${scriptsPath}/${action.icon}` : ''
-                createCustomAction(action, true)
-                // findMenuFor(action.name)
+                applyCustomActionTargets(action, {
+                    menu: Boolean(action.menuPath),
+                    toolbar: Boolean(action.toolbar)
+                }, scriptsPath)
             })
         })
     })
@@ -165,12 +503,25 @@ export const installCustomActions = (actions: CustomAction[]) => {
 
 export const uninstallCustomActions = (actions: CustomAction[]) => {
     debug(`Uninstalling Actions`)
+    const toolbarNames = new Set<string>()
+
     actions.forEach(action => {
         if (!action) return
-        let customAction = findByFilePath(action, `${getScriptPath()}/${action.filePath}`)
-        if (!customAction) return
-        debug(`Uninstalling action "${customAction.text} (${customAction.name})"`)
-        removeCustomAction(customAction)
+        if (action.toolbar) toolbarNames.add(action.toolbar)
+        removeCustomActionTargets(action, { menu: true, toolbar: true })
+    })
+
+    toolbarNames.forEach(toolbarName => {
+        const toolbar = paneMgr.findToolBar(toolbarName)
+        if (!toolbar) {
+            debug(`Toolbar ${toolbarName} not found for post-uninstall cleanup`)
+            return
+        }
+        const hasItems = toolbar.hasItems() || toolbar.getItemList().length > 0
+        debug(`Toolbar ${toolbarName} post-uninstall fresh ref hasItems=${hasItems}`)
+        toolbar.clear()
+        toolbar.setClosed(true)
+        paneMgr.removeToolBar(toolbar)
+        debug(`Toolbar ${toolbarName} cleared, closed, and removed after uninstall`)
     })
 }
-

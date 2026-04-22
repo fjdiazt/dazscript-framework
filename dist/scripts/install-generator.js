@@ -2,6 +2,8 @@ const ts = require('typescript');
 const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
+const { loadConfig } = require('./config-loader');
+const { validateAppDataPath } = require('./app-data-path');
 
 const nameofActionFunction = 'action';
 
@@ -19,19 +21,11 @@ function stringOrDefault(str, defaultValue) {
   return str !== undefined && str !== null && str !== '' ? str : defaultValue;
 }
 
-function generateInstallerTemplate(data) {
+function generateInstallerTemplate(data, settingsPath) {
   return `
-import { installCustomActions as install } from '@dsf/helpers/custom-action-helper';
+import { showSetupCustomActionsDialog as setup } from '@dsf/helpers/custom-action-installer-helper';
 
-install(${data});
-`;
-}
-
-function generateUninstallerTemplate(data) {
-  return `
-import { uninstallCustomActions as uninstall } from '@dsf/helpers/custom-action-helper';
-
-uninstall(${data});
+setup(${data}, ${JSON.stringify(settingsPath)});
 `;
 }
 
@@ -154,7 +148,7 @@ function findActionEntryFiles(workdir, options) {
   });
 }
 
-function processScript(filePath, container, defaultMenuPath) {
+function processScript(filePath, container, defaultMenuPath, settingsPath) {
   const fileInfo = path.parse(filePath);
   const content = fs.readFileSync(filePath, 'utf-8').toString();
   const actionCall = findTopLevelActionCall(content, filePath);
@@ -208,38 +202,28 @@ function processScript(filePath, container, defaultMenuPath) {
   container.scripts.push(script);
 
   if (decorator.bundle !== undefined) {
-    let packageInstallerFilePath = `Install.dsa.ts`;
-    let packageUninstallerFilePath = `Uninstall.dsa.ts`;
+    let packageSetupFilePath = `Setup.dsa.ts`;
 
     if (decorator.bundle !== true) {
-      packageInstallerFilePath = `Install ${decorator.bundle}.dsa.ts`;
-      packageUninstallerFilePath = `Uninstall ${decorator.bundle}.dsa.ts`;
+      packageSetupFilePath = `Setup ${decorator.bundle}.dsa.ts`;
     }
 
     let bundleScriptContent = generateInstallerTemplate(
-      JSON.stringify(container.scripts, null, 4)
+      JSON.stringify(container.scripts, null, 4),
+      settingsPath
     );
     let bundleScriptFilePath = path.join(
       path.parse(filePath).dir,
-      packageInstallerFilePath
-    );
-    fs.writeFileSync(bundleScriptFilePath, bundleScriptContent);
-
-    bundleScriptContent = generateUninstallerTemplate(
-      JSON.stringify(container.scripts, null, 4)
-    );
-    bundleScriptFilePath = path.join(
-      path.parse(filePath).dir,
-      packageUninstallerFilePath
+      packageSetupFilePath
     );
     fs.writeFileSync(bundleScriptFilePath, bundleScriptContent);
   }
 }
 
-function processScripts(paths, container, defaultMenuPath) {
+function processScripts(paths, container, defaultMenuPath, settingsPath) {
   paths.forEach((filePath) => {
     console.log(`Processing ${filePath}`);
-    processScript(filePath, container, defaultMenuPath);
+    processScript(filePath, container, defaultMenuPath, settingsPath);
   });
 }
 
@@ -247,10 +231,13 @@ function generateInstallerFiles(workdir, options) {
   const defaultMenuPath = options.defaultMenuPath.endsWith('/')
     ? options.defaultMenuPath
     : `${options.defaultMenuPath}/`;
+  const { config } = loadConfig(workdir);
+  const appDataPath = validateAppDataPath(options.appDataPath || config.appDataPath, workdir);
+  const settingsPath = `${appDataPath}/Installer`;
   const container = { scripts: [] };
   const matches = findActionEntryFiles(workdir, options);
 
-  processScripts(matches, container, defaultMenuPath);
+  processScripts(matches, container, defaultMenuPath, settingsPath);
 
   container.scripts = container.scripts.sort((a, b) => {
     const aKey = a.menuPath + a.filePath;
@@ -259,17 +246,15 @@ function generateInstallerFiles(workdir, options) {
   });
 
   const installerScriptContent = generateInstallerTemplate(
-    JSON.stringify(container.scripts, null, 4)
+    JSON.stringify(container.scripts, null, 4),
+    settingsPath
   );
-  fs.writeFileSync(path.join(workdir, 'src', 'Install.dsa.ts'), installerScriptContent);
+  fs.writeFileSync(path.join(workdir, 'src', 'Setup.dsa.ts'), installerScriptContent);
 
-  const uninstallerScriptContent = generateUninstallerTemplate(
-    JSON.stringify(container.scripts, null, 4)
-  );
-  fs.writeFileSync(
-    path.join(workdir, 'src', 'Uninstall.dsa.ts'),
-    uninstallerScriptContent
-  );
+  const installPath = path.join(workdir, 'src', 'Install.dsa.ts');
+  const uninstallPath = path.join(workdir, 'src', 'Uninstall.dsa.ts');
+  if (fs.existsSync(installPath)) fs.unlinkSync(installPath);
+  if (fs.existsSync(uninstallPath)) fs.unlinkSync(uninstallPath);
 }
 
 if (require.main === module) {
@@ -277,6 +262,7 @@ if (require.main === module) {
   const options = {
     scriptsPath: './src',
     defaultMenuPath: 'My Scripts',
+    appDataPath: undefined,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -290,6 +276,12 @@ if (require.main === module) {
 
     if (arg === '--menu-path' || arg === '--defaultMenuPath' || arg === '-m') {
       options.defaultMenuPath = args[index + 1];
+      index += 1;
+      continue;
+    }
+
+    if (arg === '--app-data-path') {
+      options.appDataPath = args[index + 1];
       index += 1;
       continue;
     }
