@@ -290,9 +290,7 @@ export const cleanupEmptyToolbar = (toolbarName: string | null | undefined) => {
     const toolbar = paneMgr.findToolBar(toolbarName)
     if (!toolbar) return
 
-    const hasItems = toolbar.hasItems() || toolbar.getItemList().length > 0
-    debug(`Toolbar ${toolbarName} cleanupCheck hasItems=${hasItems}`)
-    if (hasItems) return
+    if (toolbar.hasItems() || toolbar.getItemList().length > 0) return
 
     toolbar.setClosed(true)
     debug(`Toolbar ${toolbarName} closed (setClosed=true)`)
@@ -368,36 +366,6 @@ export const getInstalledCustomActionState = (action: CustomAction, scriptsPath:
     const installedMenu = customAction?.name ? findMenuFor(customAction.name, actionMgr.getMenu()) !== null : false
     const installedToolbar = customAction?.name ? isInstalledToToolbar(action.toolbar, customAction.name) : false
 
-    if (!customAction) {
-        const expectedPath = String(resolvedAction.filePath ?? '')
-        const expectedFileName = getFileName(expectedPath)
-        const nearbyCandidates: string[] = []
-        const actionsCount = actionMgr.getNumCustomActions()
-
-        for (let i = 0; i < actionsCount; i++) {
-            const candidatePath = String(actionMgr.getCustomActionFile(i))
-            if (!candidatePath) continue
-
-            const candidateFileName = getFileName(candidatePath)
-            if (candidateFileName !== expectedFileName) continue
-
-            nearbyCandidates.push(candidatePath)
-            if (nearbyCandidates.length >= 5) break
-        }
-
-        const normExpected = normalizePath(expectedPath)
-        const scriptsIdx = normExpected.indexOf('/scripts/')
-        const stableSuffix = scriptsIdx >= 0 ? normExpected.slice(scriptsIdx + 1) : normExpected
-
-        debug(
-            `[CustomActionState] action="${action.text}" expected="${expectedPath}" suffix="${stableSuffix}" match="" candidates=${nearbyCandidates.length > 0 ? nearbyCandidates.join(' | ') : '<none>'}`
-        )
-    } else {
-        debug(
-            `[CustomActionState] action="${action.text}" expected="${resolvedAction.filePath}" matched="${customAction.filePath}" menu=${installedMenu} toolbar=${installedToolbar}`
-        )
-    }
-
     return {
         action: resolvedAction,
         customAction,
@@ -430,15 +398,11 @@ export const removeCustomActionTargets = (action: CustomAction, targets: CustomA
     const resolvedAction = resolveActionPaths(action, scriptsPath)
     const matches = findAllByFilePath(action, resolvedAction.filePath)
 
-    debug(`[RemoveTargets] action="${action.text}" resolved="${resolvedAction.filePath}" matches=${matches.length} targets={menu:${targets.menu},toolbar:${targets.toolbar}}`)
-
     if (matches.length === 0) return
 
     matches.forEach((match) => {
         const installedMenu = match.name ? findMenuFor(match.name, actionMgr.getMenu()) !== null : false
         const installedToolbar = match.name ? isInstalledToToolbar(action.toolbar, match.name) : false
-
-        debug(`[RemoveTargets] match="${match.name}" filePath="${match.filePath}" installedMenu=${installedMenu} installedToolbar=${installedToolbar} toolbar="${action.toolbar}"`)
 
         if (!match.name) return
 
@@ -452,8 +416,6 @@ export const removeCustomActionTargets = (action: CustomAction, targets: CustomA
 
         const menuStillInstalled = !targets.menu && installedMenu
         const toolbarStillInstalled = !targets.toolbar && installedToolbar
-
-        debug(`[RemoveTargets] removing underlying="${match.name}" menuStillInstalled=${menuStillInstalled} toolbarStillInstalled=${toolbarStillInstalled}`)
 
         if (!menuStillInstalled && !toolbarStillInstalled) {
             removeUnderlyingCustomAction(match.name)
@@ -495,8 +457,6 @@ export const uninstallCustomActions = (actions: CustomAction[]) => {
             debug(`Toolbar ${toolbarName} not found for post-uninstall cleanup`)
             return
         }
-        const hasItems = toolbar.hasItems() || toolbar.getItemList().length > 0
-        debug(`Toolbar ${toolbarName} post-uninstall fresh ref hasItems=${hasItems}`)
         toolbar.clear()
         toolbar.setClosed(true)
         paneMgr.removeToolBar(toolbar)
