@@ -7,20 +7,20 @@ This document tracks framework improvements that are worth doing, but are not re
 ### Generate an intermediate action manifest
 
 Problem:
-The installer generator currently discovers `action(...)` metadata and immediately writes `Install.dsa.ts` and `Uninstall.dsa.ts`. That makes the pipeline harder to debug and test because there is no intermediate artifact showing the normalized action data.
+The installer generator currently discovers `action(...)` metadata and immediately writes `Setup.dsa.ts` plus any action-level bundle setup scripts. That makes the pipeline harder to debug and test because there is no intermediate artifact showing the normalized action data.
 
 Current behavior:
 - Scan source files for top-level `action(...)` calls
 - Normalize action metadata in memory
-- Write generated installer and uninstaller scripts directly into the project source tree
+- Write generated setup scripts directly into the project source tree
 
 Proposed direction:
 - Split the pipeline into `discover -> manifest -> generate scripts`
 - Generate a machine-readable manifest, such as `dist/dazscript.actions.json`
-- Generate `Install.dsa.ts` and `Uninstall.dsa.ts` from that manifest
+- Generate `Setup.dsa.ts` and bundle-specific setup scripts from that manifest
 
 Compatibility notes:
-- Keep the generated installer and uninstaller outputs unchanged at first
+- Keep generated setup outputs unchanged at first
 - Treat the manifest as an internal debugging and build artifact before making it public API
 
 Priority:
@@ -47,25 +47,25 @@ Compatibility notes:
 Priority:
 Medium
 
-### Provide a base installer and uninstaller UI
+### Extend setup dialog customization
 
 Problem:
-Framework consumers currently get generated install and uninstall scripts, but not a reusable installer experience for selecting which actions to install and how they should be registered.
+The framework now provides a reusable setup dialog out of the box, but project-level customization is still intentionally narrow.
 
 Current behavior:
-- Generated installer scripts install the full discovered action set
-- Per-action install choices such as menu placement, toolbar registration, or shortcut customization are left to the consumer or to manual post-install editing
+- Generated setup scripts open a searchable selection dialog
+- Users can inspect action metadata, select which actions to apply, and override shortcuts
+- Projects can set dialog title metadata through `bundleName`
+- The dialog copy, columns, and selection flow are framework-defined
 
 Proposed direction:
-- Provide a base installer and uninstaller window as part of the framework
-- Let users choose which scripts to install
-- Let users choose whether actions should be added to menus, toolbars, or both
-- Allow shortcut and related registration options to be customized during install
-- Make this available out of the box to framework consumers, with optional project-level customization
+- Allow limited project-level customization of setup dialog copy and labels
+- Optionally expose hooks for extra metadata columns or row badges
+- Consider project-specific grouping, presets, or setup modes without breaking the shared base experience
 
 Compatibility notes:
-- Should work as a higher-level layer on top of the existing generated action metadata
-- Needs a clear separation between framework defaults and project-specific install rules
+- Keep the default generated setup UX stable
+- Avoid turning setup generation into a UI framework of its own
 
 Priority:
 Medium

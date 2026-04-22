@@ -1,7 +1,8 @@
 const path = require('path');
 const glob = require('glob');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
-const { createActionLaunchers, validateAppDataPath } = require('./dist/scripts/launchers');
+const { createActionLaunchers } = require('./dist/scripts/launchers');
+const { validateAppDataPath } = require('./dist/scripts/app-data-path');
 const { loadConfig } = require('./dist/scripts/config-loader');
 
 class ActionLauncherPlugin {
