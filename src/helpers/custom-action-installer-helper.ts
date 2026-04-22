@@ -49,22 +49,24 @@ const describeTargets = (entry: InstallerEntry): string => {
 }
 
 const buildEntries = (actions: CustomAction[]): InstallerEntry[] => {
-    return actions.map((action) => {
-        const installed = getInstalledCustomActionState(action)
-        const supportsMenu = Boolean(action.menuPath)
-        const supportsToolbar = Boolean(action.toolbar)
-        const hasInstalledTargets = installed.installedMenu || installed.installedToolbar
-        const entry: InstallerEntry = {
-            action: { ...action },
-            supportsMenu,
-            supportsToolbar,
-            selected: hasInstalledTargets,
-            installedMenu: installed.installedMenu,
-            installedToolbar: installed.installedToolbar
-        }
+    return actions
+        .filter((action) => Boolean(action.menuPath) || Boolean(action.toolbar))
+        .map((action) => {
+            const installed = getInstalledCustomActionState(action)
+            const supportsMenu = Boolean(action.menuPath)
+            const supportsToolbar = Boolean(action.toolbar)
+            const hasInstalledTargets = installed.installedMenu || installed.installedToolbar
+            const entry: InstallerEntry = {
+                action: { ...action },
+                supportsMenu,
+                supportsToolbar,
+                selected: hasInstalledTargets,
+                installedMenu: installed.installedMenu,
+                installedToolbar: installed.installedToolbar
+            }
 
-        return entry
-    })
+            return entry
+        })
 }
 
 class InstallerSelectionDialog extends BasicDialog {
