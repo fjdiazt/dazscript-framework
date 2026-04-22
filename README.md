@@ -14,6 +14,8 @@ The **DazScript Framework** is a TypeScript-based framework for writing Daz Stud
 
 - TypeScript support with full IntelliSense.
 - A lightweight `action(...)` entrypoint plus helper methods for building interactive scripts.
+- A generated setup dialog for installing, updating, and removing custom action registrations.
+- Setup generation is fully automated from `action(...)` metadata, including menu path, toolbar, shortcut, description, grouping, icons, and bundle-based setup outputs.
 - Easy integration with Daz Studio for quick script deployment.
 
 ## Installation
@@ -65,8 +67,11 @@ export default defineConfig({
   outDir: './out',
   defaultMenuPath: '/MyScripts',
   appDataPath: 'YourName/my-project',
+  bundleName: 'My Project',
 });
 ```
+
+`bundleName` is optional display metadata for generated setup dialogs. If omitted, the dialog falls back to `Setup Scripts`. `dazscript init` now scaffolds it automatically from the project folder name.
 
 Built action outputs now use stable launcher shims by default:
 
@@ -129,7 +134,7 @@ Common `action(...)` parameters:
 - `toolbar`: the toolbar name used when the action should appear on a toolbar.
 - `group`: an optional grouping label used by Daz Studio for related actions.
 - `description`: a longer description for the action.
-- `bundle`: generates installer and uninstaller entries as a package bundle instead of a single action entry.
+- `bundle`: generates an additional setup script next to the action file. Use `true` for `Setup.dsa.ts` or a string for `Setup <bundle>.dsa.ts`.
 
 When an action is built, the framework emits two files for it:
 
@@ -140,7 +145,56 @@ Generated installers register the launcher path, so menu placement, toolbars, sh
 
 If the local `lib/` implementation is missing, the launcher falls back to the configured `appDataPath`. Builds now require this value and validate it as a unique `Author/Product` style path.
 
-Generated `Install.dsa.ts` and `Uninstall.dsa.ts` scripts now open a searchable selection dialog instead of applying every action blindly. The installer shows all generated actions, the uninstaller shows only currently installed ones, and each row lets you choose menu and toolbar targets independently when that action supports them. The dialog initializes from the current Daz Studio install state and stores the latest applied choices in `DzSettings` under your project's installer settings path.
+### Generated Setup Script
+
+Running `npm run installer` generates `src/Setup.dsa.ts` for the project.
+
+This flow is completely automated. The installer generator scans runnable `.dsa.ts` entry files, reads the top-level `action(...)` call, and derives the setup dialog rows and registration behavior directly from that metadata. In practice, the menu path, toolbar target, shortcut, description, grouping, icon usage, and bundle-specific setup outputs all come from the action definition rather than from separate installer code you have to maintain by hand.
+
+The generated setup script:
+
+- Scans all runnable top-level `.dsa.ts` files under `scriptsPath`
+- Reads `action(...)` metadata directly from the source
+- Normalizes default menu paths relative to `defaultMenuPath`
+- Derives action labels, descriptions, shortcuts, toolbar targets, grouping, and icons from the action definition
+- Writes one searchable setup entry per discovered action
+- Uses `appDataPath/Installer` as the installer settings namespace
+- Passes `bundleName` through so the dialog title can be project-specific
+
+The setup dialog initializes from the current Daz Studio install state rather than assuming a clean install. It checks which actions are already installed, which ones are present in menus or toolbars, and what shortcut is currently assigned.
+
+Current setup dialog behavior:
+
+- Shows an install checkbox plus the columns `Action`, `Shortcut`, `Description`, `Menu`, and `Toolbar`
+- Includes a search box that filters by action name, shortcut, description, menu path, and toolbar
+- Supports `Select All` and `Deselect All` for the currently visible rows
+- Lets the user right-click an action to set a shortcut or reset it to the default shortcut
+- Shows shortcut overrides with an `[ovr]` marker
+- Displays the configured toolbar name directly instead of a generic yes/no flag
+- Uses the configured `bundleName` in the window title when available
+
+Applying the setup dialog does both install and cleanup work:
+
+- Selected rows are installed or updated through the framework custom action helpers
+- Unselected rows are removed from supported menu and toolbar targets
+- Affected toolbars are rebuilt after removal so remaining selected actions stay grouped correctly
+- Empty toolbars created by the framework are cleaned up automatically
+
+The generated project-level setup file replaces the older generated `Install.dsa.ts` and `Uninstall.dsa.ts` flow. The installer generator now removes those legacy files if they still exist.
+
+### Action-Level Bundles
+
+The `bundle` property on `action(...)` is separate from project `bundleName`.
+
+- `bundleName` in `dazscript.config.ts` is project metadata used for the setup dialog title
+- `bundle` in an action definition changes installer generation behavior for that action
+
+When `bundle` is set on an action, the installer generator also writes a setup script beside that action:
+
+- `bundle: true` writes `Setup.dsa.ts`
+- `bundle: 'Utilities'` writes `Setup Utilities.dsa.ts`
+
+Those bundle-generated setup files use the same setup dialog helper and now also receive the project `bundleName`.
 
 ### Building UIs with Observables & Dialogs
 
