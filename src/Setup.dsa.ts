@@ -16,4 +16,4 @@ setup([
         "menuPath": "/DazScriptFramework/samples",
         "description": "sample-dialog"
     }
-], { settingsPath: "DazScriptFramework/samples/Installer", bundleName: "Samples" });
+], {"settingsPath":"DazScriptFramework/samples/Installer","bundleName":"Samples"});
