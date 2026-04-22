@@ -21,11 +21,14 @@ function stringOrDefault(str, defaultValue) {
   return str !== undefined && str !== null && str !== '' ? str : defaultValue;
 }
 
-function generateInstallerTemplate(data, settingsPath) {
+function generateInstallerTemplate(data, settingsPath, bundleName) {
   return `
 import { showSetupCustomActionsDialog as setup } from '@dsf/helpers/custom-action-installer-helper';
 
-setup(${data}, ${JSON.stringify(settingsPath)});
+setup(${data}, ${JSON.stringify({
+    settingsPath,
+    bundleName,
+  })});
 `;
 }
 
@@ -148,7 +151,7 @@ function findActionEntryFiles(workdir, options) {
   });
 }
 
-function processScript(filePath, container, defaultMenuPath, settingsPath) {
+function processScript(filePath, container, defaultMenuPath, settingsPath, bundleName) {
   const fileInfo = path.parse(filePath);
   const content = fs.readFileSync(filePath, 'utf-8').toString();
   const actionCall = findTopLevelActionCall(content, filePath);
@@ -210,7 +213,8 @@ function processScript(filePath, container, defaultMenuPath, settingsPath) {
 
     let bundleScriptContent = generateInstallerTemplate(
       JSON.stringify(container.scripts, null, 4),
-      settingsPath
+      settingsPath,
+      bundleName
     );
     let bundleScriptFilePath = path.join(
       path.parse(filePath).dir,
@@ -220,10 +224,10 @@ function processScript(filePath, container, defaultMenuPath, settingsPath) {
   }
 }
 
-function processScripts(paths, container, defaultMenuPath, settingsPath) {
+function processScripts(paths, container, defaultMenuPath, settingsPath, bundleName) {
   paths.forEach((filePath) => {
     console.log(`Processing ${filePath}`);
-    processScript(filePath, container, defaultMenuPath, settingsPath);
+    processScript(filePath, container, defaultMenuPath, settingsPath, bundleName);
   });
 }
 
@@ -234,10 +238,13 @@ function generateInstallerFiles(workdir, options) {
   const { config } = loadConfig(workdir);
   const appDataPath = validateAppDataPath(options.appDataPath || config.appDataPath, workdir);
   const settingsPath = `${appDataPath}/Installer`;
+  const bundleName = typeof config.bundleName === 'string' && config.bundleName.trim()
+    ? config.bundleName.trim()
+    : undefined;
   const container = { scripts: [] };
   const matches = findActionEntryFiles(workdir, options);
 
-  processScripts(matches, container, defaultMenuPath, settingsPath);
+  processScripts(matches, container, defaultMenuPath, settingsPath, bundleName);
 
   container.scripts = container.scripts.sort((a, b) => {
     const aKey = a.menuPath + a.filePath;
@@ -247,7 +254,8 @@ function generateInstallerFiles(workdir, options) {
 
   const installerScriptContent = generateInstallerTemplate(
     JSON.stringify(container.scripts, null, 4),
-    settingsPath
+    settingsPath,
+    bundleName
   );
   fs.writeFileSync(path.join(workdir, 'src', 'Setup.dsa.ts'), installerScriptContent);
 

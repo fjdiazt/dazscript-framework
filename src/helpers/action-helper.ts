@@ -37,7 +37,7 @@ const shortcutTokenMap: { [key: string]: string } = {
     'DOWN': 'Down',
 }
 
-const normalizeShortcut = (shortcut: string): string => {
+export const normalizeShortcut = (shortcut: string): string => {
     if (!shortcut) return ''
 
     return shortcut
@@ -51,6 +51,19 @@ const normalizeShortcut = (shortcut: string): string => {
             return shortcutTokenMap[key] || part
         })
         .join('+')
+}
+
+export const getActionShortcut = (name: string): string => {
+    const action = findAction(name)
+    if (!action) return ''
+
+    if (isCustomAction(action)) {
+        const index = actionMgr.findCustomAction(name)
+        if (index < 0) return ''
+        return normalizeShortcut(String(actionMgr.getCustomActionShortcut(index) ?? '').trim())
+    }
+
+    return normalizeShortcut(String(action.shortcut?.toString() ?? '').trim())
 }
 
 type ActionShortcutEntry = {

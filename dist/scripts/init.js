@@ -50,8 +50,17 @@ export default defineConfig({
   outDir: '${options.outDir}',
   defaultMenuPath: '${options.menuPath}',
   appDataPath: '${options.appDataPath}',
+  bundleName: '${options.bundleName}',
 });
 `;
+}
+
+function toBundleName(projectName) {
+  return projectName
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }
 
 function buildTsconfigContent() {
@@ -102,6 +111,7 @@ function initProject(workdir, rawOptions) {
     scriptsPath: normalizePath(rawOptions.scriptsPath, './src'),
     outDir: normalizePath(rawOptions.outDir, './out'),
     appDataPath: normalizePath(rawOptions.appDataPath, `YourName/${projectName}`),
+    bundleName: toBundleName(projectName),
   };
 
   writeFileIfNeeded(

@@ -5,4 +5,5 @@ export default defineConfig({
   outDir: './out',
   defaultMenuPath: '/DazScriptFramework',
   appDataPath: 'DazScriptFramework/samples',
+  bundleName: 'Samples',
 });

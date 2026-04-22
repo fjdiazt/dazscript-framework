@@ -1,6 +1,6 @@
 import { BasicDialog } from '@dsf/dialog/basic-dialog';
 import { debug } from '@dsf/common/log';
-import { findAction, findActionsForShortcut, setActionShortcut } from '@dsf/helpers/action-helper';
+import { findAction, findActionsForShortcut, getActionShortcut, normalizeShortcut, setActionShortcut } from '@dsf/helpers/action-helper';
 import { contains } from '@dsf/helpers/array-helper';
 import { confirm } from '@dsf/helpers/message-box-helper';
 import { Observable } from '@dsf/lib/observable';
@@ -69,6 +69,8 @@ class KeyboardShortcutDialog extends BasicDialog {
             this.dialog.setAcceptButtonEnabled(Boolean(text))
         })
 
+        this.loadInitialShortcut(model.shortcut.value)
+
         add.group('Assign Keyboard Shortcut').build((layout) => {
             layout.spacing = 5
             add.edit().value(model.actionLabel).readOnly()
@@ -117,17 +119,32 @@ class KeyboardShortcutDialog extends BasicDialog {
 
         return `Already assigned to: ${conflicts.map(action => action.text || action.name).join(', ')}`
     }
+
+    private loadInitialShortcut(shortcut: string): void {
+        const normalized = normalizeShortcut(shortcut)
+        if (!normalized) return
+
+        const parts = normalized.split('+').map(part => part.trim()).filter(Boolean)
+        const key = parts.pop() ?? ''
+
+        this.model.control.value = parts.indexOf('Ctrl') >= 0
+        this.model.alt.value = parts.indexOf('Alt') >= 0
+        this.model.shift.value = parts.indexOf('Shift') >= 0
+        this.model.windows.value = parts.indexOf('Win') >= 0
+        this.key.value = key
+    }
 }
 
-export const setKeyboardShortcut = (actionLabel: string, actionName: string) => {
+export const promptKeyboardShortcut = (actionLabel: string, actionName: string, initialShortcut?: string): string | null => {
     let model = new KeyboardShortcutModel()
     model.actionLabel = actionLabel
     model.actionName = actionName
+    model.shortcut.value = normalizeShortcut(initialShortcut ?? getActionShortcut(actionName) ?? '')
 
     let dialog = new KeyboardShortcutDialog(model)
     let result = dialog.run()
 
-    if (!result || !model.shortcut) return
+    if (!result || !model.shortcut) return null
 
     const conflicts = findActionsForShortcut(model.shortcut.value)
         .filter(action => action && action.name !== actionName)
@@ -139,8 +156,15 @@ export const setKeyboardShortcut = (actionLabel: string, actionName: string) => 
     if (conflicts.length > 0) {
         const conflictText = conflicts.map(action => action.text || action.name).join(', ')
         const response = confirm(`"${model.shortcut.value}" is already assigned to: ${conflictText}\n\nReplace it?`)
-        if (!response.ok) return
+        if (!response.ok) return null
     }
 
-    setActionShortcut(actionName, model.shortcut.value)
+    return model.shortcut.value
+}
+
+export const setKeyboardShortcut = (actionLabel: string, actionName: string, initialShortcut?: string) => {
+    const shortcut = promptKeyboardShortcut(actionLabel, actionName, initialShortcut)
+    if (!shortcut) return
+
+    setActionShortcut(actionName, shortcut)
 }

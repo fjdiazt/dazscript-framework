@@ -83,6 +83,7 @@ type CustomActionCandidate = {
     description: string
     filePath: string
     icon: string
+    shortcut: string
 }
 
 const cloneAction = (action: CustomAction): CustomAction => ({
@@ -111,7 +112,8 @@ const getCustomActionCandidates = (action: CustomAction): CustomActionCandidate[
             text: text.toString(),
             description: desc.toString(),
             filePath: actionFilePath.toString(),
-            icon: icon.toString()
+            icon: icon.toString(),
+            shortcut: String(actionMgr.getCustomActionShortcut(i) ?? '').trim()
         })
     }
 
@@ -124,9 +126,9 @@ const toCustomAction = (candidate: CustomActionCandidate, action: CustomAction):
     description: candidate.description,
     filePath: candidate.filePath,
     icon: candidate.icon,
+    shortcut: candidate.shortcut,
     menuPath: action.menuPath,
     group: action.group,
-    shortcut: action.shortcut,
     sort: action.sort,
     toolbar: action.toolbar
 })
