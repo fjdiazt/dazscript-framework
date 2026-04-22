@@ -265,24 +265,6 @@ const removeFromToolbar = (toolbarName: string | null | undefined, actionName: s
 
     toolbar.removeItem(itemIndex)
     debug(`Action ${actionName} removed from toolbar ${toolbarName} (index ${itemIndex})`)
-
-    const remainingItems = toolbar.getItemList()
-    const hasItems = toolbar.hasItems() || remainingItems.length > 0
-    debug(`Toolbar ${toolbarName} hasItems=${hasItems} remaining=${remainingItems.length} after removing ${actionName}`)
-
-    if (hasItems) {
-        const paths = remainingItems.map((item) => `${item.action}(type=${item.type})`).join(', ')
-        debug(`Toolbar ${toolbarName} remaining items: ${paths}`)
-    }
-
-    if (!hasItems) {
-        toolbar.setClosed(true)
-        debug(`Toolbar ${toolbarName} closed (setClosed=true)`)
-        toolbar.clear()
-        debug(`Toolbar ${toolbarName} cleared`)
-        paneMgr.removeToolBar(toolbar)
-        debug(`Toolbar ${toolbarName} removeToolBar called`)
-    }
 }
 
 const removeUnderlyingCustomAction = (actionName: string | null | undefined) => {
@@ -475,10 +457,6 @@ export const removeCustomActionTargets = (action: CustomAction, targets: CustomA
 
         if (!menuStillInstalled && !toolbarStillInstalled) {
             removeUnderlyingCustomAction(match.name)
-        }
-
-        if (targets.toolbar && action.toolbar) {
-            cleanupEmptyToolbar(action.toolbar)
         }
     })
 }
