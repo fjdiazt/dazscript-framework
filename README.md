@@ -241,6 +241,7 @@ This scans all `.dsa.ts` entry files, reads each top-level `action(...)` call, a
 The generated setup dialog:
 
 - Shows an install checkbox per action with columns for Action, Shortcut, Description, Menu, and Toolbar
+- Adds a `Keyboard Shortcuts` tab when a project defines shortcut JSON
 - Includes a search box that filters across all columns
 - Supports Select All / Deselect All on the visible rows
 - Lets the user right-click to set or reset a shortcut (overrides shown with `[ovr]`)
@@ -251,8 +252,43 @@ Applying the dialog:
 - Checked rows are installed or updated
 - Unchecked rows are removed from their menu and toolbar targets
 - Affected toolbars are rebuilt; empty framework-created toolbars are removed
+- Selected keyboard shortcut rows are applied after actions are installed
 
-This replaces the older `Install.dsa.ts` / `Uninstall.dsa.ts` pattern. The installer generator removes those legacy files if they exist.
+This replaces the older `Install.dsa.ts` / `Uninstall.dsa.ts` pattern. The installer generator removes those legacy files if they exist, except when shortcut restoration is needed.
+
+### Setup Keyboard Shortcuts
+
+Projects can define keyboard shortcuts for both framework custom actions and built-in Daz Studio actions. The installer generator looks for shortcut JSON in this order:
+
+- `keyboardShortcutsPath`, `shortcutsPath`, or `actionAcceleratorsPath` in `dazscript.config.ts`
+- `src/keyboard-shortcuts.json`
+- `src/action-accelerators.json`
+- `keyboard-shortcuts.json`
+- `action-accelerators.json`
+
+The JSON can be an array or an object containing `actions`, `shortcuts`, or `accelerators`. Each entry can use the Action Accelerator Finder style fields:
+
+```json
+[
+  {
+    "name": "DzRenderAction",
+    "text": "Render",
+    "shortcut": "CTRL+R"
+  }
+]
+```
+
+Accepted shortcut fields are `shortcut`, `accelerator`, or `key`. Accepted action-name fields are `name` or `action`.
+
+At build time the JSON is embedded into generated `Setup.dsa.ts`; Daz Studio does not need to read the original JSON file at setup time. During setup, the `Keyboard Shortcuts` tab shows the action label, current shortcut, new shortcut, action type, and conflicts. The user chooses which shortcut rows to apply.
+
+Before changing a non-custom Daz Studio action shortcut, setup writes the original value to:
+
+```text
+App.getAppDataPath()/<appDataPath>/Installer/keyboard-shortcuts-backup.json
+```
+
+When shortcut JSON exists, the generator also writes `src/Uninstall.dsa.ts`. Running that uninstall script restores backed-up non-custom shortcuts. Custom action shortcuts are not backed up because uninstalling the custom action removes the shortcut with the action.
 
 ---
 

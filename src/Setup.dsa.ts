@@ -44,4 +44,4 @@ setup([
         "menuPath": "/DazScriptFramework/examples",
         "description": "06-showcase-dialog"
     }
-], {"settingsPath":"DazScriptFramework/examples/Installer","bundleName":"Examples"});
+], {"settingsPath":"DazScriptFramework/examples/Installer","bundleName":"Examples","shortcutBackupPath":"DazScriptFramework/examples/Installer/keyboard-shortcuts-backup.json"});

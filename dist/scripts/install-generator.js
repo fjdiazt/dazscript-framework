@@ -21,14 +21,19 @@ function stringOrDefault(str, defaultValue) {
   return str !== undefined && str !== null && str !== '' ? str : defaultValue;
 }
 
-function generateInstallerTemplate(data, settingsPath, bundleName) {
+function generateInstallerTemplate(data, options) {
   return `
 import { showSetupCustomActionsDialog as setup } from '@dsf/helpers/custom-action-installer-helper';
 
-setup(${data}, ${JSON.stringify({
-    settingsPath,
-    bundleName,
-  })});
+setup(${data}, ${JSON.stringify(options)});
+`;
+}
+
+function generateUninstallTemplate(options) {
+  return `
+import { restoreSetupKeyboardShortcuts as restoreShortcuts } from '@dsf/helpers/custom-action-installer-helper';
+
+restoreShortcuts(${JSON.stringify(options)});
 `;
 }
 
@@ -151,7 +156,7 @@ function findActionEntryFiles(workdir, options) {
   });
 }
 
-function processScript(filePath, container, defaultMenuPath, settingsPath, bundleName) {
+function processScript(filePath, container, defaultMenuPath, setupOptions) {
   const fileInfo = path.parse(filePath);
   const content = fs.readFileSync(filePath, 'utf-8').toString();
   const actionCall = findTopLevelActionCall(content, filePath);
@@ -213,8 +218,7 @@ function processScript(filePath, container, defaultMenuPath, settingsPath, bundl
 
     let bundleScriptContent = generateInstallerTemplate(
       JSON.stringify(container.scripts, null, 4),
-      settingsPath,
-      bundleName
+      setupOptions
     );
     let bundleScriptFilePath = path.join(
       path.parse(filePath).dir,
@@ -224,11 +228,64 @@ function processScript(filePath, container, defaultMenuPath, settingsPath, bundl
   }
 }
 
-function processScripts(paths, container, defaultMenuPath, settingsPath, bundleName) {
+function processScripts(paths, container, defaultMenuPath, setupOptions) {
   paths.forEach((filePath) => {
     console.log(`Processing ${filePath}`);
-    processScript(filePath, container, defaultMenuPath, settingsPath, bundleName);
+    processScript(filePath, container, defaultMenuPath, setupOptions);
   });
+}
+
+function toPosix(filePath) {
+  return filePath.replace(/\\/g, '/');
+}
+
+function resolveShortcutFile(workdir, config) {
+  const configuredPath =
+    config.keyboardShortcutsPath ||
+    config.shortcutsPath ||
+    config.actionAcceleratorsPath;
+
+  const candidates = [];
+  if (configuredPath) {
+    candidates.push(path.resolve(workdir, configuredPath));
+  }
+
+  candidates.push(
+    path.join(workdir, 'src', 'keyboard-shortcuts.json'),
+    path.join(workdir, 'src', 'action-accelerators.json'),
+    path.join(workdir, 'keyboard-shortcuts.json'),
+    path.join(workdir, 'action-accelerators.json')
+  );
+
+  return candidates.find((candidate) => fs.existsSync(candidate)) || null;
+}
+
+function normalizeShortcutData(raw) {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  if (Array.isArray(raw.actions)) return raw.actions;
+  if (Array.isArray(raw.shortcuts)) return raw.shortcuts;
+  if (Array.isArray(raw.accelerators)) return raw.accelerators;
+  return [];
+}
+
+function loadShortcutData(workdir, config) {
+  const shortcutFile = resolveShortcutFile(workdir, config);
+  if (!shortcutFile) {
+    return { shortcuts: undefined, sourcePath: undefined };
+  }
+
+  const raw = JSON.parse(fs.readFileSync(shortcutFile, 'utf8'));
+  const shortcuts = normalizeShortcutData(raw);
+
+  if (shortcuts.length === 0) {
+    console.warn(`[dazscript] Keyboard shortcut file has no shortcut entries: ${shortcutFile}`);
+  }
+
+  return {
+    shortcuts,
+    sourcePath: toPosix(path.relative(workdir, shortcutFile)),
+  };
 }
 
 function generateInstallerFiles(workdir, options) {
@@ -241,10 +298,20 @@ function generateInstallerFiles(workdir, options) {
   const bundleName = typeof config.bundleName === 'string' && config.bundleName.trim()
     ? config.bundleName.trim()
     : undefined;
+  const shortcutData = loadShortcutData(workdir, config);
+  const setupOptions = {
+    settingsPath,
+    bundleName,
+    shortcutBackupPath: `${appDataPath}/Installer/keyboard-shortcuts-backup.json`,
+  };
+  if (shortcutData.shortcuts && shortcutData.shortcuts.length > 0) {
+    setupOptions.shortcuts = shortcutData.shortcuts;
+    setupOptions.shortcutsSourcePath = shortcutData.sourcePath;
+  }
   const container = { scripts: [] };
   const matches = findActionEntryFiles(workdir, options);
 
-  processScripts(matches, container, defaultMenuPath, settingsPath, bundleName);
+  processScripts(matches, container, defaultMenuPath, setupOptions);
 
   container.scripts = container.scripts.sort((a, b) => {
     const aKey = a.menuPath + a.filePath;
@@ -254,15 +321,19 @@ function generateInstallerFiles(workdir, options) {
 
   const installerScriptContent = generateInstallerTemplate(
     JSON.stringify(container.scripts, null, 4),
-    settingsPath,
-    bundleName
+    setupOptions
   );
   fs.writeFileSync(path.join(workdir, 'src', 'Setup.dsa.ts'), installerScriptContent);
 
   const installPath = path.join(workdir, 'src', 'Install.dsa.ts');
   const uninstallPath = path.join(workdir, 'src', 'Uninstall.dsa.ts');
   if (fs.existsSync(installPath)) fs.unlinkSync(installPath);
-  if (fs.existsSync(uninstallPath)) fs.unlinkSync(uninstallPath);
+
+  if (shortcutData.shortcuts && shortcutData.shortcuts.length > 0) {
+    fs.writeFileSync(path.join(workdir, 'src', 'Uninstall.dsa.ts'), generateUninstallTemplate(setupOptions));
+  } else if (fs.existsSync(uninstallPath)) {
+    fs.unlinkSync(uninstallPath);
+  }
 }
 
 if (require.main === module) {

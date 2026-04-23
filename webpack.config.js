@@ -75,6 +75,12 @@ module.exports = (env, argv) => {
               loader: 'ts-loader',
               options: {
                 allowTsInNodeModules: true,
+                configFile: path.resolve(projectRoot, 'tsconfig.json'),
+                compilerOptions: {
+                  strict: false,
+                  strictNullChecks: false,
+                  strictPropertyInitialization: false,
+                },
                 ignoreDiagnostics: [5107],
               },
             },
