@@ -1,6 +1,6 @@
 # DazScript Framework
 
-**DazScript Framework** is a TypeScript toolkit for writing [Daz Studio](https://www.daz3d.com/daz-studio) scripts. It layers a full TypeScript development experience on top of DAZ Script (Qt Script / ECMAScript 5.1), and ships a fluent dialog builder so you can build UIs in code without touching the Qt widget API directly.
+**DazScript Framework** is a TypeScript toolkit for writing [Daz Studio](https://www.daz3d.com/daz-studio) scripts. It layers a full TypeScript development experience on top of [DAZ Script](https://docs.daz3d.com/public/software/dazstudio/4/referenceguide/scripting/start) (Qt Script / ECMAScript 5.1), and ships a fluent dialog builder so you can build UIs in code without touching the Qt widget API directly.
 
 ## Why use it?
 
@@ -490,6 +490,11 @@ Every push to `master` automatically:
 No manual steps required.
 
 ---
+
+## Resources
+
+- [DAZ Script Reference](https://docs.daz3d.com/public/software/dazstudio/4/referenceguide/scripting/start) — official Daz Studio scripting documentation
+- [dazscript-types](https://www.npmjs.com/package/dazscript-types) — TypeScript type definitions for the Daz Studio API
 
 ## Examples
 
