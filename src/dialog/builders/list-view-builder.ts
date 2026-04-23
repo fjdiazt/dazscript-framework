@@ -384,7 +384,7 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
 
     if (context.doubleClicked) {
         listView.doubleClicked.scriptConnect((listItem) => {
-            context.doubleClicked.value = listItem?.getDataItem('data')
+            context.doubleClicked.value = listItem?.getDataItem('data') as TData
         })
     }
 

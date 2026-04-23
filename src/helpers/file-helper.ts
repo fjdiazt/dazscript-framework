@@ -80,7 +80,7 @@ export const deleteFile = (filePath: string): boolean => {
     try {
         var file = new DzFile(filePath)
         if (!file.exists()) return false
-        file.remove(filePath)
+        file.remove(/*filePath*/)
         file.deleteLater()
         return true
     } catch (error) {

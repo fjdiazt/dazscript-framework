@@ -298,7 +298,7 @@ export const cleanupEmptyToolbar = (toolbarName: string | null | undefined) => {
     debug(`Toolbar ${toolbarName} closed (setClosed=true)`)
     toolbar.clear()
     debug(`Toolbar ${toolbarName} cleared`)
-    paneMgr.removeToolBar(toolbar)
+    paneMgr.removeToolBar(toolbarName)
     debug(`Toolbar ${toolbarName} removeToolBar called`)
 }
 

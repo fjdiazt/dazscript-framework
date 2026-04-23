@@ -195,7 +195,7 @@ export const clearActionShorcut = (name: string) => {
     }
 }
 
-export const getActionPixmap = (action: string, icon: string, maxSize?: number): QPixmap | null => {
+export const getActionPixmap = (action: string, icon: string, maxSize?: number): Pixmap | null => {
     try {
         if (!action) return null;
         let isCustom = isCustomAction(action)
@@ -204,7 +204,7 @@ export const getActionPixmap = (action: string, icon: string, maxSize?: number):
             let image: DzImageTexture = (App.getImageMgr() as any)['getImage(QString)'](icon)
             if (image) {
                 let size = image.getOriginalImageSize();
-                let pixmap: QPixmap
+                let pixmap: Pixmap
                 // Only clamp if maxSize is provided and image is larger
                 if (maxSize && (size.width > maxSize || size.height > maxSize)) {
                     pixmap = image.getPreviewPixmap(Math.min(size.width, maxSize), Math.min(size.height, maxSize))
