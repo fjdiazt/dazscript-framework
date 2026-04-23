@@ -1,5 +1,6 @@
 import { debug } from '@dsf/common/log'
 import { action } from '@dsf/core/action'
+import { readFromFile, saveToFile } from '@dsf/helpers/file-helper'
 import { info } from '@dsf/helpers/message-box-helper'
 import { AppSettings } from '@dsf/lib/settings'
 import { config } from './config'
@@ -15,50 +16,26 @@ interface RunLog {
 
 class LocalFileSettings extends AppSettings {
     constructor() {
-        // appDataPath will be: <DazAppData>/DazScriptFramework/03-LocalFiles
+        // appDataPath resolves to: <DazAppData>/DazScriptFramework/03-LocalFiles
         super(`${config.author}/03-LocalFiles`)
     }
-}
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function ensureDir(path: string): void {
-    let dir = new DzDir(path)
-    if (!dir.exists()) dir.mkpath()
-}
-
-function writeJson(path: string, data: object): boolean {
-    let file = new DzFile(path)
-    if (!file.open(DzFile.WriteOnly | DzFile.Truncate)) return false
-    file.write(JSON.stringify(data, null, 2))
-    file.close()
-    return true
-}
-
-function readJson<T>(path: string, fallback: T): T {
-    let file = new DzFile(path)
-    if (!file.open(DzFile.ReadOnly)) return fallback
-    let raw = file.read()
-    file.close()
-    try { return JSON.parse(raw) as T } catch { return fallback }
 }
 
 // ── Action ───────────────────────────────────────────────────────────────────
 
 action({ text: '03 Local Files' }, () => {
     let settings = new LocalFileSettings()
-    let dir      = settings.appDataPath   // absolute path under DazAppData
-
-    ensureDir(dir)
-
+    let dir      = settings.appDataPath
     let filePath = `${dir}/run-log.json`
-    let log      = readJson<RunLog>(filePath, { count: 0, entries: [] })
+
+    // readFromFile / saveToFile (from file-helper) handle DzFile and DzDir internally.
+    let log = readFromFile<RunLog>(filePath) ?? { count: 0, entries: [] }
 
     log.count += 1
     log.entries.push(new Date().toLocaleString())
     if (log.entries.length > 5) log.entries.shift()   // keep last 5
 
-    let ok = writeJson(filePath, log)
+    let ok = saveToFile(filePath, JSON.stringify(log, null, 2))
 
     const lines = [
         `Data dir   : ${dir}`,
