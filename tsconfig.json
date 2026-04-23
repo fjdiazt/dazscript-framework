@@ -118,8 +118,6 @@
   },
   "include": [
     "node_modules/dazscript-types/src/types/**/*",
-    "../node_modules/dazscript-types/src/types/**/*",
-    "../script-types/src/types/**/*",
     "src/**/*"
   ],
   "exclude": [
