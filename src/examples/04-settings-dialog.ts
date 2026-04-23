@@ -2,11 +2,11 @@ import { BasicDialog } from '@dsf/dialog/basic-dialog'
 import { AppSettings } from '@dsf/lib/settings'
 import { config } from './config'
 
-// ── Settings (persisted across runs via DzAppSettings) ───────────────────────
+// Settings (persisted across runs via DzAppSettings)
 
 export class RenderSettings extends AppSettings {
     constructor() {
-        super(`${config.author}/05-SettingsDialog`)
+        super(`${config.author}/04-SettingsDialog`)
     }
 
     quality$       = this.bindString('quality$', 'Medium')
@@ -18,16 +18,18 @@ export class RenderSettings extends AppSettings {
     format$        = this.bindString('format$', 'PNG')
 }
 
-// ── Dialog ───────────────────────────────────────────────────────────────────
+// Dialog
 
 export class SettingsDialog extends BasicDialog {
     constructor(private readonly settings: RenderSettings) {
-        super('05 Settings Dialog')
+        super('04 Settings Dialog')
     }
 
     protected build(): void {
         let add      = this.add
         let settings = this.settings
+
+        this.builder.options({ resizable: true, width: 520, height: 420 })
 
         add.group('Render').build(() => {
             add.horizontal((layout) => {
@@ -57,7 +59,7 @@ export class SettingsDialog extends BasicDialog {
                 add.label('Path:').minWidth(60)
                 add.edit()
                     .value(settings.outputPath$)
-                    .placeholder('Leave empty for default output path…')
+                    .placeholder('Leave empty for default output path...')
             })
 
             add.group('Format').horizontal().style({ flat: true }).build(() => {

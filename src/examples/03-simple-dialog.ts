@@ -1,7 +1,7 @@
 import { BasicDialog } from '@dsf/dialog/basic-dialog'
 import { Observable } from '@dsf/lib/observable'
 
-// ── Model ────────────────────────────────────────────────────────────────────
+// Model
 
 export class SimpleDialogModel {
     name$    = new Observable('My Object')
@@ -9,28 +9,30 @@ export class SimpleDialogModel {
     notes$   = new Observable('')
 }
 
-// ── Dialog ───────────────────────────────────────────────────────────────────
+// Dialog
 
 export class SimpleDialog extends BasicDialog {
     constructor(private readonly model: SimpleDialogModel) {
-        super('04 Simple Dialog')
+        super('03 Simple Dialog')
     }
 
     protected build(): void {
         let add   = this.add
         let model = this.model
 
+        this.builder.options({ resizable: true, width: 420, height: 240 })
+
         add.group('Object').build(() => {
             add.horizontal((layout) => {
                 layout.spacing = 5
                 add.label('Name:').minWidth(45)
-                add.edit().value(model.name$).placeholder('Enter a name…')
+                add.edit().value(model.name$).placeholder('Enter a name...')
             })
 
             add.horizontal((layout) => {
                 layout.spacing = 5
                 add.label('Notes:').minWidth(45)
-                add.edit().value(model.notes$).placeholder('Optional notes…')
+                add.edit().value(model.notes$).placeholder('Optional notes...')
             })
 
             add.checkbox('Enabled').value(model.enabled$)

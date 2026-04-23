@@ -10,6 +10,7 @@ import { Observable } from '@dsf/lib/observable'
 import CustomSet from '@dsf/lib/set'
 import { TreeNode } from '@dsf/lib/tree-node'
 import { promptKeyboardShortcut } from '@dsf/shared/set-keyboard-shortcut'
+import { readFromFile } from './file-helper'
 
 type InstallerEntry = {
     action: CustomAction
@@ -28,6 +29,12 @@ type InstallerEntry = {
 type SetupDialogOptions = {
     settingsPath: string
     bundleName?: string
+    shortcutsPath?: string
+}
+
+type ActionAccelerator = {
+    name: string
+    shortcut: string
 }
 
 const OVERRIDE_MARKER = '[ovr]'
@@ -36,6 +43,9 @@ const toKey = (action: CustomAction): string => String(action.filePath ?? action
 
 const toTreeNode = (entry: InstallerEntry): TreeNode<InstallerEntry> =>
     new TreeNode(String(entry.action.text), toKey(entry.action), entry)
+
+const getEntry = (item: TreeNode<InstallerEntry>): InstallerEntry =>
+    item.value as InstallerEntry
 
 const getDisplayedToolbar = (entry: InstallerEntry): string => String(entry.action.toolbar ?? '')
 
@@ -123,8 +133,9 @@ class InstallerSelectionDialog extends BasicDialog {
                     .sortOnBuild(true)
                     .refresh(this.refreshListEvent$)
                     .row((item, parent, id) => {
+                        const entry = getEntry(item)
                         const listItem = new DzCheckListItem(parent, DzCheckListItem.CheckBox, id)
-                        listItem.on = item.value.selected
+                        listItem.on = entry.selected
                         listItem.setText(0, '')
                         return listItem
                     })
@@ -139,15 +150,18 @@ class InstallerSelectionDialog extends BasicDialog {
                         if (index === 5) return Math.max(width * 1.2, 140)
                         return width
                     })
-                    .text((item) => [
-                        '',
-                        String(item.value.action.text ?? ''),
-                        getDisplayedShortcut(item.value),
-                        String(item.value.action.description ?? ''),
-                        String(item.value.action.menuPath ?? ''),
-                        getDisplayedToolbar(item.value),
-                    ])
-                    .data((item) => item.value)
+                    .text((item) => {
+                        const entry = getEntry(item)
+                        return [
+                            '',
+                            String(entry.action.text ?? ''),
+                            getDisplayedShortcut(entry),
+                            String(entry.action.description ?? ''),
+                            String(entry.action.menuPath ?? ''),
+                            getDisplayedToolbar(entry),
+                        ]
+                    })
+                    .data((item) => getEntry(item))
                     .filter({
                         keywords: this.keywords$,
                         field: (listItem) => [
@@ -286,6 +300,21 @@ export const showSetupCustomActionsDialog = (actions: CustomAction[], options: s
     const settings = getSetupDialogOptions(options)
     const selections = runDialog(actions, settings)
     if (!selections) return
+
+    if (settings.shortcutsPath) {
+        try {
+            const shortcuts = readFromFile<ActionAccelerator[]>(settings.shortcutsPath)
+            if (shortcuts) {
+                progress('Applying Keyboard Shortcuts', shortcuts, (shortcut) => {
+                    if (shortcut.name && shortcut.shortcut) {
+                        setActionShortcut(shortcut.name, shortcut.shortcut)
+                    }
+                })
+            }
+        } catch (e) {
+            debug(`[Setup] Failed to apply shortcuts from ${settings.shortcutsPath}: ${e}`)
+        }
+    }
 
     debug(`[Setup] applying ${selections.filter(selection => selection.selected).length}/${selections.length} selected actions`)
 

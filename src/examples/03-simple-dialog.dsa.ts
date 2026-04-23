@@ -1,9 +1,9 @@
 import { debug } from '@dsf/common/log'
 import { action } from '@dsf/core/action'
 import { info } from '@dsf/helpers/message-box-helper'
-import { SimpleDialog, SimpleDialogModel } from './04-simple-dialog'
+import { SimpleDialog, SimpleDialogModel } from './03-simple-dialog'
 
-action({ text: '04 Simple Dialog' }, () => {
+action({ text: '03 Simple Dialog' }, () => {
     let model  = new SimpleDialogModel()
     let dialog = new SimpleDialog(model)
 

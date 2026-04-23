@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES5",
-    "ignoreDeprecations": "5.0",
+    "ignoreDeprecations": "6.0",
     "lib": ["ES5"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
@@ -23,6 +23,9 @@
     "preserveConstEnums": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "strict": false,
+    "strictNullChecks": false,
+    "strictPropertyInitialization": false,
     "noImplicitAny": false,
     "strictFunctionTypes": true,
     "alwaysStrict": true,

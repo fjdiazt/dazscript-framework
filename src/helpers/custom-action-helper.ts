@@ -4,6 +4,7 @@ import { mainWindow } from '@dsf/core/global'
 import * as array from '@dsf/helpers/array-helper'
 import { keys } from '@dsf/helpers/object-helper'
 import { progress } from '@dsf/helpers/progress-helper'
+import CustomSet from '@dsf/lib/set'
 import { getMenu } from './menu-helper'
 import { getScriptPath } from './script-helper'
 
@@ -445,7 +446,7 @@ export const installCustomActions = (actions: CustomAction[]) => {
 
 export const uninstallCustomActions = (actions: CustomAction[]) => {
     debug(`Uninstalling Actions`)
-    const toolbarNames = new Set<string>()
+    const toolbarNames = new CustomSet<string>()
 
     actions.forEach(action => {
         if (!action) return

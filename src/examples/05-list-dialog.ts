@@ -4,7 +4,7 @@ import { getDataItem } from '@dsf/helpers/list-view-helper'
 import { Observable } from '@dsf/lib/observable'
 import { TreeNode } from '@dsf/lib/tree-node'
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// Types
 
 export interface FileItem {
     name: string
@@ -12,7 +12,7 @@ export interface FileItem {
     size: number
 }
 
-// ── Model ────────────────────────────────────────────────────────────────────
+// Model
 
 export class ListDialogModel {
     keywords$     = new Observable('')
@@ -22,16 +22,18 @@ export class ListDialogModel {
     selectedRecent$ = new Observable<string[]>([])
 }
 
-// ── Dialog ───────────────────────────────────────────────────────────────────
+// Dialog
 
 export class ListDialog extends BasicDialog {
     constructor(private readonly model: ListDialogModel) {
-        super('06 List View')
+        super('05 List View')
     }
 
     protected build(): void {
         let add   = this.add
         let model = this.model
+
+        this.builder.options({ resizable: true, width: 640, height: 520 })
 
         // Search bar
         add.horizontal((layout) => {
@@ -39,7 +41,7 @@ export class ListDialog extends BasicDialog {
             add.label('Search:').minWidth(50)
             add.edit()
                 .value(model.keywords$)
-                .placeholder('Filter files…')
+                .placeholder('Filter files...')
                 .focus()
         })
 

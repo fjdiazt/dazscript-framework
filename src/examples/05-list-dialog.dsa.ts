@@ -2,9 +2,9 @@ import { debug } from '@dsf/common/log'
 import { action } from '@dsf/core/action'
 import { info } from '@dsf/helpers/message-box-helper'
 import { TreeNode } from '@dsf/lib/tree-node'
-import { FileItem, ListDialog, ListDialogModel } from './06-list-dialog'
+import { FileItem, ListDialog, ListDialogModel } from './05-list-dialog'
 
-// ── Sample data ──────────────────────────────────────────────────────────────
+// Sample data
 
 function buildFileTree(): TreeNode<FileItem>[] {
     const folder = (name: string, children: TreeNode<FileItem>[] = []) =>
@@ -29,9 +29,9 @@ function buildFileTree(): TreeNode<FileItem>[] {
     ]
 }
 
-// ── Action ───────────────────────────────────────────────────────────────────
+// Action
 
-action({ text: '06 List Dialog' }, () => {
+action({ text: '05 List Dialog' }, () => {
     let model  = new ListDialogModel()
     model.files$.value       = buildFileTree()
     model.recentFiles$.value = ['Victoria.duf', 'Chair.obj', 'Scene.duf']

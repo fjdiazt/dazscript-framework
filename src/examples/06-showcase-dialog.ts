@@ -6,7 +6,7 @@ import { Observable } from '@dsf/lib/observable'
 import { TreeNode } from '@dsf/lib/tree-node'
 import { config } from './config'
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// Types
 
 export interface SceneObject {
     id: number
@@ -16,11 +16,11 @@ export interface SceneObject {
     locked: boolean
 }
 
-// ── Settings (all persisted via DzAppSettings) ────────────────────────────────
+// Settings (all persisted via DzAppSettings)
 
 export class ShowcaseDialogSettings extends AppSettings {
     constructor() {
-        super(`${config.author}/07-ShowcaseDialog`)
+        super(`${config.author}/06-ShowcaseDialog`)
     }
 
     // Objects tab
@@ -30,17 +30,17 @@ export class ShowcaseDialogSettings extends AppSettings {
     splitterState$ = this.bindString('splitterState$', '')
     filterType$    = this.bindString('filterType$', 'All')
 
-    // Settings tab — Render
+    // Settings tab - Render
     quality$   = this.bindString('quality$', 'Standard')
     samples$   = this.bindInt('samples$', 64)
     scale$     = this.bindFloat('scale$', 1.0)
 
-    // Settings tab — Export
+    // Settings tab - Export
     exportFormat$ = this.bindString('exportFormat$', 'JSON')
     outputPath$   = this.bindString('outputPath$', '')
     autoSave$     = this.bindBoolean('autoSave$', false)
 
-    // Settings tab — Behaviour
+    // Settings tab - Behaviour
     notifications$ = this.bindBoolean('notifications$', true)
     logLevel$      = this.bindString('logLevel$', 'Info')
 
@@ -48,7 +48,7 @@ export class ShowcaseDialogSettings extends AppSettings {
     showFilters$ = this.bindBoolean('showFilters$', false)
 }
 
-// ── Model ─────────────────────────────────────────────────────────────────────
+// Model
 
 export class ShowcaseDialogModel {
     readonly settings = new ShowcaseDialogSettings()
@@ -59,18 +59,18 @@ export class ShowcaseDialogModel {
     keywords$       = new Observable('')
     logEntries$     = new Observable<string[]>([])
 
-    // Detail panel fields — updated externally when selectedObject$ changes
+    // Detail panel fields - updated externally when selectedObject$ changes
     detailName$    = new Observable('')
     detailType$    = new Observable('')
     detailVisible$ = new Observable(false)
     detailLocked$  = new Observable(false)
 }
 
-// ── Dialog ────────────────────────────────────────────────────────────────────
+// Dialog
 
 export class ShowcaseDialog extends BasicDialog {
     constructor(private readonly model: ShowcaseDialogModel) {
-        super('07 Showcase Dialog', `${config.author}/07-ShowcaseDialog`)
+        super('06 Showcase Dialog', `${config.author}/06-ShowcaseDialog`)
     }
 
     protected build(): void {
@@ -93,7 +93,7 @@ export class ShowcaseDialog extends BasicDialog {
         })
     }
 
-    // ── Tab 1: Objects ────────────────────────────────────────────────────────
+    // Tab 1: Objects
 
     private buildObjectsTab(): void {
         let add      = this.add
@@ -105,7 +105,7 @@ export class ShowcaseDialog extends BasicDialog {
             layout.spacing = 4
             add.edit()
                 .value(model.keywords$)
-                .placeholder('Filter objects…')
+                .placeholder('Filter objects...')
                 .focus()
             add.label('Type:')
             add.combo()
@@ -122,7 +122,7 @@ export class ShowcaseDialog extends BasicDialog {
             add.checkbox('Show Icons').value(settings.showIcons$)
         })
 
-        // Splitter — position persisted via bindString
+        // Splitter - position persisted via bindString
         add.splitter()
             .state(settings.splitterState$)
             .strech(2, 1)
@@ -209,7 +209,7 @@ export class ShowcaseDialog extends BasicDialog {
             .build()
     }
 
-    // ── Tab 2: Settings ───────────────────────────────────────────────────────
+    // Tab 2: Settings
 
     private buildSettingsTab(): void {
         let add      = this.add
@@ -232,7 +232,7 @@ export class ShowcaseDialog extends BasicDialog {
                     })
                 })
 
-                // Radio buttons — initialize from persisted quality value;
+                // Radio buttons - initialize from persisted quality value;
                 // toggled() writes back when the user picks a different option.
                 add.group('Render Quality').build(() => {
                     add.radio('Draft')
@@ -274,12 +274,12 @@ export class ShowcaseDialog extends BasicDialog {
                         add.label('Output:').minWidth(55)
                         add.edit()
                             .value(settings.outputPath$)
-                            .placeholder('Default output path…')
+                            .placeholder('Default output path...')
                     })
                     add.horizontal((layout) => {
                         layout.spacing = 4
                         add.label('Format:').minWidth(55)
-                        // ComboBox — two-way bind to persisted string
+                        // ComboBox - two-way bind to persisted string
                         add.combo()
                             .items(['JSON', 'XML', 'CSV'])
                             .selected(settings.exportFormat$)
@@ -289,7 +289,7 @@ export class ShowcaseDialog extends BasicDialog {
             })
         })
 
-        // Color pickers — read the final color from the widget on accept
+        // Color pickers - read the final color from the widget on accept
         add.group('Colors').horizontal().build(() => {
             add.vertical(() => {
                 add.label('Background:').build()
@@ -314,7 +314,7 @@ export class ShowcaseDialog extends BasicDialog {
         })
     }
 
-    // ── Tab 3: About ─────────────────────────────────────────────────────────
+    // Tab 3: About
 
     private buildAboutTab(): void {
         let add      = this.add
@@ -323,30 +323,30 @@ export class ShowcaseDialog extends BasicDialog {
 
         add.group('About This Example').build(() => {
             add.label([
-                'DAZScript Framework — Showcase Dialog (Example 07)',
+                'DAZScript Framework - Showcase Dialog (Example 06)',
                 '',
                 'Widgets demonstrated in this dialog:',
-                '  • Tabs with persisted active-tab index (bindInt)',
-                '  • Splitter with persisted position (bindString)',
-                '  • list.view — columns, keyword filter, custom filters,',
+                '  - Tabs with persisted active-tab index (bindInt)',
+                '  - Splitter with persisted position (bindString)',
+                '  - list.view - columns, keyword filter, custom filters,',
                 '      context menu, refresh trigger, flat/tree toggle,',
                 '      expanded, data binding, selection binding',
-                '  • list.box — scrollable list with multi-select',
-                '  • GroupBox — vertical / horizontal / flat style / visible toggle',
-                '  • Label — wordWrap, minWidth, alignment',
-                '  • LineEdit — value binding, placeholder, readOnly',
-                '  • CheckBox, RadioButton — Observable two-way binding',
-                '  • Button — clicked, toggle, toolTip',
-                '  • Slider — integer and float with min/max',
-                '  • ColorPicker (DzColorWgt)',
-                '  • ComboBox — items + selected binding',
-                '  • ComboEdit — items + changed/edited binding',
-                '  • NodeSelection combo (scene node picker)',
-                '  • All settings persisted via AppSettings (DzAppSettings)',
+                '  - list.box - scrollable list with multi-select',
+                '  - GroupBox - vertical / horizontal / flat style / visible toggle',
+                '  - Label - wordWrap, minWidth, alignment',
+                '  - LineEdit - value binding, placeholder, readOnly',
+                '  - CheckBox, RadioButton - Observable two-way binding',
+                '  - Button - clicked, toggle, toolTip',
+                '  - Slider - integer and float with min/max',
+                '  - ColorPicker (DzColorWgt)',
+                '  - ComboBox - items + selected binding',
+                '  - ComboEdit - items + changed/edited binding',
+                '  - NodeSelection combo (scene node picker)',
+                '  - All settings persisted via AppSettings (DzAppSettings)',
             ].join('\n')).wordWrap(true).build()
         })
 
-        // Log list — populated externally; demonstrates Observable<string[]> binding
+        // Log list - populated externally; demonstrates Observable<string[]> binding
         add.group('Recent Log').build(() => {
             add.list.box()
                 .items(model.logEntries$)
@@ -354,7 +354,7 @@ export class ShowcaseDialog extends BasicDialog {
                 .build()
         })
 
-        // Conditional filter row — group visible when showFilters$ is true
+        // Conditional filter row - group visible when showFilters$ is true
         add.group('Optional Filters').horizontal()
             .visible(settings.showFilters$)
             .build(() => {

@@ -2,9 +2,9 @@ import { debug } from '@dsf/common/log'
 import { action } from '@dsf/core/action'
 import { info } from '@dsf/helpers/message-box-helper'
 import { TreeNode } from '@dsf/lib/tree-node'
-import { SceneObject, ShowcaseDialog, ShowcaseDialogModel } from './07-showcase-dialog'
+import { SceneObject, ShowcaseDialog, ShowcaseDialogModel } from './06-showcase-dialog'
 
-// ── Sample data ───────────────────────────────────────────────────────────────
+// Sample data
 
 function buildSceneTree(): TreeNode<SceneObject>[] {
     let id = 0
@@ -40,9 +40,9 @@ function buildSceneTree(): TreeNode<SceneObject>[] {
     ]
 }
 
-// ── Action ────────────────────────────────────────────────────────────────────
+// Action
 
-action({ text: '07 Showcase Dialog' }, () => {
+action({ text: '06 Showcase Dialog' }, () => {
     let model  = new ShowcaseDialogModel()
     let dialog = new ShowcaseDialog(model)
 
@@ -50,7 +50,7 @@ action({ text: '07 Showcase Dialog' }, () => {
 
     model.logEntries$.value = [
         '[Info]  Script started',
-        '[Info]  Scene loaded — 4 root nodes',
+        '[Info]  Scene loaded - 4 root nodes',
         '[Debug] Settings restored from DzAppSettings',
     ]
 

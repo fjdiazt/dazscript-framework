@@ -11,51 +11,37 @@ setup([
     },
     {
         "name": null,
-        "text": "02 App Settings",
-        "filePath": "examples/02-app-settings.dsa",
+        "text": "02 Persistence Dialog",
+        "filePath": "examples/02-persistence-dialog.dsa",
         "menuPath": "/DazScriptFramework/examples",
-        "description": "02-app-settings"
+        "description": "02-persistence-dialog"
     },
     {
         "name": null,
-        "text": "03 Local Files",
-        "filePath": "examples/03-local-files.dsa",
+        "text": "03 Simple Dialog",
+        "filePath": "examples/03-simple-dialog.dsa",
         "menuPath": "/DazScriptFramework/examples",
-        "description": "03-local-files"
+        "description": "03-simple-dialog"
     },
     {
         "name": null,
-        "text": "04 Simple Dialog",
-        "filePath": "examples/04-simple-dialog.dsa",
+        "text": "04 Settings Dialog",
+        "filePath": "examples/04-settings-dialog.dsa",
         "menuPath": "/DazScriptFramework/examples",
-        "description": "04-simple-dialog"
+        "description": "04-settings-dialog"
     },
     {
         "name": null,
-        "text": "05 Settings Dialog",
-        "filePath": "examples/05-settings-dialog.dsa",
+        "text": "05 List Dialog",
+        "filePath": "examples/05-list-dialog.dsa",
         "menuPath": "/DazScriptFramework/examples",
-        "description": "05-settings-dialog"
+        "description": "05-list-dialog"
     },
     {
         "name": null,
-        "text": "06 List Dialog",
-        "filePath": "examples/06-list-dialog.dsa",
+        "text": "06 Showcase Dialog",
+        "filePath": "examples/06-showcase-dialog.dsa",
         "menuPath": "/DazScriptFramework/examples",
-        "description": "06-list-dialog"
-    },
-    {
-        "name": null,
-        "text": "Hello World",
-        "filePath": "examples/hello-world.dsa",
-        "menuPath": "/DazScriptFramework/examples",
-        "description": "hello-world"
-    },
-    {
-        "name": null,
-        "text": "Sample Dialog",
-        "filePath": "examples/sample-dialog.dsa",
-        "menuPath": "/DazScriptFramework/examples",
-        "description": "sample-dialog"
+        "description": "06-showcase-dialog"
     }
 ], {"settingsPath":"DazScriptFramework/examples/Installer","bundleName":"Examples"});
