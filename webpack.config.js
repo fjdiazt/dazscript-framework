@@ -75,6 +75,7 @@ module.exports = (env, argv) => {
               loader: 'ts-loader',
               options: {
                 allowTsInNodeModules: true,
+                ignoreDiagnostics: [5107],
               },
             },
           ],

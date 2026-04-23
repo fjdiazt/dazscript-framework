@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES5",
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     "lib": ["ES5"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
