@@ -193,6 +193,11 @@ class ListViewBindBuilder<TItem, TData> {
         return this
     }
 
+    contextMenu(fn: (listView: DzListView, item: DzListViewItem, pos: Point) => DzPopupMenu): this {
+        this.context.contextMenu = fn
+        return this
+    }
+
     build(then?: (listView: DzListView) => void): DzListView {
         let listView = build(this.context)
         then?.(listView)

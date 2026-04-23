@@ -23,8 +23,8 @@ class LocalFileSettings extends AppSettings {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function ensureDir(path: string): void {
-    let dir = new DzDir()
-    if (!dir.exists(path)) dir.mkpath(path)
+    let dir = new DzDir(path)
+    if (!dir.exists()) dir.mkpath()
 }
 
 function writeJson(path: string, data: object): boolean {

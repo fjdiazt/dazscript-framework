@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES5",
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     "lib": ["ES5"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
@@ -11,9 +11,9 @@
     "paths": {
       "shared/*": ["./src/shared/*"],
       "@dst/*": [
-        "./node_modules/dazscript-types/src/types/*",
+        "../script-types/src/types/*",
         "../node_modules/dazscript-types/src/types/*",
-        "../script-types/src/types/*"
+        "./node_modules/dazscript-types/src/types/*"
       ],
       "@dsf/*": ["./src/*"]
     },
@@ -29,10 +29,10 @@
     "skipLibCheck": true
   },
   "include": [
+    "../script-types/src/types/**/*",
+    "../node_modules/dazscript-types/src/types/**/*",
     "node_modules/dazscript-types/src/types/**/*",
     "src/**/*"
   ],
-  "exclude": [
-    "src/**/*.test.ts"
-  ]
+  "exclude": ["src/**/*.test.ts"]
 }

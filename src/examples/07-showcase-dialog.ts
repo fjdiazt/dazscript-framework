@@ -18,40 +18,40 @@ export interface SceneObject {
 
 // ── Settings (all persisted via DzAppSettings) ────────────────────────────────
 
-export class KitchenSinkSettings extends AppSettings {
+export class ShowcaseDialogSettings extends AppSettings {
     constructor() {
-        super(`${config.author}/07-KitchenSink`)
+        super(`${config.author}/07-ShowcaseDialog`)
     }
 
     // Objects tab
-    activeTab$     = this.bindInt('activeTab', 0)
-    flatList$      = this.bindBoolean('flatList', false)
-    showIcons$     = this.bindBoolean('showIcons', true)
-    splitterState$ = this.bindString('splitterState', '')
-    filterType$    = this.bindString('filterType', 'All')
+    activeTab$     = this.bindInt('activeTab$', 0)
+    flatList$      = this.bindBoolean('flatList$', false)
+    showIcons$     = this.bindBoolean('showIcons$', true)
+    splitterState$ = this.bindString('splitterState$', '')
+    filterType$    = this.bindString('filterType$', 'All')
 
     // Settings tab — Render
-    quality$   = this.bindString('quality', 'Standard')
-    samples$   = this.bindInt('samples', 64)
-    scale$     = this.bindFloat('scale', 1.0)
+    quality$   = this.bindString('quality$', 'Standard')
+    samples$   = this.bindInt('samples$', 64)
+    scale$     = this.bindFloat('scale$', 1.0)
 
     // Settings tab — Export
-    exportFormat$ = this.bindString('exportFormat', 'JSON')
-    outputPath$   = this.bindString('outputPath', '')
-    autoSave$     = this.bindBoolean('autoSave', false)
+    exportFormat$ = this.bindString('exportFormat$', 'JSON')
+    outputPath$   = this.bindString('outputPath$', '')
+    autoSave$     = this.bindBoolean('autoSave$', false)
 
     // Settings tab — Behaviour
-    notifications$ = this.bindBoolean('notifications', true)
-    logLevel$      = this.bindString('logLevel', 'Info')
+    notifications$ = this.bindBoolean('notifications$', true)
+    logLevel$      = this.bindString('logLevel$', 'Info')
 
     // About tab
-    showFilters$ = this.bindBoolean('showFilters', false)
+    showFilters$ = this.bindBoolean('showFilters$', false)
 }
 
 // ── Model ─────────────────────────────────────────────────────────────────────
 
-export class KitchenSinkModel {
-    readonly settings = new KitchenSinkSettings()
+export class ShowcaseDialogModel {
+    readonly settings = new ShowcaseDialogSettings()
 
     objects$        = new Observable<TreeNode<SceneObject>[]>([])
     selectedObject$ = new Observable<SceneObject>()
@@ -68,9 +68,9 @@ export class KitchenSinkModel {
 
 // ── Dialog ────────────────────────────────────────────────────────────────────
 
-export class KitchenSinkDialog extends BasicDialog {
-    constructor(private readonly model: KitchenSinkModel) {
-        super('07 Kitchen Sink', `${config.author}/07-KitchenSink`)
+export class ShowcaseDialog extends BasicDialog {
+    constructor(private readonly model: ShowcaseDialogModel) {
+        super('07 Showcase Dialog', `${config.author}/07-ShowcaseDialog`)
     }
 
     protected build(): void {
@@ -321,9 +321,9 @@ export class KitchenSinkDialog extends BasicDialog {
         let model    = this.model
         let settings = model.settings
 
-        add.group('About This Sample').build(() => {
+        add.group('About This Example').build(() => {
             add.label([
-                'DAZScript Framework — Kitchen Sink (Sample 07)',
+                'DAZScript Framework — Showcase Dialog (Example 07)',
                 '',
                 'Widgets demonstrated in this dialog:',
                 '  • Tabs with persisted active-tab index (bindInt)',

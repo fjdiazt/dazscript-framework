@@ -11,13 +11,13 @@ class CounterSettings extends AppSettings {
 
     // Each bind method reads the persisted value on construction and
     // auto-saves back to DzAppSettings whenever the observable changes.
-    runCount$ = this.bindInt('runCount', 0)
-    username$ = this.bindString('username', 'World')
-    verbose$  = this.bindBoolean('verbose', false)
-    scale$    = this.bindFloat('scale', 1.0)
-    tags$     = this.bindArray('tags', ['default'])
+    runCount$ = this.bindInt('runCount$', 0)
+    username$ = this.bindString('username$', 'World')
+    verbose$  = this.bindBoolean('verbose$', false)
+    scale$    = this.bindFloat('scale$', 1.0)
+    tags$     = this.bindArray('tags$', ['default'])
     profile$  = this.bindJson<{ theme: string; columns: number }>(
-        'profile',
+        'profile$',
         { theme: 'dark', columns: 3 },
     )
 }

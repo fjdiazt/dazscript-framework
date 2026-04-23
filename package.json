@@ -6,12 +6,12 @@
   "description": "",
   "scripts": {
     "prepare": "node ./scripts/install-git-hooks.js",
-    "prebuild": "node ./dist/scripts/cli.js installer --scripts-path ./src/samples --menu-path /DazScriptFramework",
+    "prebuild": "node ./dist/scripts/cli.js installer --scripts-path ./src/examples --menu-path /DazScriptFramework",
     "build": "node ./dist/scripts/cli.js build --out-dir ./out",
     "postbuild": "node ./dist/scripts/cli.js icons --out-dir ./out",
     "watch": "node ./dist/scripts/cli.js watch --out-dir ./out",
     "icons": "node ./dist/scripts/cli.js icons --out-dir ./out",
-    "installer": "node ./dist/scripts/cli.js installer --scripts-path ./src/samples --menu-path /DazScriptFramework",
+    "installer": "node ./dist/scripts/cli.js installer --scripts-path ./src/examples --menu-path /DazScriptFramework",
     "test": "vitest run",
     "test:watch": "vitest"
   },

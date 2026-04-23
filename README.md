@@ -498,4 +498,4 @@ No manual steps required.
 
 ## Examples
 
-The `src/samples/` folder contains ready-to-run scripts demonstrating common patterns — a basic Hello World and a sample dialog. More complete examples covering real-world use cases are planned and will be added in a future update.
+The `src/examples/` folder contains ready-to-run scripts demonstrating common patterns and fuller reference implementations for common Daz Studio workflows.

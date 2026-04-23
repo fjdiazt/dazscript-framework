@@ -9,13 +9,13 @@ export class RenderSettings extends AppSettings {
         super(`${config.author}/05-SettingsDialog`)
     }
 
-    quality$       = this.bindString('quality', 'Medium')
-    samples$       = this.bindInt('samples', 64)
-    scale$         = this.bindFloat('scale', 1.0)
-    outputPath$    = this.bindString('outputPath', '')
-    useGpu$        = this.bindBoolean('useGpu', true)
-    verbose$       = this.bindBoolean('verbose', false)
-    format$        = this.bindString('format', 'PNG')
+    quality$       = this.bindString('quality$', 'Medium')
+    samples$       = this.bindInt('samples$', 64)
+    scale$         = this.bindFloat('scale$', 1.0)
+    outputPath$    = this.bindString('outputPath$', '')
+    useGpu$        = this.bindBoolean('useGpu$', true)
+    verbose$       = this.bindBoolean('verbose$', false)
+    format$        = this.bindString('format$', 'PNG')
 }
 
 // ── Dialog ───────────────────────────────────────────────────────────────────

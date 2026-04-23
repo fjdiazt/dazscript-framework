@@ -5,57 +5,57 @@ setup([
     {
         "name": null,
         "text": "01 Hello World",
-        "filePath": "samples/01-hello-world.dsa",
-        "menuPath": "/DazScriptFramework/samples",
+        "filePath": "examples/01-hello-world.dsa",
+        "menuPath": "/DazScriptFramework/examples",
         "description": "01-hello-world"
     },
     {
         "name": null,
         "text": "02 App Settings",
-        "filePath": "samples/02-app-settings.dsa",
-        "menuPath": "/DazScriptFramework/samples",
+        "filePath": "examples/02-app-settings.dsa",
+        "menuPath": "/DazScriptFramework/examples",
         "description": "02-app-settings"
     },
     {
         "name": null,
         "text": "03 Local Files",
-        "filePath": "samples/03-local-files.dsa",
-        "menuPath": "/DazScriptFramework/samples",
+        "filePath": "examples/03-local-files.dsa",
+        "menuPath": "/DazScriptFramework/examples",
         "description": "03-local-files"
     },
     {
         "name": null,
         "text": "04 Simple Dialog",
-        "filePath": "samples/04-simple-dialog.dsa",
-        "menuPath": "/DazScriptFramework/samples",
+        "filePath": "examples/04-simple-dialog.dsa",
+        "menuPath": "/DazScriptFramework/examples",
         "description": "04-simple-dialog"
     },
     {
         "name": null,
         "text": "05 Settings Dialog",
-        "filePath": "samples/05-settings-dialog.dsa",
-        "menuPath": "/DazScriptFramework/samples",
+        "filePath": "examples/05-settings-dialog.dsa",
+        "menuPath": "/DazScriptFramework/examples",
         "description": "05-settings-dialog"
     },
     {
         "name": null,
         "text": "06 List Dialog",
-        "filePath": "samples/06-list-dialog.dsa",
-        "menuPath": "/DazScriptFramework/samples",
+        "filePath": "examples/06-list-dialog.dsa",
+        "menuPath": "/DazScriptFramework/examples",
         "description": "06-list-dialog"
     },
     {
         "name": null,
         "text": "Hello World",
-        "filePath": "samples/hello-world.dsa",
-        "menuPath": "/DazScriptFramework/samples",
+        "filePath": "examples/hello-world.dsa",
+        "menuPath": "/DazScriptFramework/examples",
         "description": "hello-world"
     },
     {
         "name": null,
         "text": "Sample Dialog",
-        "filePath": "samples/sample-dialog.dsa",
-        "menuPath": "/DazScriptFramework/samples",
+        "filePath": "examples/sample-dialog.dsa",
+        "menuPath": "/DazScriptFramework/examples",
         "description": "sample-dialog"
     }
-], {"settingsPath":"DazScriptFramework/samples/Installer","bundleName":"Samples"});
+], {"settingsPath":"DazScriptFramework/examples/Installer","bundleName":"Examples"});
