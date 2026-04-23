@@ -40,24 +40,25 @@ export class Observable<T> {
             }
 
             this._isSetting = true;
-            this._value = candidate;
-            if (!this._paused) this._onChange.slice().forEach(cb => cb(this._value));
-
-            // Apply afterChange transformations (bounded)
-            let transformed = this._afterChange?.(prev, this._value);
-            while (transformed !== undefined && !this._equals(this._value, transformed)) {
-                afterDepth++;
-                if (afterDepth > Observable.MAX_AFTER_CHANGE_DEPTH) {
-                    this._isSetting = false;
-                    this._pendingValue = undefined;
-                    throw new Error(`Observable: _afterChange exceeded depth ${Observable.MAX_AFTER_CHANGE_DEPTH}. Possible loop.`);
-                }
-                this._value = transformed;
+            try {
+                this._value = candidate;
                 if (!this._paused) this._onChange.slice().forEach(cb => cb(this._value));
-                transformed = this._afterChange?.(prev, this._value);
-            }
 
-            this._isSetting = false;
+                // Apply afterChange transformations (bounded)
+                let transformed = this._afterChange?.(prev, this._value);
+                while (transformed !== undefined && !this._equals(this._value, transformed)) {
+                    afterDepth++;
+                    if (afterDepth > Observable.MAX_AFTER_CHANGE_DEPTH) {
+                        this._pendingValue = undefined;
+                        throw new Error(`Observable: _afterChange exceeded depth ${Observable.MAX_AFTER_CHANGE_DEPTH}. Possible loop.`);
+                    }
+                    this._value = transformed;
+                    if (!this._paused) this._onChange.slice().forEach(cb => cb(this._value));
+                    transformed = this._afterChange?.(prev, this._value);
+                }
+            } finally {
+                this._isSetting = false;
+            }
 
             // If a listener requested a new value during this cycle, process it
             if (this._pendingValue !== undefined && !this._equals(this._value, this._pendingValue)) {
@@ -99,8 +100,13 @@ export class Observable<T> {
 
     pause(callback?: () => void): void {
         this._paused = true;
-        callback?.();
-        this.resume();
+        if (callback !== undefined) {
+            try {
+                callback();
+            } finally {
+                this.resume();
+            }
+        }
     }
     resume(): void { this._paused = false; }
 

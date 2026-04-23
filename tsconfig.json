@@ -121,5 +121,8 @@
     "../node_modules/dazscript-types/src/types/**/*",
     "../script-types/src/types/**/*",
     "src/**/*"
+  ],
+  "exclude": [
+    "src/**/*.test.ts"
   ]
 }

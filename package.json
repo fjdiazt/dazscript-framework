@@ -11,7 +11,9 @@
     "postbuild": "node ./dist/scripts/cli.js icons --out-dir ./out",
     "watch": "node ./dist/scripts/cli.js watch --out-dir ./out",
     "icons": "node ./dist/scripts/cli.js icons --out-dir ./out",
-    "installer": "node ./dist/scripts/cli.js installer --scripts-path ./src/samples --menu-path /DazScriptFramework"
+    "installer": "node ./dist/scripts/cli.js installer --scripts-path ./src/samples --menu-path /DazScriptFramework",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "bin": {
     "dazscript": "./dist/scripts/cli.js"
@@ -69,6 +71,7 @@
     "@types/node": "^22.10.5",
     "dazscript-types": "^1.0.1",
     "eslint": "^9.17.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.0"
   }
 }
