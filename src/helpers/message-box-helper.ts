@@ -10,7 +10,7 @@ export const error = (message: string, writeLog: boolean = true) => {
 }
 
 export const warning = (message: string) => {
-    MessageBox.warning(message, "Warning", "Ok")
+    MessageBox.warning(message, "Warning", "Ok", "")
 }
 
 export const confirm = (message?: string): { ok: boolean, cancel: boolean } => {
@@ -20,7 +20,7 @@ export const confirm = (message?: string): { ok: boolean, cancel: boolean } => {
 }
 
 export const prompt = (text: string, title: string, button0: string, button1?: string): { cancel: boolean, selection: number } => {
-    const response = MessageBox.question(text, title, button0, button1, "Cancel")
+    const response = MessageBox.question(text, title, button0, button1 ?? "", "Cancel")
 
     return { cancel: response === 0, selection: response };
 }

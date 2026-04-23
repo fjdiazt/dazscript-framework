@@ -26,7 +26,7 @@ export const isFigure = (node: DzNode): boolean => {
  * @param node
  * @returns The root of the node, if the node is part of a figure, return the figure (skeleton) otherwise return the node itself
  */
-export const getRoot = (node: DzNode): DzNode => {
+export const getRoot = (node: DzNode | null): DzNode | null => {
     if (node && node.className() === "DzBone" && node.getSkeleton)
         return node.getSkeleton();
     else
@@ -44,8 +44,8 @@ export const getFigure = (node: DzNode): DzSkeleton | null => {
  * @returns The first property with the given name or internal name, or NULL.
  */
 export const findProperty = <T extends DzProperty = DzProperty>(node: DzNode, name: string): T | null => {
-    return sceneHelper.findPropertyOnNode(name, node) as T
-        ?? sceneHelper.findPropertyOnNodeByInternalName(name, node) as T
+    return sceneHelper.findPropertyOnNode(name, node) as unknown as T
+        ?? sceneHelper.findPropertyOnNodeByInternalName(name, node) as unknown as T
 }
 
 /**
@@ -90,7 +90,7 @@ export const isChildOf = (node: DzNode, figure: DzNode): boolean => {
  * @returns the fitting target (skeleton) of the node or null
  */
 export const getFittingTarget = (node: DzNode): DzSkeleton | null => {
-    return getRoot(node).getSkeleton()?.getFollowTarget()
+    return getRoot(node)?.getSkeleton()?.getFollowTarget() ?? null
 }
 
 /**
@@ -99,7 +99,7 @@ export const getFittingTarget = (node: DzNode): DzSkeleton | null => {
 * @param target if specified, check if the node is fitted to the target node, otherwise check if the node is fitted to any other node
 * @returns true if the node is fitted to another node
 */
-export const isFitting = (figure: DzSkeleton, target?: DzNode): boolean => {
+export const isFitting = (figure: DzSkeleton | null, target?: DzNode): boolean => {
     return target
         ? figure?.getFollowTarget() == target
         : figure?.getFollowTarget() != null
@@ -140,12 +140,12 @@ export const getTransforms = (node: DzNode, include: { rotations?: boolean, tran
 export const getRotations = (node: DzNode, includeExtraRotations: boolean = true): DzFloatProperty[] => {
     if (!node) return [];
 
-    const xRotate = sceneHelper.findPropertyOnNode('XRotate', node) as DzFloatProperty;
-    const xRotate2 = sceneHelper.findPropertyOnNode('XRotate2', node) as DzFloatProperty;
-    const yRotate = sceneHelper.findPropertyOnNode('YRotate', node) as DzFloatProperty;
-    const yRotate2 = sceneHelper.findPropertyOnNode('YRotate2', node) as DzFloatProperty;
-    const zRotate = sceneHelper.findPropertyOnNode('ZRotate', node) as DzFloatProperty;
-    const zRotate2 = sceneHelper.findPropertyOnNode('ZRotate2', node) as DzFloatProperty;
+    const xRotate = sceneHelper.findPropertyOnNode('XRotate', node) as unknown as DzFloatProperty;
+    const xRotate2 = sceneHelper.findPropertyOnNode('XRotate2', node) as unknown as DzFloatProperty;
+    const yRotate = sceneHelper.findPropertyOnNode('YRotate', node) as unknown as DzFloatProperty;
+    const yRotate2 = sceneHelper.findPropertyOnNode('YRotate2', node) as unknown as DzFloatProperty;
+    const zRotate = sceneHelper.findPropertyOnNode('ZRotate', node) as unknown as DzFloatProperty;
+    const zRotate2 = sceneHelper.findPropertyOnNode('ZRotate2', node) as unknown as DzFloatProperty;
 
     if (includeExtraRotations) {
         return [xRotate, xRotate2, yRotate, yRotate2, zRotate, zRotate2].filter(Boolean);
@@ -162,7 +162,7 @@ export const getRotations = (node: DzNode, includeExtraRotations: boolean = true
 export const getRotationsForAxis = (node: DzNode, axis: 'x' | 'y' | 'z'): DzFloatProperty => {
     debug(`Getting rotation property for axis: ${axis} on node: ${node.getName()} - isBone: ${isBone(node)}`);
 
-    let prop: DzFloatProperty | undefined;
+    let prop: DzFloatProperty | null = null;
 
     if (isBone(node)) {
         prop = getNamedRotationForAxis(node, axis);
@@ -175,7 +175,7 @@ export const getRotationsForAxis = (node: DzNode, axis: 'x' | 'y' | 'z'): DzFloa
         prop = find(
             getRotations(node, false),
             (rotation) => rotation.getName().valueOf()[0].toLowerCase() === axis
-        ) as DzFloatProperty;
+        ) as unknown as DzFloatProperty;
     }
 
     return prop;
@@ -185,7 +185,7 @@ export const getNamedRotations = (node: DzNode): DzFloatProperty[] => {
     const rotations: DzFloatProperty[] = []
 
     for (let namedAxis in NamedAxis) {
-        let property = sceneHelper.findPropertyOnNodeByLabel(NamedAxis[namedAxis], node) as DzFloatProperty
+        let property = sceneHelper.findPropertyOnNodeByLabel(NamedAxis[namedAxis], node) as unknown as DzFloatProperty
         if (property) rotations.push(property)
     }
 

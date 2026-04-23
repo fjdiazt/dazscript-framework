@@ -4,8 +4,8 @@ import { mainWindow } from '@dsf/core/global'
 import * as array from '@dsf/helpers/array-helper'
 import { keys } from '@dsf/helpers/object-helper'
 import { progress } from '@dsf/helpers/progress-helper'
-import { getScriptPath } from './script-helper'
 import { getMenu } from './menu-helper'
+import { getScriptPath } from './script-helper'
 
 const actionMgr = mainWindow.getActionMgr()
 const paneMgr = mainWindow.getPaneMgr()
@@ -461,7 +461,7 @@ export const uninstallCustomActions = (actions: CustomAction[]) => {
         }
         toolbar.clear()
         toolbar.setClosed(true)
-        paneMgr.removeToolBar(toolbar)
+        paneMgr.removeToolBar(toolbarName)
         debug(`Toolbar ${toolbarName} cleared, closed, and removed after uninstall`)
     })
 }

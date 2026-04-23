@@ -2,7 +2,7 @@ import { mainWindow } from '@dsf/core/global'
 
 export const selectUniversalRotateTool = (coordinateSpace?: number): DzUniversalRotateTool => {
     const viewportMgr = mainWindow.getViewportMgr()
-    const tool = viewportMgr.findTool('DzUniversalRotateTool') as DzUniversalRotateTool
+    const tool = viewportMgr.findTool('DzUniversalRotateTool') as unknown as DzUniversalRotateTool
     viewportMgr.setActiveTool(tool)
     if (coordinateSpace) tool.setCoordinateSpace(coordinateSpace)
     return tool

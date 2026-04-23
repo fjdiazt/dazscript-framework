@@ -13,7 +13,7 @@ export const setDataItem = (listItem: DzListViewItem, data: any) => {
 }
 
 export const getDataItem = <T>(listItem: DzListViewItem): T | null => {
-    return listItem?.getDataItem('data') ?? null
+    return (listItem?.getDataItem('data') ?? null) as T | null
 }
 
 export const filter = (listView: DzListView, filterOn: (viewItem: DzListViewItem) => string, keywords: string, options?: { selectOnFilter?: boolean, filters?: (viewItem: DzListViewItem) => boolean }) => {

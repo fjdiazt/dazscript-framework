@@ -1,11 +1,11 @@
 import { mainWindow } from '@dsf/core/global'
 
 const findPane = <T extends DzPane>(className: string): T => {
-    return mainWindow.getPaneMgr().findPane(className) as T
+    return mainWindow.getPaneMgr().findPane(className) as unknown as T
 }
 
 export const getSmartContentPane = (): DzSmartContentPane => {
-    return <DzSmartContentPane>findPane("DzSmartContentPane")
+    return findPane("DzSmartContentPane") as unknown as DzSmartContentPane
 }
 
 export const getSurfacesPane = (): DzSurfacesPane => {
@@ -20,10 +20,10 @@ export const getParametersPane = (): DzParametersPane => {
     return findPane<DzParametersPane>("DzParametersPane")
 }
 
-export const getParametersPaneNodeEditor = (): DzPropertySideNavHierarchy => {
+export const getParametersPaneNodeEditor = (): DzPropertySideNavHierarchy | null => {
     return findPane<DzParametersPane>("DzParametersPane")?.getNodeEditor() ?? null
 }
 
-export const getPaneNodeEditor = (pane: DzAbstractNodeEditorPane): DzPropertySideNavHierarchy => {
+export const getPaneNodeEditor = (pane: DzAbstractNodeEditorPane): DzPropertySideNavHierarchy | null => {
     return pane.getNodeEditor ? pane.getNodeEditor() : null
 }

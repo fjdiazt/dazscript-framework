@@ -4,9 +4,9 @@ import { getRoot, isFigure } from './node-helper'
 import { getPaneNodeEditor, getParametersPane, getParametersPaneNodeEditor } from './pane-helper'
 
 export const getSelectedOf = <T>(typeName: string): DzNode[] => {
-    let nodes = []
+    let nodes: DzNode[] = []
     for (let node of scene.getSelectedNodeList()) {
-        if (!node.inherits(typeName)) continue
+        if (!node || !node.inherits(typeName)) continue
         nodes.push(node)
     }
     return nodes
@@ -45,7 +45,7 @@ export const getFigures = (): DzSkeleton[] => {
  * @returns the figure skeleton, or null if there is no current selection or the selected node is not part of a figure
  */
 export const getSelectedFigure = (): DzSkeleton | null => {
-    return getSelectedNode()?.getSkeleton?.()
+    return getSelectedNode()?.getSkeleton?.() ?? null
 }
 
 /**
@@ -66,12 +66,12 @@ export const getSelectedNodes = (): DzNode[] => {
     return scene.getSelectedNodeList()
 }
 
-export const getSelectedRoot = (): DzNode => {
+export const getSelectedRoot = (): DzNode | null => {
     return getRoot(getSelectedNode())
 }
 
 export const getSelectedRoots = (): DzNode[] => {
-    return distinct(getSelectedNodes().map(n => getRoot(n)))
+    return distinct(getSelectedNodes().map(n => getRoot(n))).filter(n => n !== null) as DzNode[]
 }
 
 export const getSelectedProperties = (): DzProperty[] => {
@@ -79,7 +79,7 @@ export const getSelectedProperties = (): DzProperty[] => {
 }
 
 export const getSelectedNumericProperties = (): (DzFloatProperty | DzIntProperty | DzBoolProperty)[] => {
-    return getParametersPane()?.getNodeEditor()?.getPropertySelections(true).map(p => p as DzFloatProperty | DzIntProperty | DzBoolProperty) ?? []
+    return getParametersPane()?.getNodeEditor()?.getPropertySelections(true).map(p => p as unknown as DzFloatProperty | DzIntProperty | DzBoolProperty) ?? []
 }
 
 export const getSelectedPropertiesOfType = <TProperty extends DzProperty>(type: string): TProperty[] => {
@@ -125,7 +125,7 @@ export const getCurrentFrame = (): number => {
 }
 
 export const getEndFrame = (): number => {
-    return scene.getAnimRange().end / scene.getTimeStep().valueOf()
+    return scene.getAnimRange().end.valueOf() / scene.getTimeStep().valueOf()
 }
 
 /**
@@ -133,7 +133,7 @@ export const getEndFrame = (): number => {
  * @returns the last frame number (0-based)
  */
 export const getLastFrame = (): number => {
-    return scene.getAnimRange().end / scene.getTimeStep().valueOf()
+    return scene.getAnimRange().end.valueOf() / scene.getTimeStep().valueOf()
 }
 
 export const timeToFrame = (time: DzTime): number => {
