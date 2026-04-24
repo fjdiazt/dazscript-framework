@@ -561,24 +561,31 @@ export const showSetupCustomActionsDialog = (actions: CustomAction[], options: s
 
     debug(`[Setup] applying ${selections.actions.filter(selection => selection.selected).length}/${selections.actions.length} selected actions`)
 
-    const removedToolbarNames = new CustomSet<string>()
+    const touchedToolbarNames = new CustomSet<string>()
+    const selectedToolbarActions: CustomAction[] = []
 
     progress('Setting Up Scripts', selections.actions, (selection) => {
         debug(`[Setup] ${selection.selected ? 'install' : 'remove'} "${selection.action.text}"`)
 
+        if (selection.supportsToolbar && selection.action.toolbar) {
+            touchedToolbarNames.add(selection.action.toolbar)
+        }
+
         if (selection.selected) {
-            applyCustomActionTargets({
+            const customAction = applyCustomActionTargets({
                 ...selection.action,
                 shortcut: selection.effectiveShortcut
             }, {
                 menu: selection.supportsMenu,
                 toolbar: selection.supportsToolbar
+            }, undefined, {
+                deferToolbar: true
             })
-            return
-        }
 
-        if (selection.supportsToolbar && selection.action.toolbar) {
-            removedToolbarNames.add(selection.action.toolbar)
+            if (customAction && selection.supportsToolbar && selection.action.toolbar) {
+                selectedToolbarActions.push(customAction)
+            }
+            return
         }
 
         removeCustomActionTargets(selection.action, {
@@ -587,14 +594,11 @@ export const showSetupCustomActionsDialog = (actions: CustomAction[], options: s
         })
     })
 
-    removedToolbarNames.forEach((toolbarName) => {
+    touchedToolbarNames.forEach((toolbarName) => {
         clearToolbar(toolbarName)
 
-        const stillSelected = selections.actions.filter(s => s.selected && s.supportsToolbar && s.action.toolbar === toolbarName)
-        stillSelected.forEach((s) => addToToolbar({
-            ...s.action,
-            shortcut: s.effectiveShortcut
-        }))
+        const stillSelected = selectedToolbarActions.filter(action => action.toolbar === toolbarName)
+        stillSelected.forEach((action) => addToToolbar(action))
         debug(`[Setup] Toolbar ${toolbarName} rebuilt with ${stillSelected.length} remaining actions`)
 
         if (stillSelected.length === 0) {

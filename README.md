@@ -254,7 +254,7 @@ Applying the dialog:
 - Affected toolbars are rebuilt; empty framework-created toolbars are removed
 - Selected keyboard shortcut rows are applied after actions are installed
 
-This replaces the older `Install.dsa.ts` / `Uninstall.dsa.ts` pattern. The installer generator removes those legacy files if they exist, except when shortcut restoration is needed.
+This replaces the older `Install.dsa.ts` / `Uninstall.dsa.ts` pattern. The installer generator removes those legacy files if they exist.
 
 ### Setup Keyboard Shortcuts
 
@@ -288,7 +288,7 @@ Before changing a non-custom Daz Studio action shortcut, setup writes the origin
 App.getAppDataPath()/<appDataPath>/Installer/keyboard-shortcuts-backup.json
 ```
 
-When shortcut JSON exists, the generator also writes `src/Uninstall.dsa.ts`. Running that uninstall script restores backed-up non-custom shortcuts. Custom action shortcuts are not backed up because uninstalling the custom action removes the shortcut with the action.
+Shortcut setup is part of the generated setup dialog. The generator does not create a separate shortcut-only uninstall script.
 
 ---
 

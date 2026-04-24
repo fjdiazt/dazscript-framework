@@ -78,6 +78,10 @@ export type CustomActionTargets = {
     toolbar: boolean
 }
 
+type ApplyCustomActionOptions = {
+    deferToolbar?: boolean
+}
+
 type CustomActionCandidate = {
     name: string
     text: string
@@ -377,13 +381,18 @@ export const getInstalledCustomActionState = (action: CustomAction, scriptsPath:
     }
 }
 
-export const applyCustomActionTargets = (action: CustomAction, targets: CustomActionTargets, scriptsPath: string = getScriptPath()) => {
+export const applyCustomActionTargets = (
+    action: CustomAction,
+    targets: CustomActionTargets,
+    scriptsPath: string = getScriptPath(),
+    options: ApplyCustomActionOptions = {}
+): CustomAction | null => {
     const resolvedAction = resolveActionPaths(action, scriptsPath)
     const shouldInstall = targets.menu || targets.toolbar
 
     if (!shouldInstall) {
         removeCustomActionTargets(action, { menu: true, toolbar: true }, scriptsPath)
-        return
+        return null
     }
 
     const customAction = createOrUpdateCustomAction(action, resolvedAction)
@@ -392,9 +401,11 @@ export const applyCustomActionTargets = (action: CustomAction, targets: CustomAc
         addToMenu(customAction)
     }
 
-    if (targets.toolbar && action.toolbar) {
+    if (targets.toolbar && action.toolbar && !options.deferToolbar) {
         addToToolbar(customAction)
     }
+
+    return customAction
 }
 
 export const removeCustomActionTargets = (action: CustomAction, targets: CustomActionTargets, scriptsPath: string = getScriptPath()) => {

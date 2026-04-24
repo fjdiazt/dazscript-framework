@@ -29,14 +29,6 @@ setup(${data}, ${JSON.stringify(options)});
 `;
 }
 
-function generateUninstallTemplate(options) {
-  return `
-import { restoreSetupKeyboardShortcuts as restoreShortcuts } from '@dsf/helpers/custom-action-installer-helper';
-
-restoreShortcuts(${JSON.stringify(options)});
-`;
-}
-
 function literalValue(node) {
   if (!node) {
     return undefined;
@@ -329,9 +321,7 @@ function generateInstallerFiles(workdir, options) {
   const uninstallPath = path.join(workdir, 'src', 'Uninstall.dsa.ts');
   if (fs.existsSync(installPath)) fs.unlinkSync(installPath);
 
-  if (shortcutData.shortcuts && shortcutData.shortcuts.length > 0) {
-    fs.writeFileSync(path.join(workdir, 'src', 'Uninstall.dsa.ts'), generateUninstallTemplate(setupOptions));
-  } else if (fs.existsSync(uninstallPath)) {
+  if (fs.existsSync(uninstallPath)) {
     fs.unlinkSync(uninstallPath);
   }
 }
