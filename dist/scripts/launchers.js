@@ -16,17 +16,20 @@ function getActionOutputPath(workdir, outDir, sourceFile) {
   return relativeSourceFile.replace(/\.ts$/, '');
 }
 
-function getImplementationRelativePath(outputRelativePath) {
+function getImplementationRelativePath(outputRelativePath, extension = 'dsa') {
   const outputDirectory = path.posix.dirname(outputRelativePath);
   const outputBaseName = path.posix.basename(outputRelativePath, '.dsa');
   const implementationDirectory = outputDirectory === '.'
     ? path.posix.join('lib', outputBaseName)
     : path.posix.join(outputDirectory, 'lib', outputBaseName);
 
-  return path.posix.join(implementationDirectory, 'script.dsa');
+  return path.posix.join(implementationDirectory, `script.${extension}`);
 }
 
 function makeLauncherSource(implementationRelativePath, appDataImplementationRelativePath) {
+  const encryptedImplementationRelativePath = implementationRelativePath.replace(/\.dsa$/, '.dse');
+  const encryptedAppDataImplementationRelativePath = appDataImplementationRelativePath.replace(/\.dsa$/, '.dse');
+
   return [
     '// Auto-generated launcher shim.',
     '// The installed Daz action points at this stable file.',
@@ -34,7 +37,9 @@ function makeLauncherSource(implementationRelativePath, appDataImplementationRel
     '// and from the AppData fallback location second.',
     '',
     `var implementationRelativePath = '${implementationRelativePath}';`,
+    `var encryptedImplementationRelativePath = '${encryptedImplementationRelativePath}';`,
     `var appDataImplementationRelativePath = '${appDataImplementationRelativePath}';`,
+    `var encryptedAppDataImplementationRelativePath = '${encryptedAppDataImplementationRelativePath}';`,
     'var launcherFileName = getScriptFileName();',
     'var launcherInfo = new DzFileInfo(launcherFileName);',
     'var launcherDirectory = typeof launcherInfo.canonicalPath == "function"',
@@ -42,8 +47,18 @@ function makeLauncherSource(implementationRelativePath, appDataImplementationRel
     '    : launcherInfo.path();',
     'launcherInfo.deleteLater();',
     '',
-    "var implementationPath = launcherDirectory + '/' + implementationRelativePath;",
+    "var implementationPath = launcherDirectory + '/' + encryptedImplementationRelativePath;",
     'var implementationFile = new DzFile(implementationPath);',
+    'if (!implementationFile.exists()) {',
+    '    implementationFile.deleteLater();',
+    "    implementationPath = launcherDirectory + '/' + implementationRelativePath;",
+    '    implementationFile = new DzFile(implementationPath);',
+    '}',
+    'if (!implementationFile.exists()) {',
+    '    implementationFile.deleteLater();',
+    "    implementationPath = App.getAppDataPath() + '/' + encryptedAppDataImplementationRelativePath;",
+    '    implementationFile = new DzFile(implementationPath);',
+    '}',
     'if (!implementationFile.exists()) {',
     '    implementationFile.deleteLater();',
     "    implementationPath = App.getAppDataPath() + '/' + appDataImplementationRelativePath;",
@@ -86,6 +101,10 @@ function createActionLaunchers(workdir, options) {
     const launcherPath = path.join(outDir, outputRelativePath);
     const implementationRelativePath = getImplementationRelativePath(outputRelativePath);
     const implementationPath = path.join(outDir, implementationRelativePath);
+    const encryptedImplementationPath = path.join(
+      outDir,
+      getImplementationRelativePath(outputRelativePath, 'dse')
+    );
 
     if (!fs.existsSync(launcherPath)) {
       return;
@@ -94,6 +113,9 @@ function createActionLaunchers(workdir, options) {
     ensureParentDir(implementationPath);
     if (fs.existsSync(implementationPath)) {
       fs.unlinkSync(implementationPath);
+    }
+    if (fs.existsSync(encryptedImplementationPath)) {
+      fs.unlinkSync(encryptedImplementationPath);
     }
 
     fs.renameSync(launcherPath, implementationPath);

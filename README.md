@@ -2,6 +2,28 @@
 
 **DazScript Framework** is a TypeScript toolkit for writing [Daz Studio](https://www.daz3d.com/daz-studio) scripts. It layers a full TypeScript development experience on top of [DAZ Script](https://docs.daz3d.com/public/software/dazstudio/4/referenceguide/scripting/start) (Qt Script / ECMAScript 5.1), and ships a fluent dialog builder so you can build UIs in code without touching the Qt widget API directly.
 
+## Table of Contents
+
+- [Why use it?](#why-use-it)
+- [Quick Start: Hello World](#quick-start-hello-world)
+- [Quick Start: A Simple Dialog](#quick-start-a-simple-dialog)
+- [Documentation](#documentation)
+  - [Installation & Setup](#installation--setup)
+  - [Project Configuration](#project-configuration)
+  - [The `action(...)` Entrypoint](#the-action-entrypoint)
+  - [Build Output: Launcher Shims](#build-output-launcher-shims)
+  - [Generated Setup Script](#generated-setup-script)
+  - [Setup Keyboard Shortcuts](#setup-keyboard-shortcuts)
+  - [Action-Level Bundles](#action-level-bundles)
+  - [Building UIs: Dialogs & Observables](#building-uis-dialogs--observables)
+  - [Observables](#observables)
+  - [Dialog Builder Reference](#dialog-builder-reference)
+  - [Available Helpers](#available-helpers)
+  - [Directory Structure](#directory-structure)
+  - [Development & Publishing](#development--publishing)
+- [Resources](#resources)
+- [Examples](#examples)
+
 ## Why use it?
 
 DAZ Script gives you direct access to the entire Daz Studio API. The DazScript Framework builds on that foundation and adds:
@@ -226,7 +248,15 @@ Each built action produces two files:
 
 When you rebuild, only the implementation bundle changes. The launcher path stays stable, so re-registering the action in Daz Studio is normally not required.
 
-At runtime the launcher looks for the local `lib/` bundle first, then falls back to `App.getAppDataPath()/<appDataPath>`.
+At runtime the launcher looks for a local encrypted `script.dse` bundle first, then the local `script.dsa` bundle, then the same encrypted/plain fallback paths under `App.getAppDataPath()/<appDataPath>`.
+
+To encrypt implementation bundles before packaging, run the build and then call Daz Studio through the framework CLI:
+
+```bash
+npx dazscript encrypt --out-dir ./out --daz-studio "C:/Program Files/DAZ 3D/DAZStudio4/DAZStudio.exe"
+```
+
+The `encrypt` command launches Daz Studio with `-headless -noPrompt`, converts each `out/**/lib/**/script.dsa` to `script.dse`, and deletes the source `script.dsa` after the matching encrypted file is written. Add `--keep-source` to leave the plain implementation bundles in place.
 
 ---
 

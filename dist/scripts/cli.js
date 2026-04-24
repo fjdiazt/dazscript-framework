@@ -6,6 +6,7 @@ const readline = require('readline');
 const { runWebpack } = require('./build');
 const { loadConfig } = require('./config-loader');
 const { copyIcons } = require('./icons');
+const { runEncrypt } = require('./encrypt');
 const { generateInstallerFiles } = require('./install-generator');
 const { initProject } = require('./init');
 
@@ -16,14 +17,18 @@ Commands:
   init                Scaffold a DazScript project in the current directory
   build               Build DazScript files
   watch               Build and watch DazScript files
+  encrypt             Encrypt built implementation bundles through Daz Studio
   icons               Copy png assets into the output directory
   installer           Generate Install.dsa.ts and Uninstall.dsa.ts
 
-Options for init:
+Options:
   --menu-path <path>    Default menu path. Default: /MyScripts
   --scripts-path <path> Source directory to scan. Default: ./src
   --out-dir <path>      Build output directory. Default: ./out
   --app-data-path <path> AppData namespace used by launcher fallbacks. Example: Author/Product
+  --daz-studio <path>   Daz Studio executable for encrypt
+  --keep-source         Keep source script.dsa files after encrypting
+  --timeout-ms <value>  Daz Studio encrypt timeout. Default: 300000
   --force               Overwrite generated files
   --help                Show this message
 `);
@@ -110,6 +115,23 @@ function parseOptions(args, defaults) {
       continue;
     }
 
+    if (arg === '--daz-studio') {
+      options.dazStudio = args[index + 1];
+      index += 1;
+      continue;
+    }
+
+    if (arg === '--keep-source') {
+      options.keepSource = true;
+      continue;
+    }
+
+    if (arg === '--timeout-ms') {
+      options.timeoutMs = Number(args[index + 1]);
+      index += 1;
+      continue;
+    }
+
     if (arg === '--file') {
       options.file = args[index + 1];
       index += 1;
@@ -158,6 +180,9 @@ async function main(argv) {
     outDir: undefined,
     appDataPath: undefined,
     file: undefined,
+    dazStudio: undefined,
+    keepSource: false,
+    timeoutMs: undefined,
   });
 
   if (options.help) {
@@ -189,6 +214,11 @@ async function main(argv) {
 
   if (command === 'watch') {
     await runWebpack(workdir, { ...resolvedOptions, watch: true });
+    return;
+  }
+
+  if (command === 'encrypt') {
+    runEncrypt(workdir, resolvedOptions);
     return;
   }
 
