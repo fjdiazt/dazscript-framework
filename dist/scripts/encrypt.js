@@ -27,8 +27,7 @@ function findImplementationScripts(dir) {
 
       if (
         entry.isFile() &&
-        entry.name === 'script.dsa' &&
-        path.basename(path.dirname(entryPath)) !== 'lib' &&
+        entry.name.endsWith('.dsa') &&
         entryPath.split(path.sep).includes('lib')
       ) {
         scripts.push(entryPath);

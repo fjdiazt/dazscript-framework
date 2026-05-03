@@ -32,7 +32,7 @@ DAZ Script gives you direct access to the entire Daz Studio API. The DazScript F
 - **Fast UI development** — a fluent builder API lets you describe dialogs declaratively without touching the Qt widget API by hand.
 - **Two-way data binding** — link your data model to UI controls so they stay in sync automatically. The user types in a field and your model updates; you update the model in code and the UI reflects it instantly. No manual synchronization needed.
 - **One-command build** — `npm run build` compiles TypeScript to `.dsa` files that Daz Studio runs directly.
-- **Stable launcher shims** — built scripts use a two-level layout so iterating on your code never requires reinstalling actions in Daz Studio.
+- **Stable launcher shims** — built scripts use a launcher/implementation layout so iterating on your code never requires reinstalling actions in Daz Studio.
 - **Automated installer generation** — `npm run installer` produces a full setup dialog by reading action metadata from your source code.
 
 ---
@@ -53,7 +53,7 @@ npm install dazscript-framework dazscript-types
 npx dazscript init
 ```
 
-Follow the prompt for your AppData author namespace (e.g. `YourName/my-project`). This creates `dazscript.config.ts`, `tsconfig.json`, and wires the `build`, `watch`, `icons`, and `installer` scripts into `package.json`.
+Follow the prompt for your AppData author namespace (e.g. `YourName/my-project`). This creates `dazscript.config.ts`, `tsconfig.json`, and wires the `build`, `build:encrypted`, `watch`, `encrypt`, `icons`, and `installer` scripts into `package.json`.
 
 ### 3. Write the script
 
@@ -159,7 +159,7 @@ If `--app-data-path` is not provided, `init` prompts for the AppData author name
 This generates:
 - `dazscript.config.ts`
 - `tsconfig.json`
-- `package.json` script wiring for `build`, `watch`, `icons`, and `installer`
+- `package.json` script wiring for `build`, `build:encrypted`, `watch`, `encrypt`, `icons`, and `installer`
 
 Available `init` flags:
 
@@ -244,7 +244,7 @@ action({ text: 'My Script' }, MyScript);
 Each built action produces two files:
 
 - `out/<script>.dsa` — the stable **launcher** registered with Daz Studio (menus, toolbars, shortcuts)
-- `out/<folder>/lib/<script-name>/script.dsa` — the **implementation bundle** the launcher executes
+- `out/<folder>/lib/<script-name>/<script-name>.dsa` — the **implementation bundle** the launcher executes
 
 When you rebuild, only the implementation bundle changes. The launcher path stays stable, so re-registering the action in Daz Studio is normally not required.
 
@@ -256,7 +256,9 @@ To encrypt implementation bundles before packaging, run the build and then call 
 npx dazscript encrypt --out-dir ./out --daz-studio "C:/Program Files/DAZ 3D/DAZStudio4/DAZStudio.exe"
 ```
 
-The `encrypt` command launches Daz Studio with `-headless -noPrompt`, converts each `out/**/lib/**/script.dsa` to `script.dse`, and deletes the source `script.dsa` after the matching encrypted file is written. Add `--keep-source` to leave the plain implementation bundles in place.
+The `encrypt` command launches Daz Studio with `-headless -noPrompt`, converts each implementation bundle under `out/**/lib/**/*.dsa` to a matching `.dse` file, and deletes the source `.dsa` after the matching encrypted file is written. Add `--keep-source` to leave the plain implementation bundles in place.
+
+Individual script packages can wrap this command in `package.json` scripts such as `npm run encrypt` or `npm run build:encrypted` so release packaging does not depend on remembering the full Daz Studio executable argument.
 
 ---
 

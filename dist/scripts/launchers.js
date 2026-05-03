@@ -23,6 +23,26 @@ function getImplementationRelativePath(outputRelativePath, extension = 'dsa') {
     ? path.posix.join('lib', outputBaseName)
     : path.posix.join(outputDirectory, 'lib', outputBaseName);
 
+  return path.posix.join(implementationDirectory, `${outputBaseName}.${extension}`);
+}
+
+function getFlatImplementationRelativePath(outputRelativePath, extension = 'dsa') {
+  const outputDirectory = path.posix.dirname(outputRelativePath);
+  const outputBaseName = path.posix.basename(outputRelativePath, '.dsa');
+  const implementationDirectory = outputDirectory === '.'
+    ? 'lib'
+    : path.posix.join(outputDirectory, 'lib');
+
+  return path.posix.join(implementationDirectory, `${outputBaseName}.${extension}`);
+}
+
+function getLegacyImplementationRelativePath(outputRelativePath, extension = 'dsa') {
+  const outputDirectory = path.posix.dirname(outputRelativePath);
+  const outputBaseName = path.posix.basename(outputRelativePath, '.dsa');
+  const implementationDirectory = outputDirectory === '.'
+    ? path.posix.join('lib', outputBaseName)
+    : path.posix.join(outputDirectory, 'lib', outputBaseName);
+
   return path.posix.join(implementationDirectory, `script.${extension}`);
 }
 
@@ -89,6 +109,14 @@ function ensureParentDir(filePath) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
 }
 
+function removeEmptyDir(dirPath) {
+  try {
+    fs.rmdirSync(dirPath);
+  } catch (_err) {
+    // Directory is missing or still contains user/generated files.
+  }
+}
+
 function createActionLaunchers(workdir, options) {
   const outDir = path.resolve(workdir, options.outDir || './out');
   const appDataPath = validateAppDataPath(options.appDataPath, workdir);
@@ -105,9 +133,32 @@ function createActionLaunchers(workdir, options) {
       outDir,
       getImplementationRelativePath(outputRelativePath, 'dse')
     );
+    const legacyImplementationPath = path.join(
+      outDir,
+      getLegacyImplementationRelativePath(outputRelativePath)
+    );
+    const legacyEncryptedImplementationPath = path.join(
+      outDir,
+      getLegacyImplementationRelativePath(outputRelativePath, 'dse')
+    );
+    const flatImplementationPath = path.join(
+      outDir,
+      getFlatImplementationRelativePath(outputRelativePath)
+    );
+    const flatEncryptedImplementationPath = path.join(
+      outDir,
+      getFlatImplementationRelativePath(outputRelativePath, 'dse')
+    );
 
     if (!fs.existsSync(launcherPath)) {
       return;
+    }
+
+    if (path.resolve(launcherPath) === path.resolve(implementationPath)) {
+      throw new Error(
+        `[dazscript] Launcher path collides with implementation path: ${implementationRelativePath}. ` +
+        `Move the source action out of a lib/ folder or use a different script name.`
+      );
     }
 
     ensureParentDir(implementationPath);
@@ -116,6 +167,21 @@ function createActionLaunchers(workdir, options) {
     }
     if (fs.existsSync(encryptedImplementationPath)) {
       fs.unlinkSync(encryptedImplementationPath);
+    }
+    if (fs.existsSync(legacyImplementationPath)) {
+      fs.unlinkSync(legacyImplementationPath);
+    }
+    if (fs.existsSync(legacyEncryptedImplementationPath)) {
+      fs.unlinkSync(legacyEncryptedImplementationPath);
+    }
+    if (fs.existsSync(flatImplementationPath)) {
+      fs.unlinkSync(flatImplementationPath);
+    }
+    if (fs.existsSync(flatEncryptedImplementationPath)) {
+      fs.unlinkSync(flatEncryptedImplementationPath);
+    }
+    if (path.resolve(path.dirname(legacyImplementationPath)) !== path.resolve(path.dirname(implementationPath))) {
+      removeEmptyDir(path.dirname(legacyImplementationPath));
     }
 
     fs.renameSync(launcherPath, implementationPath);
