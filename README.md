@@ -238,6 +238,7 @@ action({ text: 'My Script' }, MyScript);
 | `toolbar` | Toolbar name the action should appear on |
 | `group` | Grouping label for related actions in Daz Studio |
 | `description` | Longer description for the action |
+| `icon` | Image path used for the installed custom action. Overrides discovered icon files. |
 | `bundle` | Generates a setup script beside the action. `true` → `Setup.dsa.ts`, a string → `Setup <name>.dsa.ts` |
 
 ---
@@ -288,6 +289,15 @@ Applying the dialog:
 - Unchecked rows are removed from their menu and toolbar targets
 - Affected toolbars are rebuilt; empty framework-created toolbars are removed
 - Selected keyboard shortcut rows are applied after actions are installed
+
+Custom action icons are selected from `action(...)` metadata and sibling image files in this order:
+
+1. Explicit `action({ icon: '...' })`
+2. `scriptname.action.png`
+3. `scriptname.png`
+4. `scriptname.dsa.png` legacy fallback
+
+`scriptname.action.png` is the installed custom action icon. Daz Studio uses the same action icon for menu and toolbar placements. `scriptname.png` is the preferred script/content icon fallback. `scriptname.dsa.png` is a legacy fallback kept for older projects and will be removed in a future breaking release.
 
 This replaces the older `Install.dsa.ts` / `Uninstall.dsa.ts` pattern. The installer generator removes those legacy files if they exist.
 

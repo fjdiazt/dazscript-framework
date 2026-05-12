@@ -317,7 +317,9 @@ export class Dialog extends BasicDialog {
 
 ### File Naming
 - **Scripts:** `FeatureName.dsa.ts` (e.g., `delete-keyframes.dsa.ts`)
-- **Icons:** `FeatureName.dsa.png` (same name as script)
+- **Action Icons:** `FeatureName.action.png` (installed menu/toolbar action icon)
+- **Script Icons:** `FeatureName.png` (script/content icon fallback)
+- **Legacy Script Icons:** `FeatureName.dsa.png` (temporary fallback for older projects)
 - **Models:** `domain-model.ts` (e.g., `paramate-model.ts`)
 - **Factories:** `domain-model-factory.ts`
 - **Dialogs:** `domain-dialog.ts`
@@ -718,7 +720,7 @@ data$.value = 'updated'  // Triggers log
 
 1. **Install.dsa.ts is auto-generated** - Don't edit directly, modify source scripts
 2. **@action must have text property** - Menu text comes from this
-3. **Icons must match script name** - `script.dsa.ts` → `script.dsa.png`
+3. **Action icons use action naming** - `script.dsa.ts` → `script.action.png`; `script.png` is the script icon fallback; `script.dsa.png` is legacy
 4. **DzNode storage in models causes issues** - Store names, fetch nodes when needed
 5. **Observables need $ suffix** - Convention and visibility
 6. **acceptUndo() wraps operations** - Outside of it, changes aren't undoable

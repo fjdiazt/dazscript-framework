@@ -21,6 +21,54 @@ function stringOrDefault(str, defaultValue) {
   return str !== undefined && str !== null && str !== '' ? str : defaultValue;
 }
 
+function replaceEntrySourceSuffix(filePath, suffix) {
+  if (filePath.endsWith('.dsa.ts')) {
+    return `${filePath.slice(0, -'.dsa.ts'.length)}${suffix}`;
+  }
+
+  return filePath.replace(/\.ts$/, suffix);
+}
+
+function replaceEntryOutputSuffix(filePath, suffix) {
+  if (filePath.endsWith('.dsa')) {
+    return `${filePath.slice(0, -'.dsa'.length)}${suffix}`;
+  }
+
+  return `${filePath}${suffix}`;
+}
+
+function getActionIconPath(filePath, decorator) {
+  if (decorator.icon) {
+    return decorator.icon;
+  }
+
+  const actionIcon = replaceEntrySourceSuffix(filePath, '.action.png');
+  const scriptIcon = replaceEntrySourceSuffix(filePath, '.png');
+  const legacyScriptIcon = filePath.replace('.ts', '.png');
+
+  if (!fs.existsSync(actionIcon) && !fs.existsSync(scriptIcon) && !fs.existsSync(legacyScriptIcon)) {
+    return undefined;
+  }
+
+  const isBundleAction = decorator.bundle !== undefined;
+
+  if (fs.existsSync(actionIcon)) {
+    return isBundleAction
+      ? replaceEntryOutputSuffix(path.parse(filePath).name, '.action.png')
+      : replaceEntryOutputSuffix(getPartialPath(filePath), '.action.png');
+  }
+
+  if (fs.existsSync(scriptIcon)) {
+    return isBundleAction
+      ? replaceEntryOutputSuffix(path.parse(filePath).name, '.png')
+      : replaceEntryOutputSuffix(getPartialPath(filePath), '.png');
+  }
+
+  return isBundleAction
+    ? path.parse(filePath).name.replace('.dsa', '.dsa.png')
+    : `${getPartialPath(filePath)}.png`;
+}
+
 function generateInstallerTemplate(data, options) {
   return `
 import { showSetupCustomActionsDialog as setup } from '@dsf/helpers/custom-action-installer-helper';
@@ -178,12 +226,9 @@ function processScript(filePath, container, defaultMenuPath, setupOptions) {
     toolbar: stringOrDefault(decorator.toolbar, undefined),
   };
 
-  const icon = filePath.replace('.ts', '.png');
-  if (fs.existsSync(icon)) {
-    script.icon =
-      decorator.bundle === undefined
-        ? `${getPartialPath(filePath)}.png`
-        : fileInfo.name.replace('.dsa', '.dsa.png');
+  const icon = getActionIconPath(filePath, decorator);
+  if (icon) {
+    script.icon = icon;
   }
 
   script.text = stringOrDefault(decorator.text, script.text);
@@ -364,4 +409,5 @@ if (require.main === module) {
 module.exports = {
   generateInstallerFiles,
   findActionEntryFiles,
+  getActionIconPath,
 };

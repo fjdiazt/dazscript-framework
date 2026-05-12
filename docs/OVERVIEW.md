@@ -214,7 +214,9 @@ All projects use consistent TypeScript settings:
 
 To be recognized as installable scripts:
 - **Main entry scripts:** `NameOfScript.dsa.ts`
-- **Icon files:** `NameOfScript.dsa.png` (optional, associated with the action entry)
+- **Action icon files:** `NameOfScript.action.png` (optional, used by installed menu and toolbar actions)
+- **Script icon files:** `NameOfScript.png` (optional fallback, associated with the script/content entry)
+- **Legacy script icon files:** `NameOfScript.dsa.png` (supported temporarily for older projects)
 - **Utility files:** `*.ts` (not in .dsa.ts format, not auto-installed)
 
 ---
