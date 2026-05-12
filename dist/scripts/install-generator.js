@@ -280,6 +280,7 @@ function resolveSetupHeaderImage(workdir) {
   const candidates = [
     path.join(workdir, 'src', 'Setup.header.png'),
     path.join(workdir, 'src', 'Setup.png'),
+    path.join(workdir, 'src', 'Setup.dsa.png'),
   ];
   const match = candidates.find((candidate) => fs.existsSync(candidate));
   return match ? `./${path.basename(match)}` : undefined;
@@ -290,6 +291,9 @@ function resolveSetupHeaderTextFile(workdir) {
     path.join(workdir, 'src', 'Setup.header.html'),
     path.join(workdir, 'src', 'Setup.header.md'),
     path.join(workdir, 'src', 'Setup.header.txt'),
+    path.join(workdir, 'src', 'Setup.html'),
+    path.join(workdir, 'src', 'Setup.md'),
+    path.join(workdir, 'src', 'Setup.txt'),
   ];
 
   return candidates.find((candidate) => fs.existsSync(candidate)) || null;

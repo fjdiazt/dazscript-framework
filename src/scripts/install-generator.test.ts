@@ -131,6 +131,16 @@ describe('install generator setup header', () => {
         expect(setup).toContain('"headerImagePath":"./Setup.png"')
     })
 
+    it('falls back to the setup script image when no header image exists', () => {
+        const projectDir = makeProject()
+        writeScript(projectDir, 'render-tools')
+        writePng(projectDir, 'Setup.dsa.png')
+
+        const setup = generateSetup(projectDir)
+
+        expect(setup).toContain('"headerImagePath":"./Setup.dsa.png"')
+    })
+
     it('embeds setup header markdown text into generated setup options', () => {
         const projectDir = makeProject()
         writeScript(projectDir, 'render-tools')
@@ -151,5 +161,15 @@ describe('install generator setup header', () => {
 
         expect(setup).toContain('"headerText":"<h2>HTML Header</h2>"')
         expect(setup).not.toContain('# Markdown Header')
+    })
+
+    it('falls back to setup script markdown when no header text file exists', () => {
+        const projectDir = makeProject()
+        writeScript(projectDir, 'render-tools')
+        writeText(projectDir, 'Setup.md', 'Setup markdown fallback')
+
+        const setup = generateSetup(projectDir)
+
+        expect(setup).toContain('"headerText":"Setup markdown fallback"')
     })
 })
