@@ -1,6 +1,7 @@
 import LayoutBuilder from './layout-builder'
 import { createWidget } from './widget-builder'
 import { WidgetBuilderContext } from './widgets-builder'
+import { getScriptPath } from '@dsf/helpers/script-helper'
 
 export type DialogHeaderOptions = {
     image?: Pixmap
@@ -19,6 +20,14 @@ const escapeHtml = (value: string): string =>
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;')
         .replace(/\r?\n/g, '<br>')
+
+const resolveImagePath = (filePath: string): string => {
+    const value = String(filePath ?? '').replace(/\\/g, '/')
+    if (!value) return ''
+    if (value.indexOf(':') >= 0 || value.charAt(0) === '/') return value
+
+    return `${getScriptPath()}/${value.replace(/^\.\//, '')}`
+}
 
 export class DialogHeaderBuilder {
     constructor(
@@ -46,7 +55,7 @@ export class DialogHeaderBuilder {
 
     private buildImage(height: number, imageWidth: number): void {
         const pixmap = this.options.image ?? (
-            this.options.imagePath ? new Pixmap(this.options.imagePath) : null
+            this.options.imagePath ? new Pixmap(resolveImagePath(this.options.imagePath)) : null
         )
         if (!pixmap) return
 
