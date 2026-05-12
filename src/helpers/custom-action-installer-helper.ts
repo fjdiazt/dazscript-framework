@@ -235,6 +235,9 @@ class InstallerSelectionDialog extends BasicDialog {
                 .focus()
                 .placeholder('Search actions...')
                 .toolTip('Search by action name, description, path, shortcut, or available targets.')
+            add.button('Clear').clicked(() => this.keywords$.value = '')
+        })
+        add.group().horizontal().build(() => {
             add.button('Select All').clicked(() => this.setVisibleSelections(true))
             add.button('Deselect All').clicked(() => this.setVisibleSelections(false))
         })
@@ -304,6 +307,9 @@ class InstallerSelectionDialog extends BasicDialog {
                 .value(this.shortcutKeywords$)
                 .placeholder('Search shortcuts...')
                 .toolTip('Search by action name, current shortcut, new shortcut, status, or conflicts.')
+            add.button('Clear').clicked(() => this.shortcutKeywords$.value = '')
+        })
+        add.group().horizontal().build(() => {
             add.button('Select All').clicked(() => this.setVisibleShortcutSelections(true))
             add.button('Deselect All').clicked(() => this.setVisibleShortcutSelections(false))
         })
