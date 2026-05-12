@@ -302,8 +302,9 @@ Custom action icons are selected from `action(...)` metadata and sibling image f
 Setup dialog header assets are optional and are discovered beside `src/Setup.dsa.ts`:
 
 1. `src/Setup.header.png`
-2. `src/Setup.png`
-3. `src/Setup.dsa.png` legacy fallback
+2. `src/Setup.tip.png`
+3. `src/Setup.png`
+4. `src/Setup.dsa.png` legacy fallback
 
 Header text can be placed in `src/Setup.header.html`, `src/Setup.header.md`, or `src/Setup.header.txt`, with `src/Setup.html`, `src/Setup.md`, and `src/Setup.txt` as script-named fallbacks. The installer generator embeds that text into `Setup.dsa.ts`, so Daz Studio does not need to read the text file at setup time. The setup dialog renders the header body with `DzTextBrowser` rich text support; no Markdown conversion is performed. The image remains a deployed PNG asset and is resolved relative to the generated setup script at runtime.
 

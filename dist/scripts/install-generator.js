@@ -279,6 +279,7 @@ function toPosix(filePath) {
 function resolveSetupHeaderImage(workdir) {
   const candidates = [
     path.join(workdir, 'src', 'Setup.header.png'),
+    path.join(workdir, 'src', 'Setup.tip.png'),
     path.join(workdir, 'src', 'Setup.png'),
     path.join(workdir, 'src', 'Setup.dsa.png'),
   ];

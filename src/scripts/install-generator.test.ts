@@ -113,11 +113,25 @@ describe('install generator setup header', () => {
         const projectDir = makeProject()
         writeScript(projectDir, 'render-tools')
         writePng(projectDir, 'Setup.header.png')
+        writePng(projectDir, 'Setup.tip.png')
         writePng(projectDir, 'Setup.png')
 
         const setup = generateSetup(projectDir)
 
         expect(setup).toContain('"headerImagePath":"./Setup.header.png"')
+        expect(setup).not.toContain('"headerImagePath":"./Setup.tip.png"')
+        expect(setup).not.toContain('"headerImagePath":"./Setup.png"')
+    })
+
+    it('uses the setup tip image before the generic setup image', () => {
+        const projectDir = makeProject()
+        writeScript(projectDir, 'render-tools')
+        writePng(projectDir, 'Setup.tip.png')
+        writePng(projectDir, 'Setup.png')
+
+        const setup = generateSetup(projectDir)
+
+        expect(setup).toContain('"headerImagePath":"./Setup.tip.png"')
         expect(setup).not.toContain('"headerImagePath":"./Setup.png"')
     })
 
