@@ -35,7 +35,7 @@ export class DialogHeaderBuilder {
         private readonly options: DialogHeaderOptions
     ) { }
 
-    build(): DzHBoxLayout {
+    build(): DzWidget {
         const height = this.options.height ?? 96
         const imageWidth = this.options.imageWidth ?? height
         const html = this.options.html ?? (
@@ -44,13 +44,18 @@ export class DialogHeaderBuilder {
                 : ''
         )
 
-        return LayoutBuilder
-            .create(this.context)
-            .direction('horizontal')
-            .build(() => {
-                this.buildImage(height, imageWidth)
-                this.buildText(html, height)
-            }) as DzHBoxLayout
+        return createWidget(this.context).build(DzWidget, (container) => {
+            container.setFixedHeight(height)
+
+            LayoutBuilder
+                .create(this.context)
+                .parent(container)
+                .direction('horizontal')
+                .build(() => {
+                    this.buildImage(height, imageWidth)
+                    this.buildText(html, height)
+                })
+        })
     }
 
     private buildImage(height: number, imageWidth: number): void {
