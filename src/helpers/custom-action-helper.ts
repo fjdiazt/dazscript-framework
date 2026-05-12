@@ -280,6 +280,12 @@ const removeUnderlyingCustomAction = (actionName: string | null | undefined) => 
     const index = actionMgr.findCustomAction(actionName)
     if (index < 0) return
 
+    const shortcut = String(actionMgr.getCustomActionShortcut(index) ?? '').trim()
+    if (shortcut) {
+        actionMgr.setCustomActionShortcut(index, '')
+        debug(`Action ${actionName} shortcut cleared before removal`)
+    }
+
     actionMgr.removeCustomAction(index)
     debug(`Action ${actionName} removed`)
 }

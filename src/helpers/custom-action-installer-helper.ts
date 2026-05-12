@@ -11,6 +11,8 @@ import CustomSet from '@dsf/lib/set'
 import { TreeNode } from '@dsf/lib/tree-node'
 import { promptKeyboardShortcut } from '@dsf/shared/set-keyboard-shortcut'
 import { readFromFile, saveToFile } from './file-helper'
+import { getCanonicalInstallerEntry, toActionKey } from './custom-action-installer-entries'
+import { canResetSetupShortcut, getDisplayedSetupShortcut, resetSetupShortcut, setSetupShortcut, updateShortcutOverrideState } from './custom-action-installer-shortcuts'
 
 type InstallerEntry = {
     action: CustomAction
@@ -70,9 +72,7 @@ type SetupSelection = {
     shortcuts: ShortcutEntry[]
 }
 
-const OVERRIDE_MARKER = '[ovr]'
-
-const toKey = (action: CustomAction): string => String(action.filePath ?? action.text ?? '')
+const toKey = toActionKey
 
 const toTreeNode = (entry: InstallerEntry): TreeNode<InstallerEntry> =>
     new TreeNode(String(entry.action.text), toKey(entry.action), entry)
@@ -95,18 +95,6 @@ const getSetupDialogOptions = (options: string | SetupDialogOptions): SetupDialo
 
 const getShortcutBackupPath = (options: SetupDialogOptions): string =>
     `${App.getAppDataPath()}/${options.shortcutBackupPath ?? `${options.settingsPath}/keyboard-shortcuts-backup.json`}`
-
-const getDisplayedShortcut = (entry: InstallerEntry): string => {
-    if (!entry.isShortcutOverridden) return entry.effectiveShortcut
-    return entry.effectiveShortcut
-        ? `${entry.effectiveShortcut} ${OVERRIDE_MARKER}`
-        : OVERRIDE_MARKER
-}
-
-const updateOverrideState = (entry: InstallerEntry) => {
-    entry.isShortcutOverridden = Boolean(entry.installedActionName) &&
-        normalizeShortcut(entry.installedShortcut) !== normalizeShortcut(entry.defaultShortcut)
-}
 
 const buildEntries = (actions: CustomAction[]): InstallerEntry[] => {
     return actions
@@ -132,7 +120,7 @@ const buildEntries = (actions: CustomAction[]): InstallerEntry[] => {
                 installedActionName: String(installed.customAction?.name ?? '')
             }
 
-            updateOverrideState(entry)
+            updateShortcutOverrideState(entry)
             return entry
         })
 }
@@ -237,10 +225,6 @@ class InstallerSelectionDialog extends BasicDialog {
                 .toolTip('Search by action name, description, path, shortcut, or available targets.')
             add.button('Clear').clicked(() => this.keywords$.value = '')
         })
-        add.group().horizontal().build(() => {
-            add.button('Select All').clicked(() => this.setVisibleSelections(true))
-            add.button('Deselect All').clicked(() => this.setVisibleSelections(false))
-        })
 
         add.group('Scripts')
             .style({ flat: true })
@@ -272,7 +256,7 @@ class InstallerSelectionDialog extends BasicDialog {
                         return [
                             '',
                             String(entry.action.text ?? ''),
-                            getDisplayedShortcut(entry),
+                            getDisplayedSetupShortcut(entry),
                             String(entry.action.description ?? ''),
                             String(entry.action.menuPath ?? ''),
                             getDisplayedToolbar(entry),
@@ -294,6 +278,11 @@ class InstallerSelectionDialog extends BasicDialog {
                         listView.allColumnsShowFocus = true
                     })
             })
+        add.group().horizontal().build((layout) => {
+            layout.addStretch()
+            add.button('Select All').clicked(() => this.setVisibleSelections(true))
+            add.button('Deselect All').clicked(() => this.setVisibleSelections(false))
+        })
     }
 
     private buildShortcutsTab(): void {
@@ -308,10 +297,6 @@ class InstallerSelectionDialog extends BasicDialog {
                 .placeholder('Search shortcuts...')
                 .toolTip('Search by action name, current shortcut, new shortcut, status, or conflicts.')
             add.button('Clear').clicked(() => this.shortcutKeywords$.value = '')
-        })
-        add.group().horizontal().build(() => {
-            add.button('Select All').clicked(() => this.setVisibleShortcutSelections(true))
-            add.button('Deselect All').clicked(() => this.setVisibleShortcutSelections(false))
         })
 
         add.group('Keyboard Shortcuts')
@@ -364,12 +349,20 @@ class InstallerSelectionDialog extends BasicDialog {
                         listView.allColumnsShowFocus = true
                     })
             })
+        add.group().horizontal().build((layout) => {
+            layout.addStretch()
+            add.button('Select All').clicked(() => this.setVisibleShortcutSelections(true))
+            add.button('Deselect All').clicked(() => this.setVisibleShortcutSelections(false))
+        })
     }
 
     private buildContextMenu(listView: DzListView, listItem: DzListViewItem | null): DzPopupMenu {
-        const entry = listItem ? getDataItem<InstallerEntry>(listItem) : null
+        debug(`[Setup] context menu row input ${this.describeListItem('item', listItem)} ${this.describeListItem('selected', listView.selectedItem())} ${this.describeListItem('current', listView.currentItem())}`)
+        const contextItem = this.getContextListItem(listView, listItem)
+        const entry = contextItem ? this.getCanonicalEntry(getDataItem<InstallerEntry>(contextItem), contextItem) : null
+        debug(`[Setup] context menu row resolved item="${this.safeListItemText(contextItem, 1)}" entry="${entry?.action?.text ?? ''}"`)
         const canSetShortcut = Boolean(entry)
-        const canResetShortcut = Boolean(entry?.installedActionName && entry?.isShortcutOverridden)
+        const canResetShortcut = Boolean(entry && canResetSetupShortcut(entry))
 
         const items = [
             {
@@ -397,31 +390,77 @@ class InstallerSelectionDialog extends BasicDialog {
         })
     }
 
+    private getContextListItem(listView: DzListView, listItem: any): DzListViewItem | null {
+        if (this.isListViewItem(listItem)) return listItem
+
+        const selectedItem = listView.selectedItem()
+        if (this.isListViewItem(selectedItem)) return selectedItem
+
+        const currentItem = listView.currentItem()
+        if (this.isListViewItem(currentItem)) return currentItem
+
+        return null
+    }
+
+    private isListViewItem(value: any): value is DzListViewItem {
+        return Boolean(value && typeof value.text === 'function')
+    }
+
+    private describeListItem(label: string, value: any): string {
+        if (!value) return `${label}=null`
+
+        const hasTextFunction = typeof value.text === 'function'
+        const text0 = this.safeListItemText(value, 0)
+        const text1 = this.safeListItemText(value, 1)
+        const text2 = this.safeListItemText(value, 2)
+        const hasDataFunction = typeof value.getDataItem === 'function'
+        let dataText = ''
+
+        if (hasDataFunction) {
+            const data = getDataItem<any>(value)
+            dataText = String(data?.action?.text ?? data?.value?.action?.text ?? '')
+        }
+
+        return `${label} type=${typeof value} textFn=${hasTextFunction} text0="${text0}" text1="${text1}" text2="${text2}" dataFn=${hasDataFunction} data="${dataText}"`
+    }
+
+    private safeListItemText(value: any, column: number): string {
+        try {
+            if (!value || typeof value.text !== 'function') return ''
+            return String(value.text(column) ?? '')
+        } catch (error) {
+            return `[error:${String(error)}]`
+        }
+    }
+
+    private getCanonicalEntry(entry: InstallerEntry | null, listItem?: DzListViewItem | null): InstallerEntry | null {
+        return getCanonicalInstallerEntry(this.entries, entry, listItem?.text(1))
+    }
+
     private setShortcut(entry: InstallerEntry) {
+        if (!entry?.action) {
+            debug('[Setup] shortcut set ignored because the selected row did not resolve to an installer entry')
+            return
+        }
+
         const actionName = entry.installedActionName || toKey(entry.action)
         const actionLabel = String(entry.action.text ?? entry.action.filePath ?? actionName)
         const shortcut = promptKeyboardShortcut(actionLabel, actionName, entry.effectiveShortcut)
         if (shortcut == null) return
 
-        if (entry.installedActionName) {
-            setActionShortcut(entry.installedActionName, shortcut)
-            entry.installedShortcut = normalizeShortcut(shortcut)
-            entry.effectiveShortcut = entry.installedShortcut
-            updateOverrideState(entry)
-        } else {
-            entry.effectiveShortcut = normalizeShortcut(shortcut)
-        }
+        const previousShortcut = entry.effectiveShortcut
+        setSetupShortcut(entry, shortcut)
+        debug(`[Setup] shortcut queued action="${entry.action.text}" installed=${Boolean(entry.installedActionName)} previous="${previousShortcut}" next="${entry.effectiveShortcut}" custom=${entry.isShortcutOverridden}`)
 
         this.refreshListEvent$.trigger()
     }
 
     private resetDefaultShortcut(entry: InstallerEntry) {
-        if (!entry.installedActionName || !entry.isShortcutOverridden) return
+        if (!canResetSetupShortcut(entry)) return
 
-        setActionShortcut(entry.installedActionName, entry.defaultShortcut)
-        entry.installedShortcut = normalizeShortcut(entry.defaultShortcut)
-        entry.effectiveShortcut = entry.installedShortcut
-        updateOverrideState(entry)
+        const previousShortcut = entry.effectiveShortcut
+        resetSetupShortcut(entry)
+        debug(`[Setup] shortcut reset queued action="${entry.action.text}" previous="${previousShortcut}" default="${entry.defaultShortcut}"`)
         this.refreshListEvent$.trigger()
     }
 
@@ -571,7 +610,7 @@ export const showSetupCustomActionsDialog = (actions: CustomAction[], options: s
     const selectedToolbarActions: CustomAction[] = []
 
     progress('Setting Up Scripts', selections.actions, (selection) => {
-        debug(`[Setup] ${selection.selected ? 'install' : 'remove'} "${selection.action.text}"`)
+        debug(`[Setup] ${selection.selected ? 'install' : 'remove'} "${selection.action.text}" shortcut="${selection.effectiveShortcut}" custom=${selection.isShortcutOverridden}`)
 
         if (selection.supportsToolbar && selection.action.toolbar) {
             touchedToolbarNames.add(selection.action.toolbar)
@@ -580,13 +619,19 @@ export const showSetupCustomActionsDialog = (actions: CustomAction[], options: s
         if (selection.selected) {
             const customAction = applyCustomActionTargets({
                 ...selection.action,
-                shortcut: selection.effectiveShortcut
+                shortcut: ''
             }, {
                 menu: selection.supportsMenu,
                 toolbar: selection.supportsToolbar
             }, undefined, {
                 deferToolbar: true
             })
+
+            if (customAction) {
+                setActionShortcut(String(customAction.name), selection.effectiveShortcut)
+                const appliedShortcut = getActionShortcut(String(customAction.name))
+                debug(`[Setup] applied shortcut "${appliedShortcut}" to "${selection.action.text}" after install`)
+            }
 
             if (customAction && selection.supportsToolbar && selection.action.toolbar) {
                 selectedToolbarActions.push(customAction)

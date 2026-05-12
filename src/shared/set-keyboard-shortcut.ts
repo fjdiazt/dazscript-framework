@@ -1,9 +1,10 @@
 import { BasicDialog } from '@dsf/dialog/basic-dialog';
 import { debug } from '@dsf/common/log';
-import { findAction, findActionsForShortcut, getActionShortcut, normalizeShortcut, setActionShortcut } from '@dsf/helpers/action-helper';
+import { clearActionShortcut, findActionsForShortcut, getActionShortcut, normalizeShortcut, setActionShortcut } from '@dsf/helpers/action-helper';
 import { contains } from '@dsf/helpers/array-helper';
 import { confirm } from '@dsf/helpers/message-box-helper';
 import { Observable } from '@dsf/lib/observable';
+import { clearShortcutConflicts } from './set-keyboard-shortcut-conflicts';
 
 class KeyboardShortcutModel {
     actionLabel: string
@@ -157,6 +158,7 @@ export const promptKeyboardShortcut = (actionLabel: string, actionName: string, 
         const conflictText = conflicts.map(action => action.text || action.name).join(', ')
         const response = confirm(`"${model.shortcut.value}" is already assigned to: ${conflictText}\n\nReplace it?`)
         if (!response.ok) return null
+        clearShortcutConflicts(actionName, conflicts, clearActionShortcut)
     }
 
     return model.shortcut.value
