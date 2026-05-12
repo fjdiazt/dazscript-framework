@@ -4,6 +4,7 @@ import CheckBoxBuilder from './checkbox-builder'
 import ColorPickerBuilder from './color-picker-builder'
 import { ComboBoxBuilder } from './combo-box-builder'
 import { ComboEditBuilder } from './combo-edit-builder'
+import { DialogHeaderBuilder, DialogHeaderOptions } from './dialog-header-builder'
 import GroupBoxBuilder from './groupbox-builder'
 import LabelBuilder from './label-builder'
 import LayoutBuilder, { LayoutOrientation } from './layout-builder'
@@ -61,6 +62,10 @@ export class WidgetsBuilder {
 
     label(text: string): LabelBuilder {
         return new LabelBuilder(this.context).text(text)
+    }
+
+    header(options: DialogHeaderOptions): DialogHeaderBuilder {
+        return new DialogHeaderBuilder(this.context, options)
     }
 
     button(text?: string): ButtonBuilder {

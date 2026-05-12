@@ -299,6 +299,15 @@ Custom action icons are selected from `action(...)` metadata and sibling image f
 
 `scriptname.action.png` is the installed custom action icon. Daz Studio uses the same action icon for menu and toolbar placements. `scriptname.png` is the preferred script/content icon fallback. `scriptname.dsa.png` is a legacy fallback kept for older projects and will be removed in a future breaking release.
 
+Setup dialog header assets are optional and are discovered beside `src/Setup.dsa.ts`:
+
+1. `src/Setup.header.png`
+2. `src/Setup.png`
+
+Header text can be placed in `src/Setup.header.html`, `src/Setup.header.md`, or `src/Setup.header.txt`. The installer generator embeds that text into `Setup.dsa.ts`, so Daz Studio does not need to read the text file at setup time. The setup dialog renders the header body with `DzTextBrowser` rich text support; no Markdown conversion is performed. The image remains a deployed PNG asset and is resolved relative to the generated setup script at runtime.
+
+The same layout is available to custom dialogs through `add.header({ imagePath, html, text, height, imageWidth }).build()`. Use `html` for rich text, or `text` for escaped plain text.
+
 This replaces the older `Install.dsa.ts` / `Uninstall.dsa.ts` pattern. The installer generator removes those legacy files if they exist.
 
 ### Setup Keyboard Shortcuts

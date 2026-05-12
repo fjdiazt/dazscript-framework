@@ -276,6 +276,44 @@ function toPosix(filePath) {
   return filePath.replace(/\\/g, '/');
 }
 
+function resolveSetupHeaderImage(workdir) {
+  const candidates = [
+    path.join(workdir, 'src', 'Setup.header.png'),
+    path.join(workdir, 'src', 'Setup.png'),
+  ];
+  const match = candidates.find((candidate) => fs.existsSync(candidate));
+  return match ? `./${path.basename(match)}` : undefined;
+}
+
+function resolveSetupHeaderTextFile(workdir) {
+  const candidates = [
+    path.join(workdir, 'src', 'Setup.header.html'),
+    path.join(workdir, 'src', 'Setup.header.md'),
+    path.join(workdir, 'src', 'Setup.header.txt'),
+  ];
+
+  return candidates.find((candidate) => fs.existsSync(candidate)) || null;
+}
+
+function loadSetupHeader(workdir) {
+  const header = {};
+  const imagePath = resolveSetupHeaderImage(workdir);
+  const textFile = resolveSetupHeaderTextFile(workdir);
+
+  if (imagePath) {
+    header.headerImagePath = imagePath;
+  }
+
+  if (textFile) {
+    const text = fs.readFileSync(textFile, 'utf8').trim();
+    if (text) {
+      header.headerText = text;
+    }
+  }
+
+  return header;
+}
+
 function resolveShortcutFile(workdir, config) {
   const configuredPath =
     config.keyboardShortcutsPath ||
@@ -340,6 +378,7 @@ function generateInstallerFiles(workdir, options) {
     settingsPath,
     bundleName,
     shortcutBackupPath: `${appDataPath}/Installer/keyboard-shortcuts-backup.json`,
+    ...loadSetupHeader(workdir),
   };
   if (shortcutData.shortcuts && shortcutData.shortcuts.length > 0) {
     setupOptions.shortcuts = shortcutData.shortcuts;

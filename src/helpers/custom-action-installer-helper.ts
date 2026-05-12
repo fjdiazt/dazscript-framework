@@ -13,6 +13,7 @@ import { promptKeyboardShortcut } from '@dsf/shared/set-keyboard-shortcut'
 import { readFromFile, saveToFile } from './file-helper'
 import { getCanonicalInstallerEntry, toActionKey } from './custom-action-installer-entries'
 import { canResetSetupShortcut, getDisplayedSetupShortcut, resetSetupShortcut, setSetupShortcut, updateShortcutOverrideState } from './custom-action-installer-shortcuts'
+import { getScriptPath } from './script-helper'
 
 type InstallerEntry = {
     action: CustomAction
@@ -31,6 +32,10 @@ type InstallerEntry = {
 type SetupDialogOptions = {
     settingsPath: string
     bundleName?: string
+    headerImagePath?: string
+    headerImageWidth?: number
+    headerHeight?: number
+    headerText?: string
     shortcuts?: ActionAccelerator[]
     shortcutsSourcePath?: string
     shortcutBackupPath?: string
@@ -95,6 +100,17 @@ const getSetupDialogOptions = (options: string | SetupDialogOptions): SetupDialo
 
 const getShortcutBackupPath = (options: SetupDialogOptions): string =>
     `${App.getAppDataPath()}/${options.shortcutBackupPath ?? `${options.settingsPath}/keyboard-shortcuts-backup.json`}`
+
+const hasSetupHeader = (options: SetupDialogOptions): boolean =>
+    Boolean(options.headerImagePath || options.headerText)
+
+const resolveSetupAssetPath = (filePath: string | null | undefined): string => {
+    const value = String(filePath ?? '').replace(/\\/g, '/')
+    if (!value) return ''
+    if (value.indexOf(':') >= 0 || value.charAt(0) === '/') return value
+
+    return `${getScriptPath()}/${value.replace(/^\.\//, '')}`
+}
 
 const buildEntries = (actions: CustomAction[]): InstallerEntry[] => {
     return actions
@@ -180,9 +196,9 @@ class InstallerSelectionDialog extends BasicDialog {
     constructor(
         private readonly entries: InstallerEntry[],
         private readonly shortcutEntries: ShortcutEntry[],
-        bundleName?: string
+        private readonly options: SetupDialogOptions
     ) {
-        super(bundleName ? `${bundleName} Setup` : 'Setup Scripts', 'dsfSetupScripts')
+        super(options.bundleName ? `${options.bundleName} Setup` : 'Setup Scripts', 'dsfSetupScripts')
         this.items$ = new Observable(entries.map(toTreeNode))
         this.shortcutItems$ = new Observable(shortcutEntries.map(toShortcutTreeNode))
     }
@@ -214,9 +230,13 @@ class InstallerSelectionDialog extends BasicDialog {
     private buildScriptsTab(): void {
         const add = this.add
 
-        add.label('Choose which scripts to install, then use the columns to review their shortcut, menu, and toolbar targets.')
-            .wordWrap()
-            .build()
+        if (hasSetupHeader(this.options)) {
+            this.buildHeader()
+        } else {
+            add.label('Choose which scripts to install, then use the columns to review their shortcut, menu, and toolbar targets.')
+                .wordWrap()
+                .build()
+        }
         add.group('Search').horizontal().build(() => {
             add.edit()
                 .value(this.keywords$)
@@ -283,6 +303,20 @@ class InstallerSelectionDialog extends BasicDialog {
             add.button('Select All').clicked(() => this.setVisibleSelections(true))
             add.button('Deselect All').clicked(() => this.setVisibleSelections(false))
         })
+    }
+
+    private buildHeader(): void {
+        const add = this.add
+        const height = this.options.headerHeight ?? 96
+        const imageWidth = this.options.headerImageWidth ?? height
+        const headerText = String(this.options.headerText ?? 'Choose which scripts to install, then use the columns to review their shortcut, menu, and toolbar targets.')
+
+        add.header({
+            imagePath: resolveSetupAssetPath(this.options.headerImagePath),
+            imageWidth,
+            height,
+            html: headerText
+        }).build()
     }
 
     private buildShortcutsTab(): void {
@@ -559,7 +593,7 @@ class InstallerSelectionDialog extends BasicDialog {
 const runDialog = (actions: CustomAction[], options: SetupDialogOptions): SetupSelection | null => {
     const entries = buildEntries(actions)
     const shortcutEntries = buildShortcutEntries(options.shortcuts)
-    const dialog = new InstallerSelectionDialog(entries, shortcutEntries, options.bundleName)
+    const dialog = new InstallerSelectionDialog(entries, shortcutEntries, options)
     return dialog.ok() ? dialog.getSelections() : null
 }
 

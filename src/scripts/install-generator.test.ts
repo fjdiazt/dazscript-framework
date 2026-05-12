@@ -29,6 +29,10 @@ const writePng = (projectDir: string, fileName: string): void => {
     fs.writeFileSync(path.join(projectDir, 'src', fileName), 'png')
 }
 
+const writeText = (projectDir: string, fileName: string, content: string): void => {
+    fs.writeFileSync(path.join(projectDir, 'src', fileName), content)
+}
+
 const generateSetup = (projectDir: string): string => {
     const previousCwd = process.cwd()
     process.chdir(projectDir)
@@ -101,5 +105,51 @@ describe('install generator action icons', () => {
         expect(setup).not.toContain('"icon": "custom-icon.action.png"')
         expect(setup).not.toContain('"icon": "custom-icon.png"')
         expect(setup).not.toContain('"icon": "custom-icon.dsa.png"')
+    })
+})
+
+describe('install generator setup header', () => {
+    it('uses the explicit setup header image before the generic setup image', () => {
+        const projectDir = makeProject()
+        writeScript(projectDir, 'render-tools')
+        writePng(projectDir, 'Setup.header.png')
+        writePng(projectDir, 'Setup.png')
+
+        const setup = generateSetup(projectDir)
+
+        expect(setup).toContain('"headerImagePath":"./Setup.header.png"')
+        expect(setup).not.toContain('"headerImagePath":"./Setup.png"')
+    })
+
+    it('falls back to the generic setup image when no explicit header image exists', () => {
+        const projectDir = makeProject()
+        writeScript(projectDir, 'render-tools')
+        writePng(projectDir, 'Setup.png')
+
+        const setup = generateSetup(projectDir)
+
+        expect(setup).toContain('"headerImagePath":"./Setup.png"')
+    })
+
+    it('embeds setup header markdown text into generated setup options', () => {
+        const projectDir = makeProject()
+        writeScript(projectDir, 'render-tools')
+        writeText(projectDir, 'Setup.header.md', 'Header line\n\nSecond line\n')
+
+        const setup = generateSetup(projectDir)
+
+        expect(setup).toContain('"headerText":"Header line\\n\\nSecond line"')
+    })
+
+    it('prefers setup header html over markdown text', () => {
+        const projectDir = makeProject()
+        writeScript(projectDir, 'render-tools')
+        writeText(projectDir, 'Setup.header.html', '<h2>HTML Header</h2>')
+        writeText(projectDir, 'Setup.header.md', '# Markdown Header')
+
+        const setup = generateSetup(projectDir)
+
+        expect(setup).toContain('"headerText":"<h2>HTML Header</h2>"')
+        expect(setup).not.toContain('# Markdown Header')
     })
 })
