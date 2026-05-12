@@ -1,5 +1,6 @@
 const path = require('path');
 const glob = require('glob');
+const webpack = require('webpack');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const { createActionLaunchers } = require('./dist/scripts/launchers');
 const { validateAppDataPath } = require('./dist/scripts/app-data-path');
@@ -29,6 +30,7 @@ module.exports = (env, argv) => {
     (env && env.appDataPath) || projectConfig.appDataPath,
     projectRoot
   );
+  const logLevel = (env && env.logLevel) || '';
   const sourceRoot = path.resolve(projectRoot, 'src');
   const projectNodeModules = path.resolve(projectRoot, 'node_modules');
   const frameworkSourceRoot = path.resolve(
@@ -120,6 +122,9 @@ module.exports = (env, argv) => {
       },
     },
     plugins: [
+      new webpack.DefinePlugin({
+        __DAZSCRIPT_LOG_LEVEL__: JSON.stringify(logLevel),
+      }),
       new ActionLauncherPlugin({
         workdir: projectRoot,
         outDir: outputPath,

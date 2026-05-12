@@ -94,6 +94,7 @@ function updatePackageJson(workdir, options) {
     prebuild: 'npm run installer',
     build: 'dazscript build',
     'build:encrypted': 'npm run build && npm run encrypt',
+    'build:release': 'npm run build -- --log-level warn && npm run encrypt',
     postbuild: 'npm run icons',
     watch: 'dazscript watch',
     encrypt: 'dazscript encrypt --out-dir ./out --daz-studio "C:\\Program Files\\DAZ 3D\\DAZStudio4\\DAZStudio.exe"',

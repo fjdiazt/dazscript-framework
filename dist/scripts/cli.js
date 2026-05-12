@@ -26,6 +26,7 @@ Options:
   --scripts-path <path> Source directory to scan. Default: ./src
   --out-dir <path>      Build output directory. Default: ./out
   --app-data-path <path> AppData namespace used by launcher fallbacks. Example: Author/Product
+  --log-level <level>   Minimum runtime log level: trace, debug, info, warn, error, off
   --daz-studio <path>   Daz Studio executable for encrypt
   --keep-source         Keep source script.dsa files after encrypting
   --timeout-ms <value>  Daz Studio encrypt timeout. Default: 300000
@@ -115,6 +116,12 @@ function parseOptions(args, defaults) {
       continue;
     }
 
+    if (arg === '--log-level') {
+      options.logLevel = args[index + 1];
+      index += 1;
+      continue;
+    }
+
     if (arg === '--daz-studio') {
       options.dazStudio = args[index + 1];
       index += 1;
@@ -179,6 +186,7 @@ async function main(argv) {
     scriptsPath: undefined,
     outDir: undefined,
     appDataPath: undefined,
+    logLevel: undefined,
     file: undefined,
     dazStudio: undefined,
     keepSource: false,

@@ -8,6 +8,7 @@ function runWebpack(workdir, options) {
   const env = {
     context: workdir,
     outputPath: options.outDir || './out',
+    logLevel: options.logLevel || '',
   };
 
   if (options.file) {

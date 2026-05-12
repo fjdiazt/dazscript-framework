@@ -1,32 +1,73 @@
-import * as global from '@dsf/core/global'
+export type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'off'
+
+declare const __DAZSCRIPT_LOG_LEVEL__: string | undefined
+
+const logLevels: LogLevel[] = ['trace', 'debug', 'info', 'warn', 'error', 'off']
+const logLevelWeights: { [key in LogLevel]: number } = {
+    trace: 0,
+    debug: 1,
+    info: 2,
+    warn: 3,
+    error: 4,
+    off: 5
+}
+
+let currentLogLevel: LogLevel = normalizeLogLevel(
+    typeof __DAZSCRIPT_LOG_LEVEL__ === 'string'
+        ? __DAZSCRIPT_LOG_LEVEL__
+        : 'debug'
+)
+
+export const setLogLevel = (level: string): LogLevel => {
+    currentLogLevel = normalizeLogLevel(level)
+    return currentLogLevel
+}
+
+export const getLogLevel = (): LogLevel => currentLogLevel
+
+export function normalizeLogLevel(level: string): LogLevel {
+    if (!level) return 'debug'
+    const normalized = level.toLowerCase() as LogLevel
+    return logLevels.indexOf(normalized) >= 0 ? normalized : 'debug'
+}
+
+export const shouldLog = (level: LogLevel): boolean => {
+    return logLevelWeights[level] >= logLevelWeights[currentLogLevel]
+        && currentLogLevel !== 'off'
+}
 
 export const debug = (message: any) => {
-    App.debug(format(message))
-    App.flushLogBuffer()
+    if (!shouldLog('debug')) return
+    app().debug(format(message))
+    flush()
 }
 
 export const info = (message: any) => {
-    global.app.log(format(message))
-    App.flushLogBuffer()
+    if (!shouldLog('info')) return
+    app().log(format(message))
+    flush()
 }
 
 export const error = (message: any) => {
-    App.warning(format(message, "ERROR"))
-    App.flushLogBuffer()
+    if (!shouldLog('error')) return
+    app().warning(format(message, "ERROR"))
+    flush()
 }
 
 export const warn = (message: any) => {
-    App.warning(message)
-    App.flushLogBuffer()
+    if (!shouldLog('warn')) return
+    app().warning(message)
+    flush()
 }
 
 export const trace = (message: any) => {
-    App.debug(format(message, "TRACE"))
-    App.flushLogBuffer()
+    if (!shouldLog('trace')) return
+    app().debug(format(message, "TRACE"))
+    flush()
 }
 
 export const status = (message: any, log: boolean = true) => {
-    App.statusLine(message, log)
+    app().statusLine(message, log)
 }
 
 /**
@@ -39,8 +80,9 @@ export const raise = (err: string) => {
 }
 
 export const dump = (obj: any) => {
-    App.debug(`[DUMP]\r\n${JSON.stringify(obj, null, 2)}`)
-    App.flushLogBuffer()
+    if (!shouldLog('debug')) return
+    app().debug(`[DUMP]\r\n${JSON.stringify(obj, null, 2)}`)
+    flush()
 }
 
 const format = (message: string, level?: 'ERROR' | 'TRACE' | 'DUMP' | 'INFO') => {
@@ -52,5 +94,11 @@ const format = (message: string, level?: 'ERROR' | 'TRACE' | 'DUMP' | 'INFO') =>
 
     if (level) text = `[${level}] ${text}`
     return text
+}
+
+const app = (): any => App
+
+const flush = () => {
+    app().flushLogBuffer()
 }
 

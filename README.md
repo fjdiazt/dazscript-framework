@@ -53,7 +53,7 @@ npm install dazscript-framework dazscript-types
 npx dazscript init
 ```
 
-Follow the prompt for your AppData author namespace (e.g. `YourName/my-project`). This creates `dazscript.config.ts`, `tsconfig.json`, and wires the `build`, `build:encrypted`, `watch`, `encrypt`, `icons`, and `installer` scripts into `package.json`.
+Follow the prompt for your AppData author namespace (e.g. `YourName/my-project`). This creates `dazscript.config.ts`, `tsconfig.json`, and wires the `build`, `build:encrypted`, `build:release`, `watch`, `encrypt`, `icons`, and `installer` scripts into `package.json`.
 
 ### 3. Write the script
 
@@ -160,6 +160,7 @@ This generates:
 - `dazscript.config.ts`
 - `tsconfig.json`
 - `package.json` script wiring for `build`, `build:encrypted`, `watch`, `encrypt`, `icons`, and `installer`
+- `build:release` uses `--log-level warn` before encryption so release packages suppress debug and trace output
 
 Available `init` flags:
 
@@ -173,6 +174,8 @@ npx dazscript init --menu-path /MyScripts --scripts-path ./src --out-dir ./out -
 | `--scripts-path` | Where the generator scans for runnable `.dsa.ts` entry files |
 | `--out-dir` | Where `build` writes `.dsa` files and copies icons |
 | `--app-data-path` | AppData namespace for launcher fallback (`Author/Product` format) |
+
+Builds also accept `--log-level <trace|debug|info|warn|error|off>`. This sets the minimum runtime log level for the compiled scripts. Use `debug` or `trace` during development and `warn` for release packages.
 
 Use `--scripts-path ./src/scripts` when runnable files live under a subfolder; use `--scripts-path ./src` when they are at the source root.
 
@@ -517,6 +520,7 @@ Files ending in `.dsa.ts` are treated as runnable entry points and compiled to `
 | Command | What it does |
 |---|---|
 | `npm run build` | Compile TypeScript → Daz Script |
+| `npm run build:release` | Build with `--log-level warn`, then encrypt implementation bundles |
 | `npm run watch` | Recompile on every save |
 | `npm run installer` | Generate the setup dialog |
 | `npm run icons` | Copy icon assets to the output folder |
