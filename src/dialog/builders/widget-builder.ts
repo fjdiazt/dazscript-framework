@@ -77,6 +77,11 @@ export abstract class WidgetBuilderBase<T extends DzWidget> implements IWidgetBu
         return this
     }
 
+    maxHeight(value: number): this {
+        this.widget.maxHeight = value
+        return this
+    }
+
     build(): T {
         return this.widget
     }
@@ -86,6 +91,7 @@ export interface IWidgetBuilder<T extends DzWidget> {
     visible(value: boolean | Observable<boolean>): this
     height(value: number): this
     minHeight(value: number): this
+    maxHeight(value: number): this
     build(): T
 }
 
