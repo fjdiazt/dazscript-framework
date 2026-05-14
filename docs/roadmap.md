@@ -75,15 +75,16 @@ Medium
 ### Add opt-in rebuild mode for list views
 
 Problem:
-Some Daz list and tree views appear unstable when item updates are applied through incremental in-place refreshes.
+Some Daz list and tree views appear unstable when item updates are applied through incremental in-place refreshes. This was reproduced in Morphs Loader when switching large tree/checklist lists that also carried product pixmaps.
 
 Current behavior:
 - `ListViewBuilder` listens to item observable changes
-- Item changes may trigger in-place list updates
+- Item changes trigger in-place list updates by default
+- Callers can opt into full rebuilds on item changes with `rebuildOnItemsChanged()`
 
 Proposed direction:
-- Add an opt-in rebuild mode for `ListViewBuilder`
-- Use that mode only for lists that are known to be unsafe with incremental updates
+- Keep `rebuildOnItemsChanged()` opt-in and use it only for lists that are known to be unsafe with incremental updates
+- Avoid changing the default list behavior globally because existing scripts depend on it
 
 Compatibility notes:
 - Do not change the default behavior globally

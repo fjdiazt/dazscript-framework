@@ -19,6 +19,8 @@ export enum ListViewRefreshOptions {
     Filters
 }
 
+type ListViewItemsChangeMode = 'update' | 'rebuild'
+
 export class ListViewBuilder<TItem, TData> implements IWidgetBuilder<DzListView> {
 
     private readonly context: ListViewBuilderContext<TItem, TData>
@@ -109,6 +111,11 @@ export class ListViewBuilder<TItem, TData> implements IWidgetBuilder<DzListView>
         return this
     }
 
+    rebuildOnItemsChanged(): this {
+        this.context.itemsChangeMode = 'rebuild'
+        return this
+    }
+
     contextMenu(fn: (listView: DzListView, item: DzListViewItem, pos: Point) => DzPopupMenu): this {
         this.context.contextMenu = fn
         return this
@@ -144,6 +151,7 @@ class ListViewBuilderContext<TItem, TData> {
     decorated: boolean
     flat: Observable<boolean>
     refreshWhat: ListViewRefreshOptions = ListViewRefreshOptions.All
+    itemsChangeMode: ListViewItemsChangeMode = 'update'
     constructor(public readonly dialogContext: WidgetBuilderContext) { }
 }
 
@@ -196,6 +204,11 @@ class ListViewBindBuilder<TItem, TData> {
 
     filter(options: ListViewFilterOptions): this {
         this.context.filter = options
+        return this
+    }
+
+    rebuildOnItemsChanged(): this {
+        this.context.itemsChangeMode = 'rebuild'
         return this
     }
 
@@ -281,6 +294,7 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
         if (!context.text)
             return warn('No text function provided for list builder')
 
+        const previousColumnWidths = context.columns?.value.map((_, index) => listView.columnWidth(index)) ?? []
         listView.clear()
         context.columns?.value.forEach((_, index) => {
             listView.setColumnWidth(index, 0)
@@ -299,6 +313,11 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
         if (context.columnsWidth) {
             context.columns?.value.forEach((_, index) => {
                 listView.setColumnWidth(index, context.columnsWidth!(index, listView.columnWidth(index), listView))
+            })
+        } else {
+            context.columns?.value.forEach((_, index) => {
+                const previousWidth = previousColumnWidths[index]
+                if (previousWidth > 0) listView.setColumnWidth(index, previousWidth)
             })
         }
 
@@ -390,7 +409,10 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
     listView.setSorting(context.sorting, context.sortAscending)
     buildList(context.items?.value)
     context.items.connect((items) => {
-        updateList(items)
+        if (context.itemsChangeMode === 'rebuild')
+            buildList(items, listView.selectedItem()?.id)
+        else
+            updateList(items)
     })
 
     context.refreshWhen?.connect(() => {
