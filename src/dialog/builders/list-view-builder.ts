@@ -44,6 +44,11 @@ export class ListViewBuilder<TItem, TData> implements IWidgetBuilder<DzListView>
         return this
     }
 
+    maxHeight(value: number): this {
+        this.context.maxHeight = value
+        return this
+    }
+
     /**
      * Binds the list rows to a collection of items
      * @param items
@@ -135,6 +140,7 @@ class ListViewBuilderContext<TItem, TData> {
     visible: Observable<boolean> = new Observable(true)
     height: number | null = null
     minHeight: number | null = null
+    maxHeight: number | null = null
     decorated: boolean
     flat: Observable<boolean>
     refreshWhat: ListViewRefreshOptions = ListViewRefreshOptions.All
@@ -226,6 +232,10 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
 
     if (context.minHeight !== null) {
         listView.minHeight = context.minHeight
+    }
+
+    if (context.maxHeight !== null) {
+        listView.maxHeight = context.maxHeight
     }
 
     const buildColumns = (columns: string[]) => {
@@ -320,22 +330,44 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
             existingByPath[path] = li
         })
 
+        const itemKey = (item: TreeNode<TItem>) => {
+            const data = context.data?.(item) as any
+            return data?.id ?? item.path
+        }
+
         const incomingPaths: Record<string, boolean> = {}
-        items.forEach((item) => {
-            incomingPaths[item.path] = true
-            const existing = existingByPath[item.path]
+        const markIncoming = (item: TreeNode<TItem>) => {
+            incomingPaths[itemKey(item)] = true
+            item.children.forEach(markIncoming)
+        }
+        items.forEach(markIncoming)
+
+        const updateItem = (item: TreeNode<TItem>, parent: DzListView | DzListViewItem) => {
+            const key = itemKey(item)
+            const existing = existingByPath[key]
             if (existing) {
                 context.text(item).forEach((text, idx) => {
+                    if (idx >= context.columns.value.length) return
                     existing.setText(idx, text ?? '')
                 })
                 const data = context.data?.(item)
                 if (data) setDataItem(existing, data)
+                item.children.forEach((child) => {
+                    updateItem(child, context.flat?.value === true ? listView : existing)
+                })
             } else {
-                buildItem(item, listView)
+                buildItem(item, parent)
             }
-        })
+        }
+        items.forEach((item) => updateItem(item, listView))
 
-        listView.getItems(DzListView.All).forEach((li) => {
+        listView.getItems(DzListView.All).sort((left, right) => {
+            const leftData = getDataItem<any>(left)
+            const rightData = getDataItem<any>(right)
+            const leftPath = leftData?.id ?? String(left.id)
+            const rightPath = rightData?.id ?? String(right.id)
+            return rightPath.length - leftPath.length
+        }).forEach((li) => {
             const data = getDataItem<any>(li)
             const path = data?.id ?? String(li.id)
             if (!incomingPaths[path]) listView.deleteItem(li)

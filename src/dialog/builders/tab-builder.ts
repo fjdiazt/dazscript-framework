@@ -11,6 +11,7 @@ export class TabBuilder implements IWidgetBuilder<DzTabWidget> {
     private currentChanged: (index: number) => void;
     private height_: number | null = null;
     private minHeight_: number | null = null;
+    private maxHeight_: number | null = null;
 
     constructor(private layoutBuilder: LayoutBuilder, private context: TabBuilderContext) {
     }
@@ -29,6 +30,11 @@ export class TabBuilder implements IWidgetBuilder<DzTabWidget> {
 
     minHeight(value: number): this {
         this.minHeight_ = value
+        return this
+    }
+
+    maxHeight(value: number): this {
+        this.maxHeight_ = value
         return this
     }
 
@@ -65,6 +71,7 @@ export class TabBuilder implements IWidgetBuilder<DzTabWidget> {
         return this.context.add((tabWidget) => {
             if (this.height_ !== null) tabWidget.height = this.height_
             if (this.minHeight_ !== null) tabWidget.minHeight = this.minHeight_
+            if (this.maxHeight_ !== null) tabWidget.maxHeight = this.maxHeight_
             let tab = new DzWidget(this.context.widgetContext.dialog)
             tabWidget.addTab(tab, this.titleText)
             this.context.widgetContext.layout.addWidget(tabWidget)

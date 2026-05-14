@@ -13,6 +13,7 @@ export default class GroupBoxBuilder implements IWidgetBuilder<DzGroupBox> {
     private _columns: number = 1
     private _height: number | null = null
     private _minHeight: number | null = null
+    private _maxHeight: number | null = null
 
     constructor(private context: WidgetBuilderContext) {
     }
@@ -73,6 +74,11 @@ export default class GroupBoxBuilder implements IWidgetBuilder<DzGroupBox> {
         return this
     }
 
+    maxHeight(value: number): this {
+        this._maxHeight = value
+        return this
+    }
+
     columns(value: number): this {
         this._columns = value
         return this
@@ -86,6 +92,7 @@ export default class GroupBoxBuilder implements IWidgetBuilder<DzGroupBox> {
         groupBox.columns = this._columns
         if (this._height !== null) groupBox.height = this._height
         if (this._minHeight !== null) groupBox.minHeight = this._minHeight
+        if (this._maxHeight !== null) groupBox.maxHeight = this._maxHeight
 
         this._title?.connect((text) => {
             groupBox.title = text
