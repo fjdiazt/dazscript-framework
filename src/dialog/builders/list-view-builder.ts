@@ -85,6 +85,11 @@ export class ListViewBuilder<TItem, TData> implements IWidgetBuilder<DzListView>
         return this
     }
 
+    selectionMode(mode: number): this {
+        this.context.selectionMode = mode
+        return this
+    }
+
     expanded(onOff: boolean | Observable<boolean>): this {
         if (typeof onOff === 'boolean')
             this.context.expanded = new Observable(onOff)
@@ -137,6 +142,7 @@ class ListViewBuilderContext<TItem, TData> {
     sorting: number = 0
     sortAscending: boolean = true
     sortOnBuild: boolean = true
+    selectionMode: number | null = null
     selected: Observable<TData>
     filter: ListViewFilterOptions
     doubleClicked: Observable<TData>
@@ -209,6 +215,11 @@ class ListViewBindBuilder<TItem, TData> {
 
     rebuildOnItemsChanged(): this {
         this.context.itemsChangeMode = 'rebuild'
+        return this
+    }
+
+    selectionMode(mode: number): this {
+        this.context.selectionMode = mode
         return this
     }
 
@@ -407,6 +418,9 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
     })
 
     listView.setSorting(context.sorting, context.sortAscending)
+    if (context.selectionMode !== null) {
+        listView.selectionMode = context.selectionMode
+    }
     buildList(context.items?.value)
     context.items.connect((items) => {
         if (context.itemsChangeMode === 'rebuild')
