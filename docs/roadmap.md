@@ -72,6 +72,55 @@ Medium
 
 ## List Refresh Stability
 
+### Add manual progress callback helper
+
+Problem:
+The framework `progress(info, items, callback)` helper works well for simple item loops, but some scripts need multi-phase progress that does not map cleanly to one array iteration. Morphs Loader apply/refresh flows need manual steps across file operations, manifest sync, model sync, and UI refresh.
+
+Current behavior:
+- Scripts can use `progress(info, items, callback)` for array-driven work
+- Multi-phase flows must call raw DAZ globals such as `startProgress`, `stepProgress`, and `finishProgress`
+
+Proposed direction:
+- Add a wrapper such as `withProgress(info, totalSteps, callback)`
+- Provide a small progress handle to the callback, for example `step(count?)`
+- Ensure `finishProgress()` runs in a `finally` block
+- Keep cancellability and elapsed-time options consistent with the existing `progress()` helper
+
+Compatibility notes:
+- Keep existing `progress()` behavior unchanged
+- Avoid forcing multi-phase work into fake arrays
+
+Priority:
+Medium
+
+### Add richer list view builder helpers
+
+Problem:
+Consumer scripts still drop to raw `DzListView` and `DzPopupMenu` APIs for common list behavior. Morphs Loader currently needs typed item signals, selected row data extraction, submenu/separator context menus, manual column sizing, and checklist row setup.
+
+Current behavior:
+- `ListViewBuilder` supports core binding, columns, filters, context menus, refresh, rebuild mode, and selection mode
+- Item signal overloads still require string-indexed `scriptConnect` calls in consumer code
+- Selected row operations require each script to call `getItems(DzListView.Selected)` and unwrap stored data
+- `PopupMenuBuilder` handles flat item lists but not submenus, explicit enabled state, or append-position separators
+- Checklist row setup and manual column width setup are repeated in scripts
+
+Proposed direction:
+- Add typed list item signal hooks such as clicked item and space-pressed item callbacks
+- Add helper APIs for selected row data, for example `getSelectedDataItems<T>(listView)`
+- Extend `PopupMenuBuilder` with submenu, separator, and enabled-state support
+- Add list builder options for manual column widths and resize/sort indicator settings
+- Consider checklist row builder sugar only after another script repeats the Morphs Loader pattern
+
+Compatibility notes:
+- Keep these as thin wrappers over DAZ APIs
+- Do not remove the existing `build((listView) => ...)` escape hatch
+- Avoid baking Morphs Loader-specific policy into the framework
+
+Priority:
+Medium
+
 ### Add opt-in rebuild mode for list views
 
 Problem:
