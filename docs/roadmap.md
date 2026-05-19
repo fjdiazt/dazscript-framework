@@ -70,6 +70,32 @@ Compatibility notes:
 Priority:
 Medium
 
+## Logging
+
+### Add scoped logger helpers
+
+Problem:
+Scripts currently use `@dsf/common/log` directly and must manually prefix every message with a product or script tag, such as `[PowerMenu]` or `[MorphsLoader]`. `BaseScript` announces script execution, but the common log helpers do not provide a scoped logger that automatically prefixes each diagnostic line. This makes logs less consistent and increases copy/paste drift across products.
+
+Current behavior:
+- `BaseScript.exec()` logs the class/script name at startup and on errors
+- `debug`, `info`, `warn`, `error`, and `trace` log messages as provided
+- Products that need consistent diagnostic tags build their own local wrappers or string prefixes
+
+Proposed direction:
+- Add a helper such as `createLogger(scope)` or `createScopedLogger(scope)`
+- Return scoped `debug`, `info`, `warn`, `error`, and `trace` functions
+- Format messages consistently, for example `[Scope] message`
+- Keep existing unscoped log helpers unchanged
+- Allow nested scopes later if repeated by scripts, for example `[MorphVault][Discovery] message`
+
+Compatibility notes:
+- Do not change existing log output by default
+- Keep scoped logging opt-in so current scripts and tests remain stable
+
+Priority:
+Medium
+
 ## List Refresh Stability
 
 ### Add manual progress callback helper
