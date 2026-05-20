@@ -257,10 +257,17 @@ import {
 ### Property Operations
 ```typescript
 import {
-  unlock,                     // (prop, fn) => unlock property temporarily
-  lock,                       // (prop) => lock property
-  setPropertyValue,           // Set with optional animation
-  getPropertyValue            // Get current value
+  setPath,                    // Move a property to a DzPropertyGroup path
+  getName,                    // Get the internal property name
+  ensureNameIsUnique,         // Rename to a unique internal name on the owning node
+  unlock,                     // Temporarily unlock while a callback runs
+  isNumeric,                  // Test DzNumericProperty inheritance
+  cast,                       // Cast to a specific property type
+  toNumeric,                  // Cast to DzFloatProperty or DzIntProperty
+  toFloat,
+  toInt,
+  getPropertyInputs,          // Get properties that drive this property
+  getPropertyOutputs          // Get properties driven by this property
 } from '@dsf/helpers/property-helper'
 ```
 
@@ -435,4 +442,3 @@ import { something } from '@dsf/lib/something'
 - [OVERVIEW.md](./OVERVIEW.md) — Project structure overview
 - Framework source: `/framework/src/` — Implementation of all helpers
 - Types source: `/dazscript-types/src/types/` — Daz API type definitions
-

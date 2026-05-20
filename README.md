@@ -501,7 +501,7 @@ The framework ships helpers for common Daz Studio tasks, all importable from `@d
 |---|---|
 | `scene-helper` | `getRoot()`, `getSelectedNode()`, `getNodes()` |
 | `node-helper` | Type checks (`isFigure`, `isBone`), transforms, visibility |
-| `property-helper` | Find, read, and adjust node properties |
+| `property-helper` | Set paths, unlock, cast numeric types, and inspect property inputs/outputs |
 | `array-helper` | `distinct()`, `flatten()`, `groupBy()` |
 | `string-helper` | Case, trimming, splitting |
 | `directory-helper` | File and path operations |

@@ -20,7 +20,7 @@ export const confirm = (message?: string): { ok: boolean, cancel: boolean } => {
 }
 
 export const prompt = (text: string, title: string, button0: string, button1?: string): { cancel: boolean, selection: number } => {
-    const response = MessageBox.question(text, title, button0, button1 ?? "", "Cancel")
+    const response = MessageBox.question(text, title, "Cancel", button0, button1 ?? "")
 
-    return { cancel: response === 0, selection: response };
+    return { cancel: response === 0, selection: response - 1 };
 }

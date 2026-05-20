@@ -379,10 +379,17 @@ import {
 ### Property Helpers
 ```typescript
 import {
+  setPath,
+  getName,
+  ensureNameIsUnique,
   unlock,
-  lock,
-  setPropertyValue,
-  getPropertyValue
+  isNumeric,
+  cast,
+  toNumeric,
+  toFloat,
+  toInt,
+  getPropertyInputs,
+  getPropertyOutputs
 } from '@dsf/helpers/property-helper'
 ```
 
@@ -765,4 +772,3 @@ Every push to `master` automatically:
 - For breaking changes, include `BREAKING CHANGE:` in commit body
 - Use `fix:` for patches, `feat:` for new features/enhancements
 - Use no prefix for docs, tests, or non-publishing changes
-
