@@ -461,9 +461,11 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
         })
     }
 
-    listView.contextMenuRequested.scriptConnect((item: DzListViewItem, pos: Point) => {
-        context.contextMenu?.(listView, item, pos).exec(pos.cursorPos(), 0)
-    })
+    if (context.contextMenu) {
+        listView.contextMenuRequested.scriptConnect((item: DzListViewItem, pos: Point) => {
+            context.contextMenu(listView, item, pos).exec(pos.cursorPos(), 0)
+        })
+    }
 
     return listView
 }
