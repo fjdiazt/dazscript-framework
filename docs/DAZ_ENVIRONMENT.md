@@ -371,6 +371,22 @@ loadData((err, data) => {
 })
 ```
 
+### Connecting overloaded DAZ signals
+```typescript
+// ❌ Wrong for overloaded signals: DAZ cannot choose the overload at runtime
+comboBox.currentIndexChanged.scriptConnect((index: number) => {
+  selectedIndex$.value = index
+})
+
+// ✅ Right: use the explicit signal signature
+comboBox['currentIndexChanged(int)'].scriptConnect((index: number) => {
+  selectedIndex$.value = index
+})
+```
+
+`DzComboBox.currentIndexChanged` has both `currentIndexChanged(int)` and `currentIndexChanged(QString)`.
+For overloaded DAZ signals, always connect through the string-indexed signature that names the parameter type.
+
 ---
 
 ## 🚀 What IS Available
