@@ -81,7 +81,6 @@ export class ListViewBuilder<TItem, TData> implements IWidgetBuilder<DzListView>
     }
 
     sortOnBuild(onOff: boolean = true): this {
-        this.context.sortOnBuild = onOff
         return this
     }
 
@@ -141,7 +140,6 @@ class ListViewBuilderContext<TItem, TData> {
     data: (item: TreeNode<TItem>) => TData
     sorting: number = 0
     sortAscending: boolean = true
-    sortOnBuild: boolean = true
     selectionMode: number | null = null
     selected: Observable<TData>
     filter: ListViewFilterOptions
@@ -333,7 +331,6 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
         }
 
         listView.rootIsDecorated = context.decorated
-        if (context.sorting >= 0 && context.sortOnBuild) listView.sort()
 
         if (context.filter?.keywords.value || context.filter?.filters)
             filterList()
@@ -403,7 +400,6 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
             if (!incomingPaths[path]) listView.deleteItem(li)
         })
 
-        listView.sort()
     }
 
     const onSelectionChanged = (callback: (item: DzListViewItem, data: TData) => void) => {
@@ -417,6 +413,7 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
         buildColumns(columns)
     })
 
+    listView.showSortIndicator = context.sorting >= 0
     listView.setSorting(context.sorting, context.sortAscending)
     if (context.selectionMode !== null) {
         listView.selectionMode = context.selectionMode
