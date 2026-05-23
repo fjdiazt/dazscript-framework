@@ -42,4 +42,11 @@ describe('log levels', () => {
         expect(getLogLevel()).toBe('debug')
         expect(shouldLog('debug')).toBe(true)
     })
+
+    it('normalizes an empty build level to trace', () => {
+        setLogLevel('')
+
+        expect(getLogLevel()).toBe('trace')
+        expect(shouldLog('trace')).toBe(true)
+    })
 })

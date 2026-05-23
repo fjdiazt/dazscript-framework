@@ -15,7 +15,7 @@ const logLevelWeights: { [key in LogLevel]: number } = {
 let currentLogLevel: LogLevel = normalizeLogLevel(
     typeof __DAZSCRIPT_LOG_LEVEL__ === 'string'
         ? __DAZSCRIPT_LOG_LEVEL__
-        : 'debug'
+        : 'trace'
 )
 
 export const setLogLevel = (level: string): LogLevel => {
@@ -26,7 +26,7 @@ export const setLogLevel = (level: string): LogLevel => {
 export const getLogLevel = (): LogLevel => currentLogLevel
 
 export function normalizeLogLevel(level: string): LogLevel {
-    if (!level) return 'debug'
+    if (!level) return 'trace'
     const normalized = level.toLowerCase() as LogLevel
     return logLevels.indexOf(normalized) >= 0 ? normalized : 'debug'
 }

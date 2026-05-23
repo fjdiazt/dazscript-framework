@@ -175,7 +175,7 @@ npx dazscript init --menu-path /MyScripts --scripts-path ./src --out-dir ./out -
 | `--out-dir` | Where `build` writes `.dsa` files and copies icons |
 | `--app-data-path` | AppData namespace for launcher fallback (`Author/Product` format) |
 
-Builds also accept `--log-level <trace|debug|info|warn|error|off>`. This sets the minimum runtime log level for the compiled scripts. Use `debug` or `trace` during development and `warn` for release packages.
+Builds also accept `--log-level <trace|debug|info|warn|error|off>`. This sets the minimum runtime log level for the compiled scripts. When omitted, builds default to `trace`; use `warn` for release packages.
 
 Use `--scripts-path ./src/scripts` when runnable files live under a subfolder; use `--scripts-path ./src` when they are at the source root.
 
