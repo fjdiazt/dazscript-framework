@@ -23,7 +23,11 @@ export abstract class BasicDialog {
 
     run(): boolean {
         this.init()
-        return this.dialog.exec()
+        this.builder.restoreObjectName()
+        this.builder.traceGeometry('beforeExec')
+        let result = this.dialog.exec()
+        this.builder.traceGeometry('afterExec', { result })
+        return result
     }
 
     ok(): boolean {
