@@ -42,12 +42,18 @@ export class DialogBuilder extends WidgetsBuilder {
         let dialogWidget = this.context.dialog.getWidget();
         let sizeHint = dialogWidget.minimumSizeHint;
         let maxHeight = this.properties.maxHeight;
-        let height = this.properties.height ?? sizeHint.height;
-        if (maxHeight !== undefined && height > maxHeight) height = maxHeight;
-        this.context.dialog.minHeight = maxHeight !== undefined
-            ? Math.min(sizeHint.height, maxHeight)
-            : sizeHint.height;
-        this.context.dialog.height = height;
+        let hasExplicitHeight = this.properties.height !== undefined;
+        let height = this.properties.height;
+        if (height !== undefined && maxHeight !== undefined && height > maxHeight) height = maxHeight;
+
+        if (maxHeight !== undefined) {
+            this.context.dialog.minHeight = Math.min(sizeHint.height, maxHeight);
+        }
+        else if (height !== undefined) {
+            this.context.dialog.minHeight = height;
+        }
+
+        if (height !== undefined) this.context.dialog.height = height;
 
         if (this.properties.width) this.context.dialog.width = this.properties.width;
         if (this.properties.maxWidth !== undefined) this.context.dialog.maxWidth = this.properties.maxWidth;
@@ -59,7 +65,8 @@ export class DialogBuilder extends WidgetsBuilder {
         else {
             if (this.properties.width)
                 this.context.dialog.setFixedWidth(this.properties.width);
-            this.context.dialog.setFixedHeight(height);
+            if (hasExplicitHeight && height !== undefined)
+                this.context.dialog.setFixedHeight(height);
         }
     }
 

@@ -15,6 +15,16 @@ class HeaderDialog extends BasicDialog {
     }
 }
 
+class NonResizableDefaultSizeDialog extends BasicDialog {
+    protected build(): void { }
+}
+
+class ExplicitFixedHeightDialog extends BasicDialog {
+    protected build(): void {
+        this.builder.options({ height: 35 })
+    }
+}
+
 describe('dialog geometry trace', () => {
     beforeEach(() => {
         ; (globalThis as any).App = {
@@ -29,7 +39,11 @@ describe('dialog geometry trace', () => {
             width = 300
             height = 200
             minHeight = 0
+            maxHeight = 0
+            maxWidth = 0
             sizeGripEnabled = false
+            fixedHeight: number | undefined
+            fixedWidth: number | undefined
             private widget = {
                 objectName: '',
                 x: 10,
@@ -50,11 +64,30 @@ describe('dialog geometry trace', () => {
             addLayout() { }
 
             exec() {
-                this.width = 640
-                this.height = 480
-                this.widget.width = 640
-                this.widget.height = 480
+                if (this.sizeGripEnabled) {
+                    this.width = 640
+                    this.height = 480
+                    this.widget.width = 640
+                    this.widget.height = 480
+                    return true
+                }
+
+                this.widget.minimumSizeHint = { width: 196, height: 76 }
+                this.width = this.fixedWidth ?? this.widget.minimumSizeHint.width
+                this.height = this.fixedHeight ?? this.widget.minimumSizeHint.height
+                this.widget.width = this.width
+                this.widget.height = this.height
                 return true
+            }
+
+            setFixedHeight(value: number) {
+                this.fixedHeight = value
+                this.height = value
+            }
+
+            setFixedWidth(value: number) {
+                this.fixedWidth = value
+                this.width = value
             }
         }
         const Layout = class {
@@ -143,6 +176,32 @@ describe('dialog geometry trace', () => {
         expect(messages.some((message: string) =>
             message.includes('event=dialog.geometry phase=beforeExec') &&
             message.includes('objectName="Vholf3DPowerMenu-ActiveToolDlg"')
+        )).toBe(true)
+    })
+
+    it('does not freeze a non-resizable dialog to an early implicit size hint', () => {
+        new NonResizableDefaultSizeDialog('Store Active Camera').run()
+
+        const messages = (globalThis as any).App.debug.mock.calls.map((call: unknown[]) => String(call[0]))
+
+        expect(messages.some((message: string) =>
+            message.includes('event=dialog.geometry phase=afterExec') &&
+            message.includes('objectName="StoreActiveCameraDlg"') &&
+            message.includes('dialogHeight=76') &&
+            message.includes('sizeHintHeight=76')
+        )).toBe(true)
+    })
+
+    it('keeps explicit non-resizable dialog height fixed', () => {
+        new ExplicitFixedHeightDialog('Explicit Height').run()
+
+        const messages = (globalThis as any).App.debug.mock.calls.map((call: unknown[]) => String(call[0]))
+
+        expect(messages.some((message: string) =>
+            message.includes('event=dialog.geometry phase=afterExec') &&
+            message.includes('objectName="ExplicitHeightDlg"') &&
+            message.includes('dialogHeight=35') &&
+            message.includes('sizeHintHeight=76')
         )).toBe(true)
     })
 })
