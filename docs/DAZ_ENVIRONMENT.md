@@ -382,9 +382,15 @@ comboBox.currentIndexChanged.scriptConnect((index: number) => {
 comboBox['currentIndexChanged(int)'].scriptConnect((index: number) => {
   selectedIndex$.value = index
 })
+
+// ✅ Also right for DzListView item clicks
+listView['clicked(DzListViewItem*)'].scriptConnect((item: DzListViewItem) => {
+  selectedItem$.value = item.getDataItem('data')
+})
 ```
 
 `DzComboBox.currentIndexChanged` has both `currentIndexChanged(int)` and `currentIndexChanged(QString)`.
+`DzListView.clicked` has both `clicked(DzListViewItem*)` and `clicked(DzListViewItem*,QPoint,int)`.
 For overloaded DAZ signals, always connect through the string-indexed signature that names the parameter type.
 
 ---
