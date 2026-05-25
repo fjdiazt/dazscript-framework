@@ -10,6 +10,7 @@ export default class GroupBoxBuilder implements IWidgetBuilder<DzGroupBox> {
     private _style: { flat?: boolean }
     private _visible: Observable<boolean>
     private _enabled: Observable<boolean>
+    private _checked: Observable<boolean>
     private _columns: number = 1
     private _height: number | null = null
     private _minHeight: number | null = null
@@ -47,6 +48,13 @@ export default class GroupBoxBuilder implements IWidgetBuilder<DzGroupBox> {
 
     flat(): this {
         this._style = { flat: true }
+        return this
+    }
+
+    checkable(value: boolean | Observable<boolean> = true): this {
+        this._checked = typeof value === 'boolean'
+            ? new Observable(value)
+            : value
         return this
     }
 
@@ -90,6 +98,10 @@ export default class GroupBoxBuilder implements IWidgetBuilder<DzGroupBox> {
         groupBox.title = this._title?.value
         groupBox.flat = this._style?.flat
         groupBox.columns = this._columns
+        if (this._checked) {
+            groupBox.checkable = true
+            groupBox.checked = this._checked.value
+        }
         if (this._height !== null) groupBox.height = this._height
         if (this._minHeight !== null) groupBox.minHeight = this._minHeight
         if (this._maxHeight !== null) groupBox.maxHeight = this._maxHeight
@@ -97,6 +109,15 @@ export default class GroupBoxBuilder implements IWidgetBuilder<DzGroupBox> {
         this._title?.connect((text) => {
             groupBox.title = text
         })
+
+        if (this._checked) {
+            this._checked.connect((checked) => {
+                groupBox.checked = checked
+            })
+            groupBox.toggled.scriptConnect((checked) => {
+                this._checked.value = checked
+            })
+        }
 
         new LayoutBuilder(this.context)
             .parent(groupBox)
