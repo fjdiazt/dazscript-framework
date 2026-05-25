@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
     canResetSetupShortcut,
     getDisplayedSetupShortcut,
+    resetSetupShortcuts,
     resetSetupShortcut,
     setSetupShortcut,
     updateShortcutOverrideState
@@ -78,6 +79,29 @@ describe('setup shortcut state', () => {
         expect(entry.effectiveShortcut).toBe('')
         expect(entry.isShortcutOverridden).toBe(false)
         expect(canResetSetupShortcut(entry)).toBe(false)
+    })
+
+    it('resets all shortcut entries to their defaults', () => {
+        const installed = shortcutState({
+            installedActionName: 'installed-guid',
+            defaultShortcut: 'Ctrl+P',
+            installedShortcut: 'F12',
+            effectiveShortcut: 'F12',
+            isShortcutOverridden: true
+        })
+        const pending = shortcutState({
+            defaultShortcut: '',
+            effectiveShortcut: 'Ctrl+Alt+K'
+        })
+
+        resetSetupShortcuts([installed, pending])
+
+        expect(installed.installedShortcut).toBe('Ctrl+P')
+        expect(installed.effectiveShortcut).toBe('Ctrl+P')
+        expect(installed.isShortcutOverridden).toBe(false)
+        expect(pending.installedShortcut).toBe('')
+        expect(pending.effectiveShortcut).toBe('')
+        expect(pending.isShortcutOverridden).toBe(false)
     })
 
     it('displays custom marker when installed shortcut was changed outside setup', () => {

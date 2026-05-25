@@ -12,7 +12,7 @@ import { TreeNode } from '@dsf/lib/tree-node'
 import { promptKeyboardShortcut } from '@dsf/shared/set-keyboard-shortcut'
 import { readFromFile, saveToFile } from './file-helper'
 import { getCanonicalInstallerEntry, toActionKey } from './custom-action-installer-entries'
-import { canResetSetupShortcut, getDisplayedSetupShortcut, resetSetupShortcut, setSetupShortcut, updateShortcutOverrideState } from './custom-action-installer-shortcuts'
+import { canResetSetupShortcut, getDisplayedSetupShortcut, resetSetupShortcut, resetSetupShortcuts, setSetupShortcut, updateShortcutOverrideState } from './custom-action-installer-shortcuts'
 import { getScriptPath } from './script-helper'
 
 type InstallerEntry = {
@@ -397,6 +397,7 @@ class InstallerSelectionDialog extends BasicDialog {
         debug(`[Setup] context menu row resolved item="${this.safeListItemText(contextItem, 1)}" entry="${entry?.action?.text ?? ''}"`)
         const canSetShortcut = Boolean(entry)
         const canResetShortcut = Boolean(entry && canResetSetupShortcut(entry))
+        const canResetAllShortcuts = this.entries.some(canResetSetupShortcut)
 
         const items = [
             {
@@ -413,6 +414,10 @@ class InstallerSelectionDialog extends BasicDialog {
                     this.resetDefaultShortcut(entry)
                 }
             },
+            {
+                text: 'Reset All Shortcuts to Defaults',
+                activated: () => this.resetAllDefaultShortcuts()
+            },
             {},
             { text: 'Check All', activated: () => this.checkVisible(listView, true) },
             { text: 'Uncheck All', activated: () => this.checkVisible(listView, false) }
@@ -421,6 +426,7 @@ class InstallerSelectionDialog extends BasicDialog {
         return new PopupMenuBuilder(this.builder.context).items(...items).build((menu) => {
             menu.setItemEnabled(0, canSetShortcut)
             menu.setItemEnabled(1, canResetShortcut)
+            menu.setItemEnabled(2, canResetAllShortcuts)
         })
     }
 
@@ -495,6 +501,15 @@ class InstallerSelectionDialog extends BasicDialog {
         const previousShortcut = entry.effectiveShortcut
         resetSetupShortcut(entry)
         debug(`[Setup] shortcut reset queued action="${entry.action.text}" previous="${previousShortcut}" default="${entry.defaultShortcut}"`)
+        this.refreshListEvent$.trigger()
+    }
+
+    private resetAllDefaultShortcuts() {
+        const resettableEntries = this.entries.filter(canResetSetupShortcut)
+        if (resettableEntries.length === 0) return
+
+        resetSetupShortcuts(resettableEntries)
+        debug(`[Setup] reset ${resettableEntries.length} shortcuts to defaults`)
         this.refreshListEvent$.trigger()
     }
 

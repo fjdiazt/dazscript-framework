@@ -47,3 +47,7 @@ export const resetSetupShortcut = (entry: InstallerShortcutState): void => {
     entry.effectiveShortcut = defaultShortcut
     updateShortcutOverrideState(entry)
 }
+
+export const resetSetupShortcuts = (entries: InstallerShortcutState[]): void => {
+    entries.forEach(resetSetupShortcut)
+}
