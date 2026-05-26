@@ -22,6 +22,12 @@ export const trimEnd = (source: string, search: string): string => {
     return source.endsWith(search) ? source.slice(0, -search.length) : source
 }
 
+export const repeat = (source: string, count: number): string => {
+    let value = ''
+    for (let i = 0; i < count; i++) value += source
+    return value
+}
+
 export const count = (source: string, search: string): number => {
     return source.split(search).length - 1
 }
