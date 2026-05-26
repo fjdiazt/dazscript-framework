@@ -13,6 +13,7 @@
     "icons": "node ./dist/scripts/cli.js icons --out-dir ./out",
     "installer": "node ./dist/scripts/cli.js installer --scripts-path ./src/examples --menu-path /DazScriptFramework",
     "test": "vitest run",
+    "test:integration": "node ./test/integration/run-integration-tests.js",
     "test:watch": "vitest"
   },
   "bin": {

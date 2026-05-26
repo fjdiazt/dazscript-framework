@@ -17,7 +17,12 @@ export const getScriptPath = (): string => {
 
 export const getScriptArguments = (): any[] => {
     try {
-        return typeof getArguments === 'function' ? getArguments() : []
+        if (typeof getArguments === 'function') {
+            const args = getArguments()
+            if (args && args.length > 0) return args
+        }
+
+        return App.scriptArgs ?? []
     }
     catch (e) {
         return []
