@@ -21,6 +21,18 @@ DAZ_STUDIO_EXE
 DAZ_TEST_CONTENT_DUF
 ```
 
+You can set these in your shell, or copy one of the example files to `.env.integration.local`:
+
+```bash
+cp .env.integration.linux.example .env.integration.local
+```
+
+```powershell
+Copy-Item .env.integration.windows.example .env.integration.local
+```
+
+`.env.integration.local` is ignored by git. Shell environment variables override values from the local env file.
+
 Windows example:
 
 ```powershell

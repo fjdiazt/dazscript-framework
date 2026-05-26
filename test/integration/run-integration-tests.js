@@ -10,6 +10,7 @@ const fixtureSource = path.join(__dirname, 'fixtures', 'framework-integration.ds
 const integrationOut = path.join(__dirname, 'out');
 const fixtureRoot = path.join(integrationOut, 'fixture');
 const resultPath = path.join(fixtureRoot, 'result.json');
+const localEnvPath = path.join(repoRoot, '.env.integration.local');
 
 function fail(message) {
   console.error(`[dazscript integration] ${message}`);
@@ -28,6 +29,38 @@ function normalizeForDaz(value) {
   }
 
   return normalized;
+}
+
+function unquoteEnvValue(value) {
+  const trimmed = value.trim();
+  if (trimmed.length < 2) return trimmed;
+
+  const first = trimmed[0];
+  const last = trimmed[trimmed.length - 1];
+  if ((first === '"' && last === '"') || (first === '\'' && last === '\'')) {
+    return trimmed.substring(1, trimmed.length - 1);
+  }
+
+  return trimmed;
+}
+
+function loadLocalEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return;
+
+  const lines = fs.readFileSync(filePath, 'utf8').split(/\r?\n/);
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index].trim();
+    if (!line || line[0] === '#') continue;
+
+    const separatorIndex = line.indexOf('=');
+    if (separatorIndex <= 0) continue;
+
+    const key = line.substring(0, separatorIndex).trim();
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) continue;
+    if (process.env[key] !== undefined) continue;
+
+    process.env[key] = unquoteEnvValue(line.substring(separatorIndex + 1));
+  }
 }
 
 function requireEnv() {
@@ -218,6 +251,7 @@ function assertResult() {
 }
 
 function main() {
+  loadLocalEnvFile(localEnvPath);
   const env = requireEnv();
   generateFixtureProject();
   buildFixtureProject();

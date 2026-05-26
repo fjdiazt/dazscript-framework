@@ -3,3 +3,4 @@ out
 src/Install.dsa.ts
 src/Uninstall.dsa.ts
 /test/integration/out/
+.env.integration.local
