@@ -55,6 +55,12 @@ npx dazscript init
 
 Follow the prompt for your AppData author namespace (e.g. `YourName/my-project`). This creates `dazscript.config.ts`, `tsconfig.json`, and wires the `build`, `build:encrypted`, `build:release`, `watch`, `encrypt`, `icons`, and `installer` scripts into `package.json`.
 
+To include a DAZ Studio headless integration-test scaffold, run:
+
+```bash
+npx dazscript init --integration-tests
+```
+
 ### 3. Write the script
 
 Create `src/hello-world.dsa.ts`:
@@ -174,10 +180,21 @@ npx dazscript init --menu-path /MyScripts --scripts-path ./src --out-dir ./out -
 | `--scripts-path` | Where the generator scans for runnable `.dsa.ts` entry files |
 | `--out-dir` | Where `build` writes `.dsa` files and copies icons |
 | `--app-data-path` | AppData namespace for launcher fallback (`Author/Product` format) |
+| `--integration-tests` | Add a DAZ Studio headless integration-test fixture, env examples, ignore entries, and `test:integration` script |
 
 Builds also accept `--log-level <trace|debug|info|warn|error|off>`. This sets the minimum runtime log level for the compiled scripts. When omitted, builds default to `debug`; use `warn` for release packages.
 
 Use `--scripts-path ./src/scripts` when runnable files live under a subfolder; use `--scripts-path ./src` when they are at the source root.
+
+### DAZ Studio integration tests
+
+Projects can run real DAZ Studio smoke tests through the published CLI:
+
+```bash
+npm run test:integration
+```
+
+The generated script calls `dazscript integration --fixture ./test/integration/fixtures/<project>-smoke.dsa.ts`. Configure local machine paths in an ignored `.env.integration.local`; `DAZ_STUDIO_EXE` is always required, and `DAZ_TEST_CONTENT_DUF` is required only for tests that use `--require-content`. See `test/integration/README.md` in this repository for maintainer and consuming-project details.
 
 ---
 

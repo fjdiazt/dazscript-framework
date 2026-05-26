@@ -6,20 +6,25 @@ Run the fast unit suite with:
 npm test
 ```
 
-Run the DAZ Studio integration suite with:
+Run this repository's DAZ Studio integration suite with:
 
 ```bash
 npm run test:integration
 ```
 
-`test:integration` is opt-in and requires a local DAZ Studio install plus one figure DUF. It builds a generated consumer-style fixture project under `test/integration/out/fixture/`, launches DAZ Studio headless through the generated launcher, and validates framework helpers against real DAZ runtime objects.
+The framework fixture uses:
 
-Required environment:
-
-```text
-DAZ_STUDIO_EXE
-DAZ_TEST_CONTENT_DUF
+```bash
+node ./dist/scripts/cli.js integration --fixture ./test/integration/fixtures/framework-integration.dsa.ts --require-content
 ```
+
+It builds a generated consumer-style fixture project under `test/integration/out/fixture/`, launches DAZ Studio headless through the generated launcher, loads the configured content DUF, and validates framework helpers against real DAZ runtime objects.
+
+## Environment
+
+`DAZ_STUDIO_EXE` is required for every integration test.
+
+`DAZ_TEST_CONTENT_DUF` is required only when the fixture or npm script uses `--require-content`.
 
 You can set these in your shell, or copy one of the example files to `.env.integration.local`:
 
@@ -50,9 +55,37 @@ export DAZ_TEST_CONTENT_DUF="$WINEPREFIX/drive_c/users/Public/Documents/My DAZ 3
 npm run test:integration
 ```
 
-The figure does not have to be Genesis 9. The first-pass assertions are figure-agnostic and cover:
+The framework fixture does not have to use Genesis 9. The assertions are figure-agnostic and cover:
 
 - `scene-helper` frame/time helpers
 - `node-helper` figure, bone, root, and body-part helpers
 
 Generated files are ignored by git and left in `test/integration/out/` after failures for inspection.
+
+## Consumer Projects
+
+New projects can bootstrap a no-figure smoke fixture with:
+
+```bash
+npx dazscript init --integration-tests
+```
+
+For an existing project, add a fixture and script manually:
+
+```json
+{
+  "scripts": {
+    "test:integration": "dazscript integration --fixture ./test/integration/fixtures/project-smoke.dsa.ts"
+  }
+}
+```
+
+The no-figure form requires only `DAZ_STUDIO_EXE`. Add `--require-content` to the npm script only when a fixture needs a content DUF:
+
+```json
+{
+  "scripts": {
+    "test:integration": "dazscript integration --fixture ./test/integration/fixtures/project-figure.dsa.ts --require-content"
+  }
+}
+```
