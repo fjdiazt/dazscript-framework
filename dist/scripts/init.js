@@ -147,6 +147,143 @@ function updatePackageJsonForIntegration(workdir, fixturePath) {
   }
 }
 
+function isNpmDefaultTestScript(scriptName, command) {
+  return scriptName === 'test' && command === 'echo "Error: no test specified" && exit 1';
+}
+
+function setPackageScript(packageJson, scriptName, command) {
+  packageJson.scripts = packageJson.scripts || {};
+  const existingCommand = packageJson.scripts[scriptName];
+  if (existingCommand && !isNpmDefaultTestScript(scriptName, existingCommand)) {
+    console.log(`skip package.json ${scriptName}`);
+    return false;
+  }
+
+  packageJson.scripts[scriptName] = command;
+  return true;
+}
+
+function setDevDependency(packageJson, dependencyName, version) {
+  packageJson.devDependencies = packageJson.devDependencies || {};
+  if (packageJson.devDependencies[dependencyName]) {
+    return false;
+  }
+
+  packageJson.devDependencies[dependencyName] = version;
+  return true;
+}
+
+function updatePackageJsonForUnitTests(workdir) {
+  const packageJsonPath = path.join(workdir, 'package.json');
+  const packageJson = fs.existsSync(packageJsonPath)
+    ? readJson(packageJsonPath)
+    : { private: true };
+
+  let changed = false;
+  changed = setPackageScript(packageJson, 'test', 'vitest run') || changed;
+  changed = setPackageScript(packageJson, 'test:watch', 'vitest') || changed;
+  changed = setDevDependency(packageJson, 'vitest', '^3.0.0') || changed;
+
+  if (changed) {
+    writeJson(packageJsonPath, packageJson);
+    console.log('update package.json');
+  }
+}
+
+function buildVitestConfigContent() {
+  return `import path from 'node:path'
+import { defineConfig } from 'vitest/config'
+
+export default defineConfig({
+    test: {
+        environment: 'node',
+        include: ['src/**/*.test.ts', 'test/unit/**/*.test.ts']
+    },
+    resolve: {
+        alias: {
+            '@dsf': path.resolve(__dirname, 'node_modules/dazscript-framework/src'),
+            '@dst': path.resolve(__dirname, 'node_modules/dazscript-types/src/types')
+        }
+    }
+})
+`;
+}
+
+function buildTestTsconfigContent() {
+  return `{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "moduleResolution": "Node"
+  },
+  "include": ["src/**/*.test.ts", "test/unit/**/*.test.ts"],
+  "exclude": []
+}
+`;
+}
+
+function buildUnitTestContent() {
+  return `import { describe, expect, it } from 'vitest'
+
+const toTitleCase = (value: string): string =>
+    value
+        .split(/[-_\\s]+/)
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ')
+
+describe('unit test scaffold', () => {
+    it('runs TypeScript tests with Vitest', () => {
+        expect(toTitleCase('hello-daz-script')).toBe('Hello Daz Script')
+    })
+})
+`;
+}
+
+function buildUnitTestReadmeContent() {
+  return `# Unit Tests
+
+This project uses Vitest for fast Node-side unit tests.
+
+Run once:
+
+\`\`\`bash
+npm test
+\`\`\`
+
+Watch mode:
+
+\`\`\`bash
+npm run test:watch
+\`\`\`
+
+Unit tests are useful for pure TypeScript helpers, parsing, normalization, and other logic that does not require Daz Studio runtime objects. Use DAZ Studio integration tests for helpers that must execute inside Daz Studio.
+`;
+}
+
+function initUnitTests(workdir, options) {
+  writeFileIfNeeded(
+    path.join(workdir, 'vitest.config.ts'),
+    buildVitestConfigContent(),
+    options.force
+  );
+  writeFileIfNeeded(
+    path.join(workdir, 'tsconfig.test.json'),
+    buildTestTsconfigContent(),
+    options.force
+  );
+  writeFileIfNeeded(
+    path.join(workdir, 'test/unit/smoke.test.ts'),
+    buildUnitTestContent(),
+    options.force
+  );
+  writeFileIfNeeded(
+    path.join(workdir, 'test/unit/README.md'),
+    buildUnitTestReadmeContent(),
+    options.force
+  );
+  updatePackageJsonForUnitTests(workdir);
+}
+
 function buildIntegrationFixtureContent() {
   return `import { action } from '@dsf/core/action'
 import { saveToFile } from '@dsf/helpers/file-helper'
@@ -295,6 +432,7 @@ function initProject(workdir, rawOptions) {
     outDir: normalizePath(rawOptions.outDir, './out'),
     appDataPath: normalizePath(rawOptions.appDataPath, `YourName/${projectName}`),
     bundleName: toBundleName(projectName),
+    unitTests: Boolean(rawOptions.unitTests),
     integrationTests: Boolean(rawOptions.integrationTests),
   };
 
@@ -311,6 +449,10 @@ function initProject(workdir, rawOptions) {
 
   updatePackageJson(workdir, options);
 
+  if (options.unitTests) {
+    initUnitTests(workdir, options);
+  }
+
   if (options.integrationTests) {
     initIntegrationTests(workdir, options);
   }
@@ -318,5 +460,6 @@ function initProject(workdir, rawOptions) {
 
 module.exports = {
   initIntegrationTests,
+  initUnitTests,
   initProject,
 };

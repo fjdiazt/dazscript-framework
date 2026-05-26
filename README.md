@@ -9,6 +9,7 @@
 - [Quick Start: A Simple Dialog](#quick-start-a-simple-dialog)
 - [Documentation](#documentation)
   - [Installation & Setup](#installation--setup)
+  - [Unit Tests](#unit-tests)
   - [DAZ Studio Integration Tests](#daz-studio-integration-tests)
   - [Project Configuration](#project-configuration)
   - [The `action(...)` Entrypoint](#the-action-entrypoint)
@@ -56,9 +57,10 @@ npx dazscript init
 
 Follow the prompt for your AppData author namespace (e.g. `YourName/my-project`). This creates `dazscript.config.ts`, `tsconfig.json`, and wires the `build`, `build:encrypted`, `build:release`, `watch`, `encrypt`, `icons`, and `installer` scripts into `package.json`.
 
-To include a DAZ Studio headless integration-test scaffold, run:
+To include optional test scaffolds, run one or both:
 
 ```bash
+npx dazscript init --unit-tests
 npx dazscript init --integration-tests
 ```
 
@@ -173,6 +175,7 @@ Available `init` flags:
 
 ```bash
 npx dazscript init --menu-path /MyScripts --scripts-path ./src --out-dir ./out --app-data-path YourName/my-project
+npx dazscript init --unit-tests --app-data-path YourName/my-project
 npx dazscript init --integration-tests --app-data-path YourName/my-project
 ```
 
@@ -182,11 +185,32 @@ npx dazscript init --integration-tests --app-data-path YourName/my-project
 | `--scripts-path` | Where the generator scans for runnable `.dsa.ts` entry files |
 | `--out-dir` | Where `build` writes `.dsa` files and copies icons |
 | `--app-data-path` | AppData namespace for launcher fallback (`Author/Product` format) |
+| `--unit-tests` | Add Vitest config, sample unit test, unit-test docs, `test` scripts, and the `vitest` dev dependency |
 | `--integration-tests` | Add a DAZ Studio headless integration-test fixture, env examples, ignore entries, and `test:integration` script |
 
 Builds also accept `--log-level <trace|debug|info|warn|error|off>`. This sets the minimum runtime log level for the compiled scripts. When omitted, builds default to `debug`; use `warn` for release packages.
 
 Use `--scripts-path ./src/scripts` when runnable files live under a subfolder; use `--scripts-path ./src` when they are at the source root.
+
+### Unit tests
+
+Projects can bootstrap fast Node-side TypeScript tests with:
+
+```bash
+npx dazscript init --unit-tests
+```
+
+This adds:
+
+- `vitest.config.ts`
+- `tsconfig.test.json`
+- `test/unit/smoke.test.ts`
+- `test/unit/README.md`
+- `npm test`
+- `npm run test:watch`
+- `vitest` as a dev dependency
+
+Use unit tests for pure TypeScript helpers, parsing, normalization, and code that does not need Daz Studio runtime objects.
 
 ### DAZ Studio integration tests
 
@@ -548,22 +572,27 @@ my-daz-scripts/
 │   ├── my-dialog.ts
 │   └── my-dialog-script.dsa.ts  # runnable entry point
 ├── test/
-│   └── integration/
-│       ├── fixtures/
-│       │   └── my-daz-scripts-smoke.dsa.ts
-│       ├── out/                 # integration output, ignored by git
+│   ├── integration/
+│   │   ├── fixtures/
+│   │   │   └── my-daz-scripts-smoke.dsa.ts
+│   │   ├── out/                 # integration output, ignored by git
+│   │   └── README.md
+│   └── unit/
+│       ├── smoke.test.ts
 │       └── README.md
 ├── out/                         # build output — launchers, bundles, icons
 ├── .env.integration.linux.example
 ├── .env.integration.windows.example
 ├── dazscript.config.ts
 ├── tsconfig.json
+├── tsconfig.test.json
+├── vitest.config.ts
 └── package.json
 ```
 
 Files ending in `.dsa.ts` are treated as runnable entry points and compiled to `.dsa`. Plain `.ts` files are modules — imported by entry points but not compiled independently.
 
-The `test/integration/` files and env examples are generated only when you run `dazscript init --integration-tests`.
+The `test/unit/` files are generated only when you run `dazscript init --unit-tests`. The `test/integration/` files and env examples are generated only when you run `dazscript init --integration-tests`.
 
 **Common commands**
 

@@ -3,7 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 
-const { initIntegrationTests } = require('../../dist/scripts/init')
+const { initIntegrationTests, initUnitTests } = require('../../dist/scripts/init')
 
 const tempDirs: string[] = []
 
@@ -71,5 +71,61 @@ describe('init integration tests', () => {
         expect(updatedPackageJson.scripts['test:integration']).toBe('custom command')
         expect(gitignore.match(/test\/integration\/out\//g)?.length).toBe(1)
         expect(gitignore.match(/\.env\.integration\.local/g)?.length).toBe(1)
+    })
+})
+
+describe('init unit tests', () => {
+    it('creates Vitest config, sample test, docs, npm scripts, and dev dependency', () => {
+        const projectDir = makeProject('unit-test')
+        const packageJsonPath = path.join(projectDir, 'package.json')
+        const initialPackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
+        delete initialPackageJson.scripts.test
+        fs.writeFileSync(packageJsonPath, JSON.stringify(initialPackageJson, null, 2))
+
+        initUnitTests(projectDir, { force: false })
+
+        const packageJson = JSON.parse(fs.readFileSync(path.join(projectDir, 'package.json'), 'utf8'))
+
+        expect(fs.existsSync(path.join(projectDir, 'vitest.config.ts'))).toBe(true)
+        expect(fs.existsSync(path.join(projectDir, 'tsconfig.test.json'))).toBe(true)
+        expect(fs.existsSync(path.join(projectDir, 'test/unit/smoke.test.ts'))).toBe(true)
+        expect(fs.existsSync(path.join(projectDir, 'test/unit/README.md'))).toBe(true)
+        expect(packageJson.scripts.test).toBe('vitest run')
+        expect(packageJson.scripts['test:watch']).toBe('vitest')
+        expect(packageJson.devDependencies.vitest).toBe('^3.0.0')
+    })
+
+    it('does not replace existing unit test scripts or duplicate Vitest dependency', () => {
+        const projectDir = makeProject('existing-unit-test')
+        const packageJsonPath = path.join(projectDir, 'package.json')
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
+        packageJson.scripts.test = 'custom test'
+        packageJson.scripts['test:watch'] = 'custom watch'
+        packageJson.devDependencies = {
+            vitest: '^4.0.0',
+        }
+        fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2))
+
+        initUnitTests(projectDir, { force: false })
+
+        const updatedPackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
+
+        expect(updatedPackageJson.scripts.test).toBe('custom test')
+        expect(updatedPackageJson.scripts['test:watch']).toBe('custom watch')
+        expect(updatedPackageJson.devDependencies.vitest).toBe('^4.0.0')
+    })
+
+    it('replaces the default npm init failing test script', () => {
+        const projectDir = makeProject('npm-default-unit-test')
+        const packageJsonPath = path.join(projectDir, 'package.json')
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
+        packageJson.scripts.test = 'echo "Error: no test specified" && exit 1'
+        fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2))
+
+        initUnitTests(projectDir, { force: false })
+
+        const updatedPackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
+
+        expect(updatedPackageJson.scripts.test).toBe('vitest run')
     })
 })

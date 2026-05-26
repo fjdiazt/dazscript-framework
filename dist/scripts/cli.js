@@ -35,6 +35,7 @@ Options:
   --fixture <path>      Integration fixture .dsa.ts file
   --env-file <path>     Integration env file. Default: .env.integration.local
   --require-content     Require DAZ_TEST_CONTENT_DUF for integration tests
+  --unit-tests          Add Vitest unit-test scaffold during init
   --integration-tests   Add integration-test scaffold during init
   --force               Overwrite generated files
   --help                Show this message
@@ -100,6 +101,11 @@ function parseOptions(args, defaults) {
 
     if (arg === '--integration-tests') {
       options.integrationTests = true;
+      continue;
+    }
+
+    if (arg === '--unit-tests') {
+      options.unitTests = true;
       continue;
     }
 
@@ -222,6 +228,7 @@ async function main(argv) {
     fixture: undefined,
     envFile: undefined,
     requireContent: false,
+    unitTests: false,
     integrationTests: false,
   });
 
