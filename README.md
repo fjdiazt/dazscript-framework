@@ -9,6 +9,7 @@
 - [Quick Start: A Simple Dialog](#quick-start-a-simple-dialog)
 - [Documentation](#documentation)
   - [Installation & Setup](#installation--setup)
+  - [DAZ Studio Integration Tests](#daz-studio-integration-tests)
   - [Project Configuration](#project-configuration)
   - [The `action(...)` Entrypoint](#the-action-entrypoint)
   - [Build Output: Launcher Shims](#build-output-launcher-shims)
@@ -172,6 +173,7 @@ Available `init` flags:
 
 ```bash
 npx dazscript init --menu-path /MyScripts --scripts-path ./src --out-dir ./out --app-data-path YourName/my-project
+npx dazscript init --integration-tests --app-data-path YourName/my-project
 ```
 
 | Flag | Description |
@@ -545,13 +547,23 @@ my-daz-scripts/
 │   ├── my-dialog-model.ts       # plain TypeScript — model or helper class
 │   ├── my-dialog.ts
 │   └── my-dialog-script.dsa.ts  # runnable entry point
+├── test/
+│   └── integration/
+│       ├── fixtures/
+│       │   └── my-daz-scripts-smoke.dsa.ts
+│       ├── out/                 # integration output, ignored by git
+│       └── README.md
 ├── out/                         # build output — launchers, bundles, icons
+├── .env.integration.linux.example
+├── .env.integration.windows.example
 ├── dazscript.config.ts
 ├── tsconfig.json
 └── package.json
 ```
 
 Files ending in `.dsa.ts` are treated as runnable entry points and compiled to `.dsa`. Plain `.ts` files are modules — imported by entry points but not compiled independently.
+
+The `test/integration/` files and env examples are generated only when you run `dazscript init --integration-tests`.
 
 **Common commands**
 
@@ -562,6 +574,8 @@ Files ending in `.dsa.ts` are treated as runnable entry points and compiled to `
 | `npm run watch` | Recompile on every save |
 | `npm run installer` | Generate the setup dialog |
 | `npm run icons` | Copy icon assets to the output folder |
+| `npm test` | Run fast Node/Vitest tests |
+| `npm run test:integration` | Run a DAZ Studio headless integration fixture |
 
 ---
 
