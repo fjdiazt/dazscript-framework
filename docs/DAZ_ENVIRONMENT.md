@@ -297,9 +297,12 @@ import {
 ### Progress & Performance
 ```typescript
 import {
-  progress                    // Show progress bar with loop
+  progress,                   // Show progress bar with loop
+  withProgress                // Show progress bar for manual multi-phase work
 } from '@dsf/helpers/progress-helper'
 ```
+
+`withProgress()` closes the progress dialog for normal returns and catchable script exceptions. It cannot recover from DAZ host crashes or native aborts that bypass script cleanup.
 
 ### Menus & Actions
 ```typescript

@@ -406,7 +406,7 @@ import {
 
 ### Progress/Logging
 ```typescript
-import { progress } from '@dsf/helpers/progress-helper'
+import { progress, withProgress } from '@dsf/helpers/progress-helper'
 import { log, debug, trace } from '@dsf/common/log'
 ```
 

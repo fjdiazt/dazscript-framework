@@ -98,28 +98,6 @@ Medium
 
 ## List Refresh Stability
 
-### Add manual progress callback helper
-
-Problem:
-The framework `progress(info, items, callback)` helper works well for simple item loops, but some scripts need multi-phase progress that does not map cleanly to one array iteration. Morphs Loader apply/refresh flows need manual steps across file operations, manifest sync, model sync, and UI refresh.
-
-Current behavior:
-- Scripts can use `progress(info, items, callback)` for array-driven work
-- Multi-phase flows must call raw DAZ globals such as `startProgress`, `stepProgress`, and `finishProgress`
-
-Proposed direction:
-- Add a wrapper such as `withProgress(info, totalSteps, callback)`
-- Provide a small progress handle to the callback, for example `step(count?)`
-- Ensure `finishProgress()` runs in a `finally` block
-- Keep cancellability and elapsed-time options consistent with the existing `progress()` helper
-
-Compatibility notes:
-- Keep existing `progress()` behavior unchanged
-- Avoid forcing multi-phase work into fake arrays
-
-Priority:
-Medium
-
 ### Add richer list view builder helpers
 
 Problem:
