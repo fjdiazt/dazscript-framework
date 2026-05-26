@@ -9,6 +9,7 @@ const { copyIcons } = require('./icons');
 const { runEncrypt } = require('./encrypt');
 const { generateInstallerFiles } = require('./install-generator');
 const { initProject } = require('./init');
+const { runIntegration } = require('./integration');
 
 function printHelp() {
   console.log(`dazscript <command> [options]
@@ -20,6 +21,7 @@ Commands:
   encrypt             Encrypt built implementation bundles through Daz Studio
   icons               Copy png assets into the output directory
   installer           Generate Install.dsa.ts and Uninstall.dsa.ts
+  integration         Run a DAZ Studio headless integration fixture
 
 Options:
   --menu-path <path>    Default menu path. Default: /MyScripts
@@ -30,6 +32,10 @@ Options:
   --daz-studio <path>   Daz Studio executable for encrypt
   --keep-source         Keep source script.dsa files after encrypting
   --timeout-ms <value>  Daz Studio encrypt timeout. Default: 300000
+  --fixture <path>      Integration fixture .dsa.ts file
+  --env-file <path>     Integration env file. Default: .env.integration.local
+  --require-content     Require DAZ_TEST_CONTENT_DUF for integration tests
+  --integration-tests   Add integration-test scaffold during init
   --force               Overwrite generated files
   --help                Show this message
 `);
@@ -92,6 +98,11 @@ function parseOptions(args, defaults) {
       continue;
     }
 
+    if (arg === '--integration-tests') {
+      options.integrationTests = true;
+      continue;
+    }
+
     if (arg === '--menu-path') {
       options.menuPath = args[index + 1];
       index += 1;
@@ -136,6 +147,23 @@ function parseOptions(args, defaults) {
     if (arg === '--timeout-ms') {
       options.timeoutMs = Number(args[index + 1]);
       index += 1;
+      continue;
+    }
+
+    if (arg === '--fixture') {
+      options.fixture = args[index + 1];
+      index += 1;
+      continue;
+    }
+
+    if (arg === '--env-file') {
+      options.envFile = args[index + 1];
+      index += 1;
+      continue;
+    }
+
+    if (arg === '--require-content') {
+      options.requireContent = true;
       continue;
     }
 
@@ -191,10 +219,19 @@ async function main(argv) {
     dazStudio: undefined,
     keepSource: false,
     timeoutMs: undefined,
+    fixture: undefined,
+    envFile: undefined,
+    requireContent: false,
+    integrationTests: false,
   });
 
   if (options.help) {
     printHelp();
+    return;
+  }
+
+  if (command === 'integration') {
+    await runIntegration(options, process.env, workdir);
     return;
   }
 

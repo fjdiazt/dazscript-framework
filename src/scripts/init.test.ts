@@ -1,0 +1,75 @@
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import { afterEach, describe, expect, it } from 'vitest'
+
+const { initIntegrationTests } = require('../../dist/scripts/init')
+
+const tempDirs: string[] = []
+
+const makeProject = (name = 'toolbox-test'): string => {
+    const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), `${name}-`))
+    tempDirs.push(projectDir)
+    fs.writeFileSync(path.join(projectDir, 'package.json'), JSON.stringify({
+        private: true,
+        scripts: {
+            test: 'vitest run',
+        },
+    }, null, 2))
+    return projectDir
+}
+
+const toFixtureName = (projectDir: string): string =>
+    path.basename(projectDir)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'project'
+
+afterEach(() => {
+    while (tempDirs.length > 0) {
+        const dir = tempDirs.pop()
+        if (dir) fs.rmSync(dir, { recursive: true, force: true })
+    }
+})
+
+describe('init integration tests', () => {
+    it('creates the fixture, docs, env examples, npm script, and ignore entries', () => {
+        const projectDir = makeProject('toolbox-test')
+        const fixtureBaseName = toFixtureName(projectDir)
+
+        initIntegrationTests(projectDir, { force: false })
+
+        const fixturePath = path.join(projectDir, `test/integration/fixtures/${fixtureBaseName}-smoke.dsa.ts`)
+        const packageJson = JSON.parse(fs.readFileSync(path.join(projectDir, 'package.json'), 'utf8'))
+        const gitignore = fs.readFileSync(path.join(projectDir, '.gitignore'), 'utf8')
+
+        expect(fs.existsSync(fixturePath)).toBe(true)
+        expect(fs.existsSync(path.join(projectDir, 'test/integration/README.md'))).toBe(true)
+        expect(fs.existsSync(path.join(projectDir, '.env.integration.linux.example'))).toBe(true)
+        expect(fs.existsSync(path.join(projectDir, '.env.integration.windows.example'))).toBe(true)
+        expect(packageJson.scripts['test:integration']).toBe(
+            `dazscript integration --fixture ./test/integration/fixtures/${fixtureBaseName}-smoke.dsa.ts`
+        )
+        expect(gitignore).toContain('test/integration/out/')
+        expect(gitignore).toContain('.env.integration.local')
+    })
+
+    it('does not replace an existing integration script or duplicate ignore entries', () => {
+        const projectDir = makeProject('existing-test')
+        const packageJsonPath = path.join(projectDir, 'package.json')
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
+        packageJson.scripts['test:integration'] = 'custom command'
+        fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2))
+        fs.writeFileSync(path.join(projectDir, '.gitignore'), 'test/integration/out/\n')
+
+        initIntegrationTests(projectDir, { force: false })
+        initIntegrationTests(projectDir, { force: false })
+
+        const updatedPackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
+        const gitignore = fs.readFileSync(path.join(projectDir, '.gitignore'), 'utf8')
+
+        expect(updatedPackageJson.scripts['test:integration']).toBe('custom command')
+        expect(gitignore.match(/test\/integration\/out\//g)?.length).toBe(1)
+        expect(gitignore.match(/\.env\.integration\.local/g)?.length).toBe(1)
+    })
+})
