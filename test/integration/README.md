@@ -107,3 +107,40 @@ npx dazscript init --probes
 ```
 
 The default probe env file is `.env.probe.local`, and generated output is written to `probes/out/`.
+
+### Writing A Probe
+
+Create a `.dsa.ts` file under `probes/fixtures/` and write a JSON result to script argument `0`:
+
+```typescript
+import { action } from '@dsf/core/action'
+import { saveToFile } from '@dsf/helpers/file-helper'
+import { getStringScriptArguments } from '@dsf/helpers/script-helper'
+
+action({ text: 'Node Property Probe', menuPath: false }, () => {
+    const resultPath = getStringScriptArguments()[0] || ''
+    const node = new DzNode()
+    node.setName('Probe_Node')
+    Scene.addNode(node)
+
+    const property = new DzFloatProperty('Probe_Custom_Property', true, true, 0)
+    node.addProperty(property)
+
+    const result = {
+        kind: 'node-property-probe',
+        status: 'observed',
+        observations: {
+            propertyFound: !!node.findProperty('Probe_Custom_Property', true),
+            nodeCount: Scene.getNumNodes()
+        }
+    }
+
+    if (resultPath) saveToFile(resultPath, JSON.stringify(result, null, 2))
+})
+```
+
+Run it with:
+
+```bash
+dazscript probe --fixture ./probes/fixtures/node-property-probe.dsa.ts
+```
