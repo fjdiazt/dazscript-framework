@@ -153,9 +153,63 @@ function run(command, args, options) {
   return result;
 }
 
+function getNpmInvocation(args, platform) {
+  const npmArgs = args || [];
+  if ((platform || process.platform) !== 'win32') {
+    return { command: 'npm', args: npmArgs };
+  }
+
+  const npmCliPath = path.join(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js');
+  if (fs.existsSync(npmCliPath)) {
+    return { command: process.execPath, args: [npmCliPath].concat(npmArgs) };
+  }
+
+  return { command: 'npm.cmd', args: npmArgs };
+}
+
 function writeFile(filePath, content) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   fs.writeFileSync(filePath, content, 'utf8');
+}
+
+const fixtureBuildDependencies = [
+  '@babel/core',
+  '@babel/plugin-proposal-class-properties',
+  '@babel/plugin-proposal-decorators',
+  '@babel/plugin-transform-arrow-functions',
+  '@babel/plugin-transform-block-scoping',
+  '@babel/plugin-transform-class-properties',
+  '@babel/plugin-transform-private-methods',
+  '@babel/plugin-transform-private-property-in-object',
+  '@babel/preset-env',
+  '@babel/preset-typescript',
+  'babel-core',
+  'babel-loader',
+  'babel-plugin-transform-class-properties',
+  'babel-plugin-transform-typescript-metadata',
+  'glob',
+  'ts-loader',
+  'tsconfig-paths-webpack-plugin',
+  'typescript',
+  'webpack',
+];
+
+function getFixtureBuildDependencies(frameworkRoot) {
+  const frameworkPackageJson = JSON.parse(
+    fs.readFileSync(path.join(frameworkRoot, 'package.json'), 'utf8')
+  );
+  const availableDependencies = {
+    ...(frameworkPackageJson.dependencies || {}),
+    ...(frameworkPackageJson.devDependencies || {}),
+  };
+
+  return fixtureBuildDependencies.reduce((result, dependencyName) => {
+    const version = availableDependencies[dependencyName];
+    if (version) {
+      result[dependencyName] = version;
+    }
+    return result;
+  }, {});
 }
 
 function buildFixtureProject(options) {
@@ -171,7 +225,7 @@ function buildFixtureProject(options) {
       'dazscript-framework': `file:${options.frameworkRoot}`,
       'dazscript-types': '^1.0.1',
     },
-    devDependencies: {},
+    devDependencies: getFixtureBuildDependencies(options.frameworkRoot),
   }, null, 2));
 
   writeFile(path.join(options.fixtureRoot, 'dazscript.config.ts'), [
@@ -223,8 +277,10 @@ function buildFixtureProject(options) {
   }, null, 2));
 
   fs.copyFileSync(options.fixturePath, path.join(options.fixtureRoot, 'src', `${options.fixtureName}.dsa.ts`));
-  run('npm', ['install', '--ignore-scripts'], { cwd: options.fixtureRoot });
-  run('npm', ['run', 'build'], { cwd: options.fixtureRoot });
+  const npmInstall = getNpmInvocation(['install', '--ignore-scripts']);
+  run(npmInstall.command, npmInstall.args, { cwd: options.fixtureRoot });
+  const npmBuild = getNpmInvocation(['run', 'build']);
+  run(npmBuild.command, npmBuild.args, { cwd: options.fixtureRoot });
 }
 
 function runDazFixture(options) {
@@ -296,6 +352,8 @@ async function runIntegration(rawOptions, injectedEnv, cwd) {
 module.exports = {
   loadEnvFile,
   normalizeForDaz,
+  getNpmInvocation,
+  getFixtureBuildDependencies,
   readIntegrationResult,
   resolveIntegrationOptions,
   buildFixtureProject,

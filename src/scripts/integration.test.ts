@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 const {
     loadEnvFile,
+    getFixtureBuildDependencies,
+    getNpmInvocation,
     readIntegrationResult,
     resolveIntegrationOptions,
 } = require('../../dist/scripts/integration')
@@ -75,6 +77,34 @@ describe('integration option resolution', () => {
         }, {
             DAZ_STUDIO_EXE: path.join(projectDir, 'DAZStudio.exe'),
         })).toThrow(/DAZ_TEST_CONTENT_DUF/)
+    })
+})
+
+describe('integration command resolution', () => {
+    it('uses node plus npm-cli on Windows so child_process can spawn without a shell', () => {
+        const invocation = getNpmInvocation(['--version'], 'win32')
+
+        expect(invocation.command).toMatch(/node(\.exe)?$/i)
+        expect(invocation.args[0]).toMatch(/npm-cli\.js$/)
+        expect(invocation.args[1]).toBe('--version')
+    })
+
+    it('uses npm on non-Windows platforms', () => {
+        expect(getNpmInvocation(['--version'], 'linux')).toEqual({
+            command: 'npm',
+            args: ['--version']
+        })
+    })
+})
+
+describe('integration fixture build dependencies', () => {
+    it('includes webpack loader dependencies needed by generated fixture projects', () => {
+        const dependencies = getFixtureBuildDependencies(path.resolve(__dirname, '../..'))
+
+        expect(dependencies['babel-loader']).toBeTruthy()
+        expect(dependencies['ts-loader']).toBeTruthy()
+        expect(dependencies['webpack']).toBeTruthy()
+        expect(dependencies['typescript']).toBeTruthy()
     })
 })
 
