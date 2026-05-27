@@ -14,6 +14,10 @@ export const contains = (source: string, search: string | string[]): boolean => 
     return source.indexOf(search) >= 0
 }
 
+export const startsWith = (source: string, search: string): boolean => {
+    return source.substr(0, search.length) === search
+}
+
 export const remove = (source: string, search: string): string => {
     return source.replace(search, "")
 }

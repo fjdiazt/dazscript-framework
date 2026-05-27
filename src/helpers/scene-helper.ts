@@ -2,6 +2,7 @@ import { scene } from '@dsf/core/global'
 import { contains, distinct, group } from './array-helper'
 import { getRoot, isFigure } from './node-helper'
 import { getPaneNodeEditor, getParametersPane, getParametersPaneNodeEditor } from './pane-helper'
+import { startsWith } from './string-helper'
 
 export const getSelectedOf = <T>(typeName: string): DzNode[] => {
     let nodes: DzNode[] = []
@@ -142,4 +143,38 @@ export const timeToFrame = (time: DzTime): number => {
 
 export const frameToTime = (frame: number): DzTime => {
     return new DzTime(scene.getTimeStep().valueOf() * frame)
+}
+
+export const collectSceneNodeIds = (): number[] => {
+    const ids: number[] = []
+    for (let i = 0; i < Scene.getNumNodes(); i++) {
+        ids.push(Scene.getNode(i).elementID)
+    }
+    return ids
+}
+
+export const getNodesAddedAfter = (beforeIds: number[]): DzNode[] => {
+    const nodes: DzNode[] = []
+    for (let i = 0; i < Scene.getNumNodes(); i++) {
+        const node = Scene.getNode(i)
+        if (beforeIds.indexOf(node.elementID) < 0) nodes.push(node)
+    }
+    return nodes
+}
+
+export const removeNodesByNameOrLabelPrefix = (prefix: string): number => {
+    const nodes: DzNode[] = []
+
+    for (let i = 0; i < Scene.getNumNodes(); i++) {
+        const node = Scene.getNode(i)
+        if (startsWith(String(node.getName()), prefix) || startsWith(String(node.getLabel()), prefix)) {
+            nodes.push(node)
+        }
+    }
+
+    for (let i = 0; i < nodes.length; i++) {
+        Scene.removeNode(nodes[i])
+    }
+
+    return nodes.length
 }
