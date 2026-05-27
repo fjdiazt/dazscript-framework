@@ -8,8 +8,15 @@ const { validateAppDataPath } = require('./app-data-path');
 const nameofActionFunction = 'action';
 
 function getPartialPath(filePath) {
-  const fileInfo = path.parse(filePath);
-  const dir = fileInfo.dir.replace('/src', '').replace(/^\.\//, '');
+  const fileInfo = path.posix.parse(filePath.replace(/\\/g, '/'));
+  if (fileInfo.dir === 'src' || fileInfo.dir === './src') {
+    return `./${fileInfo.name}`;
+  }
+
+  const dir = fileInfo.dir
+    .replace(/^\.\/src\/?/, '')
+    .replace(/^src\/?/, '')
+    .replace(/^\.\//, '');
   return dir ? `${dir}/${fileInfo.name}` : fileInfo.name;
 }
 
