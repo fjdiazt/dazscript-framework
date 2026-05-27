@@ -8,7 +8,9 @@ const {
     getFixtureBuildDependencies,
     getNpmInvocation,
     readIntegrationResult,
+    readProbeResult,
     resolveIntegrationOptions,
+    resolveProbeOptions,
 } = require('../../dist/scripts/integration')
 
 const tempDirs: string[] = []
@@ -80,6 +82,28 @@ describe('integration option resolution', () => {
     })
 })
 
+describe('probe option resolution', () => {
+    it('uses probe-specific env and output defaults', () => {
+        const projectDir = makeProject()
+        fs.mkdirSync(path.join(projectDir, 'probes/fixtures'), { recursive: true })
+        fs.writeFileSync(path.join(projectDir, 'probes/fixtures/scene.dsa.ts'), 'action({}, function() {})\n')
+
+        const options = resolveProbeOptions(projectDir, {
+            fixture: './probes/fixtures/scene.dsa.ts',
+        }, {
+            DAZ_STUDIO_EXE: path.join(projectDir, 'DAZStudio.exe'),
+            DAZ_PROBE_TIMEOUT_MS: '123456',
+        })
+
+        expect(options.envFile).toBe(path.join(projectDir, '.env.probe.local'))
+        expect(options.outDir).toBe(path.join(projectDir, 'probes/out'))
+        expect(options.fixtureRoot).toBe(path.join(projectDir, 'probes/out/fixture'))
+        expect(options.resultPath).toBe(path.join(projectDir, 'probes/out/fixture/result.json'))
+        expect(options.timeoutMs).toBe(123456)
+        expect(options.commandName).toBe('probe')
+    })
+})
+
 describe('integration command resolution', () => {
     it('uses node plus npm-cli on Windows so child_process can spawn without a shell', () => {
         const invocation = getNpmInvocation(['--version'], 'win32')
@@ -123,5 +147,23 @@ describe('integration result reader', () => {
         fs.writeFileSync(resultPath, JSON.stringify({ ok: false, failures: ['bad frame'] }))
 
         expect(() => readIntegrationResult(resultPath)).toThrow(/bad frame/)
+    })
+})
+
+describe('probe result reader', () => {
+    it('accepts arbitrary readable probe JSON without ok assertions', () => {
+        const projectDir = makeProject()
+        const resultPath = path.join(projectDir, 'result.json')
+        fs.writeFileSync(resultPath, JSON.stringify({
+            kind: 'daz-headless-probe',
+            status: 'inconclusive',
+            observations: { interfaceAvailable: false }
+        }))
+
+        expect(readProbeResult(resultPath)).toEqual({
+            kind: 'daz-headless-probe',
+            status: 'inconclusive',
+            observations: { interfaceAvailable: false }
+        })
     })
 })

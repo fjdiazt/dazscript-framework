@@ -71,10 +71,10 @@ function assertRequiredFile(label, filePath, allowDazPath) {
   return resolvedPath;
 }
 
-function resolveIntegrationOptions(cwd, rawOptions, env) {
+function resolveHeadlessOptions(cwd, rawOptions, env, defaults) {
   const options = rawOptions || {};
   const projectRoot = path.resolve(cwd || process.cwd());
-  const envFile = path.resolve(projectRoot, options.envFile || '.env.integration.local');
+  const envFile = path.resolve(projectRoot, options.envFile || defaults.envFile);
   const fixturePath = options.fixture
     ? path.resolve(projectRoot, options.fixture)
     : '';
@@ -100,12 +100,12 @@ function resolveIntegrationOptions(cwd, rawOptions, env) {
     throw new Error(`DAZ_TEST_CONTENT_DUF does not exist: ${path.resolve(rawContentPath)}`);
   }
 
-  const timeoutMs = Number(options.timeoutMs || env.DAZ_TEST_TIMEOUT_MS || defaultTimeoutMs);
+  const timeoutMs = Number(options.timeoutMs || env[defaults.timeoutEnv] || env.DAZ_TEST_TIMEOUT_MS || defaultTimeoutMs);
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
-    throw new Error(`invalid timeout: ${options.timeoutMs || env.DAZ_TEST_TIMEOUT_MS}`);
+    throw new Error(`invalid timeout: ${options.timeoutMs || env[defaults.timeoutEnv] || env.DAZ_TEST_TIMEOUT_MS}`);
   }
 
-  const outDir = path.resolve(projectRoot, options.outDir || './test/integration/out');
+  const outDir = path.resolve(projectRoot, options.outDir || defaults.outDir);
   const fixtureName = path.basename(fixturePath).replace(/\.dsa\.ts$/i, '').replace(/\.ts$/i, '');
   const fixtureRoot = path.join(outDir, 'fixture');
   const resultPath = path.join(fixtureRoot, 'result.json');
@@ -124,10 +124,33 @@ function resolveIntegrationOptions(cwd, rawOptions, env) {
     contentPath: rawContentPath ? normalizeForDaz(rawContentPath) : '',
     requireContent: Boolean(options.requireContent),
     timeoutMs,
-    appDataPath: options.appDataPath || 'DazScriptFramework/integration-tests',
-    bundleName: options.bundleName || 'Integration Test Fixture',
+    appDataPath: options.appDataPath || defaults.appDataPath,
+    bundleName: options.bundleName || defaults.bundleName,
+    commandName: defaults.commandName,
     env,
   };
+}
+
+function resolveIntegrationOptions(cwd, rawOptions, env) {
+  return resolveHeadlessOptions(cwd, rawOptions, env, {
+    commandName: 'integration',
+    envFile: '.env.integration.local',
+    timeoutEnv: 'DAZ_TEST_TIMEOUT_MS',
+    outDir: './test/integration/out',
+    appDataPath: 'DazScriptFramework/integration-tests',
+    bundleName: 'Integration Test Fixture',
+  });
+}
+
+function resolveProbeOptions(cwd, rawOptions, env) {
+  return resolveHeadlessOptions(cwd, rawOptions, env, {
+    commandName: 'probe',
+    envFile: '.env.probe.local',
+    timeoutEnv: 'DAZ_PROBE_TIMEOUT_MS',
+    outDir: './probes/out',
+    appDataPath: 'DazScriptFramework/probes',
+    bundleName: 'Probe Fixture',
+  });
 }
 
 function run(command, args, options) {
@@ -306,7 +329,7 @@ function runDazFixture(options) {
   const command = useWine ? 'wine' : options.dazStudioExe;
   const commandArgs = useWine ? [options.dazStudioExe].concat(dazArgs) : dazArgs;
 
-  console.log(`[dazscript integration] launching DAZ: ${useWine ? `${command} ${options.dazStudioExe}` : command}`);
+  console.log(`[dazscript ${options.commandName || 'integration'}] launching DAZ: ${useWine ? `${command} ${options.dazStudioExe}` : command}`);
   run(command, commandArgs, {
     cwd: options.fixtureRoot,
     env: options.env,
@@ -335,6 +358,19 @@ function readIntegrationResult(resultPath) {
   return result;
 }
 
+function readProbeResult(resultPath) {
+  if (!fs.existsSync(resultPath)) {
+    throw new Error(`DAZ did not write result JSON: ${resultPath}`);
+  }
+
+  try {
+    return JSON.parse(fs.readFileSync(resultPath, 'utf8'));
+  }
+  catch (error) {
+    throw new Error(`could not parse result JSON: ${error}`);
+  }
+}
+
 async function runIntegration(rawOptions, injectedEnv, cwd) {
   const env = { ...(injectedEnv || process.env) };
   const projectRoot = path.resolve(cwd || process.cwd());
@@ -349,14 +385,31 @@ async function runIntegration(rawOptions, injectedEnv, cwd) {
   return result;
 }
 
+async function runProbe(rawOptions, injectedEnv, cwd) {
+  const env = { ...(injectedEnv || process.env) };
+  const projectRoot = path.resolve(cwd || process.cwd());
+  const envFile = path.resolve(projectRoot, (rawOptions && rawOptions.envFile) || '.env.probe.local');
+  loadEnvFile(envFile, env);
+
+  const options = resolveProbeOptions(projectRoot, rawOptions, env);
+  buildFixtureProject(options);
+  runDazFixture(options);
+  const result = readProbeResult(options.resultPath);
+  console.log(`[dazscript probe] result: ${options.resultPath}`);
+  return result;
+}
+
 module.exports = {
   loadEnvFile,
   normalizeForDaz,
   getNpmInvocation,
   getFixtureBuildDependencies,
   readIntegrationResult,
+  readProbeResult,
   resolveIntegrationOptions,
+  resolveProbeOptions,
   buildFixtureProject,
   runDazFixture,
   runIntegration,
+  runProbe,
 };

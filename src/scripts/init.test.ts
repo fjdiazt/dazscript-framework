@@ -3,7 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 
-const { initIntegrationTests, initUnitTests } = require('../../dist/scripts/init')
+const { initIntegrationTests, initProbes, initUnitTests } = require('../../dist/scripts/init')
 
 const tempDirs: string[] = []
 
@@ -71,6 +71,48 @@ describe('init integration tests', () => {
         expect(updatedPackageJson.scripts['test:integration']).toBe('custom command')
         expect(gitignore.match(/test\/integration\/out\//g)?.length).toBe(1)
         expect(gitignore.match(/\.env\.integration\.local/g)?.length).toBe(1)
+    })
+})
+
+describe('init probes', () => {
+    it('creates the probe fixture, docs, env examples, npm script, and ignore entries', () => {
+        const projectDir = makeProject('probe-test')
+        const fixtureBaseName = toFixtureName(projectDir)
+
+        initProbes(projectDir, { force: false })
+
+        const fixturePath = path.join(projectDir, `probes/fixtures/${fixtureBaseName}-scene.dsa.ts`)
+        const packageJson = JSON.parse(fs.readFileSync(path.join(projectDir, 'package.json'), 'utf8'))
+        const gitignore = fs.readFileSync(path.join(projectDir, '.gitignore'), 'utf8')
+
+        expect(fs.existsSync(fixturePath)).toBe(true)
+        expect(fs.existsSync(path.join(projectDir, 'probes/README.md'))).toBe(true)
+        expect(fs.existsSync(path.join(projectDir, '.env.probe.linux.example'))).toBe(true)
+        expect(fs.existsSync(path.join(projectDir, '.env.probe.windows.example'))).toBe(true)
+        expect(packageJson.scripts.probe).toBe(
+            `dazscript probe --fixture ./probes/fixtures/${fixtureBaseName}-scene.dsa.ts`
+        )
+        expect(gitignore).toContain('probes/out/')
+        expect(gitignore).toContain('.env.probe.local')
+    })
+
+    it('does not replace an existing probe script or duplicate ignore entries', () => {
+        const projectDir = makeProject('existing-probe')
+        const packageJsonPath = path.join(projectDir, 'package.json')
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
+        packageJson.scripts.probe = 'custom probe'
+        fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2))
+        fs.writeFileSync(path.join(projectDir, '.gitignore'), 'probes/out/\n')
+
+        initProbes(projectDir, { force: false })
+        initProbes(projectDir, { force: false })
+
+        const updatedPackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
+        const gitignore = fs.readFileSync(path.join(projectDir, '.gitignore'), 'utf8')
+
+        expect(updatedPackageJson.scripts.probe).toBe('custom probe')
+        expect(gitignore.match(/probes\/out\//g)?.length).toBe(1)
+        expect(gitignore.match(/\.env\.probe\.local/g)?.length).toBe(1)
     })
 })
 

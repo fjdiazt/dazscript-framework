@@ -11,6 +11,7 @@
   - [Installation & Setup](#installation--setup)
   - [Unit Tests](#unit-tests)
   - [DAZ Studio Integration Tests](#daz-studio-integration-tests)
+  - [DAZ Studio Headless Probes](#daz-studio-headless-probes)
   - [Project Configuration](#project-configuration)
   - [The `action(...)` Entrypoint](#the-action-entrypoint)
   - [Build Output: Launcher Shims](#build-output-launcher-shims)
@@ -62,6 +63,7 @@ To include optional test scaffolds, run one or both:
 ```bash
 npx dazscript init --unit-tests
 npx dazscript init --integration-tests
+npx dazscript init --probes
 ```
 
 ### 3. Write the script
@@ -177,6 +179,7 @@ Available `init` flags:
 npx dazscript init --menu-path /MyScripts --scripts-path ./src --out-dir ./out --app-data-path YourName/my-project
 npx dazscript init --unit-tests --app-data-path YourName/my-project
 npx dazscript init --integration-tests --app-data-path YourName/my-project
+npx dazscript init --probes --app-data-path YourName/my-project
 ```
 
 | Flag | Description |
@@ -221,6 +224,22 @@ npm run test:integration
 ```
 
 The generated script calls `dazscript integration --fixture ./test/integration/fixtures/<project>-smoke.dsa.ts`. Configure local machine paths in an ignored `.env.integration.local`; `DAZ_STUDIO_EXE` is always required, and `DAZ_TEST_CONTENT_DUF` is required only for tests that use `--require-content`. See `test/integration/README.md` in this repository for maintainer and consuming-project details.
+
+### DAZ Studio headless probes
+
+Projects can bootstrap non-asserting DAZ Studio probes with:
+
+```bash
+npx dazscript init --probes
+```
+
+Run a probe with:
+
+```bash
+npm run probe
+```
+
+Probes use the same headless DAZ build and launch infrastructure as integration tests, but they do not require `ok: true` assertions. A probe succeeds when DAZ completes and writes readable JSON. Use `dazscript probe` for exploratory runtime observations such as available globals, installed plugins, scene state, signal behavior, or content loading details.
 
 ---
 
@@ -592,7 +611,7 @@ my-daz-scripts/
 
 Files ending in `.dsa.ts` are treated as runnable entry points and compiled to `.dsa`. Plain `.ts` files are modules — imported by entry points but not compiled independently.
 
-The `test/unit/` files are generated only when you run `dazscript init --unit-tests`. The `test/integration/` files and env examples are generated only when you run `dazscript init --integration-tests`.
+The `test/unit/` files are generated only when you run `dazscript init --unit-tests`. The `test/integration/` files and env examples are generated only when you run `dazscript init --integration-tests`. The `probes/` files and probe env examples are generated only when you run `dazscript init --probes`.
 
 **Common commands**
 

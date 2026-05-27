@@ -9,7 +9,7 @@ const { copyIcons } = require('./icons');
 const { runEncrypt } = require('./encrypt');
 const { generateInstallerFiles } = require('./install-generator');
 const { initProject } = require('./init');
-const { runIntegration } = require('./integration');
+const { runIntegration, runProbe } = require('./integration');
 
 function printHelp() {
   console.log(`dazscript <command> [options]
@@ -22,6 +22,7 @@ Commands:
   icons               Copy png assets into the output directory
   installer           Generate Install.dsa.ts and Uninstall.dsa.ts
   integration         Run a DAZ Studio headless integration fixture
+  probe               Run a non-asserting DAZ Studio headless probe fixture
 
 Options:
   --menu-path <path>    Default menu path. Default: /MyScripts
@@ -32,11 +33,12 @@ Options:
   --daz-studio <path>   Daz Studio executable for encrypt
   --keep-source         Keep source script.dsa files after encrypting
   --timeout-ms <value>  Daz Studio encrypt timeout. Default: 300000
-  --fixture <path>      Integration fixture .dsa.ts file
-  --env-file <path>     Integration env file. Default: .env.integration.local
-  --require-content     Require DAZ_TEST_CONTENT_DUF for integration tests
+  --fixture <path>      Integration or probe fixture .dsa.ts file
+  --env-file <path>     Integration/probe env file. Defaults: .env.integration.local or .env.probe.local
+  --require-content     Require DAZ_TEST_CONTENT_DUF for integration tests or probes
   --unit-tests          Add Vitest unit-test scaffold during init
   --integration-tests   Add integration-test scaffold during init
+  --probes              Add DAZ headless probe scaffold during init
   --force               Overwrite generated files
   --help                Show this message
 `);
@@ -106,6 +108,11 @@ function parseOptions(args, defaults) {
 
     if (arg === '--unit-tests') {
       options.unitTests = true;
+      continue;
+    }
+
+    if (arg === '--probes') {
+      options.probes = true;
       continue;
     }
 
@@ -230,6 +237,7 @@ async function main(argv) {
     requireContent: false,
     unitTests: false,
     integrationTests: false,
+    probes: false,
   });
 
   if (options.help) {
@@ -239,6 +247,11 @@ async function main(argv) {
 
   if (command === 'integration') {
     await runIntegration(options, process.env, workdir);
+    return;
+  }
+
+  if (command === 'probe') {
+    await runProbe(options, process.env, workdir);
     return;
   }
 

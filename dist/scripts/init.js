@@ -147,6 +147,23 @@ function updatePackageJsonForIntegration(workdir, fixturePath) {
   }
 }
 
+function updatePackageJsonForProbe(workdir, fixturePath) {
+  const packageJsonPath = path.join(workdir, 'package.json');
+  const packageJson = fs.existsSync(packageJsonPath)
+    ? readJson(packageJsonPath)
+    : { private: true };
+
+  packageJson.scripts = packageJson.scripts || {};
+  if (packageJson.scripts.probe) {
+    console.log('skip package.json probe');
+  }
+  else {
+    packageJson.scripts.probe = `dazscript probe --fixture ${fixturePath}`;
+    writeJson(packageJsonPath, packageJson);
+    console.log('update package.json');
+  }
+}
+
 function isNpmDefaultTestScript(scriptName, command) {
   return scriptName === 'test' && command === 'echo "Error: no test specified" && exit 1';
 }
@@ -423,6 +440,122 @@ function initIntegrationTests(workdir, options) {
   ensureLine(path.join(workdir, '.gitignore'), '.env.integration.local');
 }
 
+function buildProbeFixtureContent() {
+  return `import { action } from '@dsf/core/action'
+import { saveToFile } from '@dsf/helpers/file-helper'
+import { getStringScriptArguments } from '@dsf/helpers/script-helper'
+
+type ProbeResult = {
+    kind: string
+    status: string
+    observations: Record<string, unknown>
+}
+
+const countSceneNodes = (): number => {
+    return Scene.getNumNodes()
+}
+
+action({ text: 'Scene Probe', menuPath: false }, () => {
+    const args = getStringScriptArguments()
+    const resultPath = args.length > 0 ? args[0] : ''
+    const result: ProbeResult = {
+        kind: 'daz-headless-probe',
+        status: 'observed',
+        observations: {
+            graphicsMode: App.getGraphicsMode(),
+            interfaceAvailable: !!App.getInterface(),
+            nodeCount: countSceneNodes(),
+            time: String(Scene.getTime()),
+            frame: Scene.getFrame()
+        }
+    }
+
+    if (resultPath) {
+        saveToFile(resultPath, JSON.stringify(result, null, 2))
+    }
+})
+`;
+}
+
+function buildProbeReadmeContent(fixturePath) {
+  return `# DAZ Headless Probes
+
+Probes are non-asserting DAZ Studio headless scripts for runtime exploration. They are useful for AI-agent investigations where the desired output is structured observations, not pass/fail test assertions.
+
+Create a local env file:
+
+\`\`\`bash
+cp .env.probe.linux.example .env.probe.local
+\`\`\`
+
+\`\`\`powershell
+Copy-Item .env.probe.windows.example .env.probe.local
+\`\`\`
+
+Then run:
+
+\`\`\`bash
+npm run probe
+\`\`\`
+
+The default scene probe is:
+
+\`\`\`text
+${fixturePath}
+\`\`\`
+
+Generated output is written to \`probes/out/\` and ignored by git.
+`;
+}
+
+function buildProbeLinuxEnvExample() {
+  return `# Copy this file to .env.probe.local and edit paths for your machine.
+# Shell environment variables override values in .env.probe.local.
+# DAZ_STUDIO_EXE is required for probes.
+
+WINEPREFIX=/home/your-user/.local/share/daz-wine/prefix
+DAZ_STUDIO_EXE=/home/your-user/.local/share/daz-wine/prefix/drive_c/Program Files/DAZ 3D/DAZStudio4/DAZStudio.exe
+DAZ_PROBE_TIMEOUT_MS=300000
+`;
+}
+
+function buildProbeWindowsEnvExample() {
+  return `# Copy this file to .env.probe.local and edit paths for your machine.
+# Shell environment variables override values in .env.probe.local.
+# Forward slashes avoid escaping issues in env files.
+# DAZ_STUDIO_EXE is required for probes.
+
+DAZ_STUDIO_EXE=C:/Program Files/DAZ 3D/DAZStudio4/DAZStudio.exe
+DAZ_PROBE_TIMEOUT_MS=300000
+`;
+}
+
+function initProbes(workdir, options) {
+  const fixtureBaseName = `${toFixtureName(path.basename(workdir))}-scene.dsa.ts`;
+  const fixturePath = `./probes/fixtures/${fixtureBaseName}`;
+  const localFixturePath = path.join(workdir, fixturePath);
+
+  writeFileIfNeeded(localFixturePath, buildProbeFixtureContent(), options.force);
+  writeFileIfNeeded(
+    path.join(workdir, 'probes/README.md'),
+    buildProbeReadmeContent(fixturePath),
+    options.force
+  );
+  writeFileIfNeeded(
+    path.join(workdir, '.env.probe.linux.example'),
+    buildProbeLinuxEnvExample(),
+    options.force
+  );
+  writeFileIfNeeded(
+    path.join(workdir, '.env.probe.windows.example'),
+    buildProbeWindowsEnvExample(),
+    options.force
+  );
+  updatePackageJsonForProbe(workdir, fixturePath);
+  ensureLine(path.join(workdir, '.gitignore'), 'probes/out/');
+  ensureLine(path.join(workdir, '.gitignore'), '.env.probe.local');
+}
+
 function initProject(workdir, rawOptions) {
   const projectName = path.basename(workdir);
   const options = {
@@ -434,6 +567,7 @@ function initProject(workdir, rawOptions) {
     bundleName: toBundleName(projectName),
     unitTests: Boolean(rawOptions.unitTests),
     integrationTests: Boolean(rawOptions.integrationTests),
+    probes: Boolean(rawOptions.probes),
   };
 
   writeFileIfNeeded(
@@ -456,10 +590,15 @@ function initProject(workdir, rawOptions) {
   if (options.integrationTests) {
     initIntegrationTests(workdir, options);
   }
+
+  if (options.probes) {
+    initProbes(workdir, options);
+  }
 }
 
 module.exports = {
   initIntegrationTests,
+  initProbes,
   initUnitTests,
   initProject,
 };

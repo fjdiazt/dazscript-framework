@@ -89,3 +89,21 @@ The no-figure form requires only `DAZ_STUDIO_EXE`. Add `--require-content` to th
   }
 }
 ```
+
+## Headless Probes
+
+Use probes when the goal is exploratory runtime observation rather than pass/fail assertions:
+
+```bash
+dazscript probe --fixture ./probes/fixtures/scene-globals.dsa.ts
+```
+
+Probe fixtures use the same generated project and headless DAZ launch path as integration fixtures. The difference is the result contract: `integration` requires result JSON with `ok: true`; `probe` succeeds when DAZ completes and writes readable JSON. The JSON can contain `status: "observed"`, `status: "inconclusive"`, findings, timings, object shapes, loaded plugin state, or artifact paths.
+
+New projects can bootstrap a probe folder with:
+
+```bash
+npx dazscript init --probes
+```
+
+The default probe env file is `.env.probe.local`, and generated output is written to `probes/out/`.
