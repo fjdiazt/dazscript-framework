@@ -120,7 +120,7 @@ export const isHairType = (node: DzNode): boolean => {
     const figure = getFigure(node)!
     const assetMgr = app.getAssetMgr()
     const type = assetMgr.getTypeForNode(figure)
-    return assetMgr.isHairType(type) || contains(type.valueOf(), 'Hair')
+    return assetMgr.isHairType(type) || contains(type.valueOf(), ['Hair', 'Eyelashes'], true)
 }
 
 export const isGeoShell = (node: DzNode): boolean => {

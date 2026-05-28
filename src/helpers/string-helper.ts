@@ -4,7 +4,17 @@ export const isNumeric = (value: string | number): boolean => {
         !isNaN(Number(value.toString())))
 }
 
-export const contains = (source: string, search: string | string[]): boolean => {
+export const contains = (source: string, search: string | string[], caseInsensitive: boolean = false): boolean => {
+    if (caseInsensitive) {
+        source = source.toLowerCase()
+        if (Array.isArray(search)) {
+            search = search.map(s => s.toLowerCase())
+        }
+        else {
+            search = search.toLowerCase()
+        }
+    }
+
     if (Array.isArray(search)) {
         for (const s of search) {
             if (source.indexOf(s) >= 0) return true
