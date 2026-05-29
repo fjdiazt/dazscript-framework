@@ -12,6 +12,7 @@ import { TreeNode } from '@dsf/lib/tree-node'
 import { promptKeyboardShortcut } from '@dsf/shared/set-keyboard-shortcut'
 import { readFromFile, saveToFile } from './file-helper'
 import { getCanonicalInstallerEntry, toActionKey } from './custom-action-installer-entries'
+import { SETUP_BULK_ACTIONS, applySetupBulkSelection } from './custom-action-installer-bulk'
 import { canResetSetupShortcut, getDisplayedSetupShortcut, resetSetupShortcut, resetSetupShortcuts, setSetupShortcut, updateShortcutOverrideState } from './custom-action-installer-shortcuts'
 import { getScriptPath } from './script-helper'
 
@@ -192,6 +193,7 @@ class InstallerSelectionDialog extends BasicDialog {
     private readonly refreshListEvent$ = new Observable<void>()
     private listView: DzListView | null = null
     private shortcutListView: DzListView | null = null
+    private bulkSelectionApplied = false
 
     constructor(
         private readonly entries: InstallerEntry[],
@@ -207,6 +209,7 @@ class InstallerSelectionDialog extends BasicDialog {
         this.builder.options({ resizable: true, width: 1100, height: 700 })
         this.dialog.setAcceptButtonText('Apply')
         this.dialog.setCancelButtonText('Cancel')
+        this.addBulkActionButtons()
 
         if (this.shortcutEntries.length > 0) {
             const add = this.add
@@ -219,12 +222,18 @@ class InstallerSelectionDialog extends BasicDialog {
     }
 
     getSelections(): SetupSelection {
-        this.syncSelectionsFromListView()
+        if (!this.bulkSelectionApplied) {
+            this.syncSelectionsFromListView()
+        }
         this.syncShortcutSelectionsFromListView()
         return {
             actions: this.entries,
             shortcuts: this.shortcutEntries
         }
+    }
+
+    hasBulkSelectionApplied(): boolean {
+        return this.bulkSelectionApplied
     }
 
     private buildScriptsTab(): void {
@@ -430,6 +439,34 @@ class InstallerSelectionDialog extends BasicDialog {
         })
     }
 
+    private addBulkActionButtons(): void {
+        if (this.entries.length === 0) return
+
+        const installAllButton = this.createBulkActionButton(
+            SETUP_BULK_ACTIONS.installAll.label,
+            SETUP_BULK_ACTIONS.installAll.toolTip,
+            SETUP_BULK_ACTIONS.installAll.whatsThis
+        )
+        installAllButton.clicked.scriptConnect(() => this.applyBulkSelection(true))
+        this.dialog.addButton(installAllButton, 0)
+
+        const uninstallAllButton = this.createBulkActionButton(
+            SETUP_BULK_ACTIONS.uninstallAll.label,
+            SETUP_BULK_ACTIONS.uninstallAll.toolTip,
+            SETUP_BULK_ACTIONS.uninstallAll.whatsThis
+        )
+        uninstallAllButton.clicked.scriptConnect(() => this.confirmAndApplyBulkUninstall())
+        this.dialog.addButton(uninstallAllButton, 1)
+    }
+
+    private createBulkActionButton(label: string, toolTip: string, whatsThis: string): DzPushButton {
+        const button = new DzPushButton(this.dialog)
+        button.text = label
+        button.toolTip = toolTip
+        button.whatsThis = whatsThis
+        return button
+    }
+
     private getContextListItem(listView: DzListView, listItem: any): DzListViewItem | null {
         if (this.isListViewItem(listItem)) return listItem
 
@@ -535,6 +572,24 @@ class InstallerSelectionDialog extends BasicDialog {
         this.checkVisible(this.listView, onOff)
     }
 
+    private applyBulkSelection(selected: boolean): void {
+        applySetupBulkSelection(this.entries, selected)
+        this.bulkSelectionApplied = true
+        this.dialog.close()
+    }
+
+    private confirmAndApplyBulkUninstall(): void {
+        const response = MessageBox.question(
+            'Uninstall all scripts from menu and toolbar targets?',
+            'Uninstall All',
+            'Uninstall All',
+            'Cancel'
+        )
+        if (response !== 0) return
+
+        this.applyBulkSelection(false)
+    }
+
     private syncSelectionsFromListView() {
         if (!this.listView) return
 
@@ -609,7 +664,10 @@ const runDialog = (actions: CustomAction[], options: SetupDialogOptions): SetupS
     const entries = buildEntries(actions)
     const shortcutEntries = buildShortcutEntries(options.shortcuts)
     const dialog = new InstallerSelectionDialog(entries, shortcutEntries, options)
-    return dialog.ok() ? dialog.getSelections() : null
+    const accepted = dialog.ok()
+    return accepted || dialog.hasBulkSelectionApplied()
+        ? dialog.getSelections()
+        : null
 }
 
 const readShortcutBackup = (backupPath: string): ShortcutBackupFile => {
