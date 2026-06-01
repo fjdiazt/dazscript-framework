@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const glob = require('glob');
+const { globSync } = require('glob');
 
 function copyFile(sourcePath, targetPath) {
   fs.mkdirSync(path.dirname(targetPath), { recursive: true });
@@ -14,7 +14,7 @@ function copyIcons(workdir, options) {
   const sourceRoot = path.resolve(workdir, 'src');
   const outDir = path.resolve(workdir, options.outDir || './out');
   const pattern = path.join(sourceRoot, '**/*.png').replace(/\\/g, '/');
-  const files = glob.sync(pattern);
+  const files = globSync(pattern);
 
   files.forEach((filePath) => {
     const relativePath = path.relative(sourceRoot, filePath);

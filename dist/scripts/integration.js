@@ -197,7 +197,6 @@ function writeFile(filePath, content) {
 
 const fixtureBuildDependencies = [
   '@babel/core',
-  '@babel/plugin-proposal-class-properties',
   '@babel/plugin-proposal-decorators',
   '@babel/plugin-transform-arrow-functions',
   '@babel/plugin-transform-block-scoping',
@@ -206,9 +205,7 @@ const fixtureBuildDependencies = [
   '@babel/plugin-transform-private-property-in-object',
   '@babel/preset-env',
   '@babel/preset-typescript',
-  'babel-core',
   'babel-loader',
-  'babel-plugin-transform-class-properties',
   'babel-plugin-transform-typescript-metadata',
   'glob',
   'ts-loader',

@@ -18,7 +18,6 @@ module.exports = {
     [require.resolve('@babel/plugin-proposal-decorators'), { version: 'legacy' }],
     [require.resolve('@babel/plugin-transform-arrow-functions')],
     require.resolve('@babel/plugin-transform-block-scoping'),
-    require.resolve('@babel/plugin-proposal-class-properties'),
     require.resolve('@babel/plugin-transform-private-property-in-object'),
     require.resolve('@babel/plugin-transform-private-methods'),
   ],

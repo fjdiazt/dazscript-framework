@@ -1,5 +1,5 @@
 const path = require('path');
-const glob = require('glob');
+const { globSync } = require('glob');
 const webpack = require('webpack');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const { createActionLaunchers } = require('./dist/scripts/launchers');
@@ -41,8 +41,7 @@ module.exports = (env, argv) => {
   const isFileSpecified = env && env.file;
   const entryFiles = isFileSpecified
     ? [path.resolve(sourceRoot, `${env.file}.dsa.ts`)]
-    : glob
-        .sync(path.join(sourceRoot, '**/*.dsa.ts').replace(/\\/g, '/'))
+    : globSync(path.join(sourceRoot, '**/*.dsa.ts').replace(/\\/g, '/'))
         .map((filePath) => path.resolve(filePath));
 
   const outputPath =

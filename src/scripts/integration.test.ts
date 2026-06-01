@@ -105,6 +105,15 @@ describe('probe option resolution', () => {
 })
 
 describe('integration command resolution', () => {
+    it('exposes a no-content smoke integration command', () => {
+        const packageJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8'))
+        const script = packageJson.scripts['test:integration:smoke']
+
+        expect(script).toContain('integration')
+        expect(script).toContain('./test/integration/fixtures/framework-smoke.dsa.ts')
+        expect(script).not.toContain('--require-content')
+    })
+
     it('uses node plus npm-cli on Windows so child_process can spawn without a shell', () => {
         const invocation = getNpmInvocation(['--version'], 'win32')
 

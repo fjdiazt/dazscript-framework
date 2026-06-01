@@ -1,7 +1,7 @@
 const ts = require('typescript');
 const fs = require('fs');
 const path = require('path');
-const glob = require('glob');
+const { globSync } = require('glob');
 const { loadConfig } = require('./config-loader');
 const { validateAppDataPath } = require('./app-data-path');
 
@@ -187,7 +187,11 @@ function findActionEntryFiles(workdir, options) {
   const scriptsPath = options.scriptsPath.endsWith('/')
     ? options.scriptsPath
     : `${options.scriptsPath}/`;
-  const matches = glob.sync(`${scriptsPath}/**/*.dsa.ts`, { cwd: workdir });
+  const matches = globSync(`${scriptsPath}/**/*.dsa.ts`, { cwd: workdir })
+    .map((filePath) => {
+      const normalized = toPosix(filePath).replace(/^\.\//, '');
+      return `./${normalized}`;
+    });
 
   return matches.filter((filePath) => {
     const absolutePath = path.join(workdir, filePath);
