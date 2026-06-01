@@ -8,6 +8,7 @@ type SmokeResult = {
     failures: string[]
     syntax: Record<string, unknown>
     daz: Record<string, unknown>
+    image: Record<string, unknown>
 }
 
 class SmokeAccumulator {
@@ -28,7 +29,8 @@ const createResult = (): SmokeResult => ({
     ok: false,
     failures: [],
     syntax: {},
-    daz: {}
+    daz: {},
+    image: {}
 })
 
 const addFailure = (result: SmokeResult, message: string): void => {
@@ -98,6 +100,40 @@ const runDazChecks = (result: SmokeResult): void => {
     assertCondition(result, time !== null && time !== undefined, 'current time was not available')
 }
 
+const runImageChecks = (result: SmokeResult): void => {
+    const imageConstructorAvailable = typeof Image !== 'undefined'
+    let imageCreated = false
+    let width = -1
+    let height = -1
+    let hasIsNull = false
+    let isNull = false
+
+    if (imageConstructorAvailable) {
+        const image = new Image()
+        imageCreated = !!image
+        width = imageCreated ? image.width : -1
+        height = imageCreated ? image.height : -1
+        hasIsNull = imageCreated && typeof image.isNull === 'function'
+        isNull = hasIsNull ? image.isNull() : false
+    }
+
+    result.image = {
+        imageConstructorAvailable,
+        imageCreated,
+        width,
+        height,
+        hasIsNull,
+        isNull
+    }
+
+    assertCondition(result, imageConstructorAvailable, 'Image constructor is not available')
+    assertCondition(result, imageCreated, 'Image constructor did not create an object')
+    assertCondition(result, typeof width === 'number' && width >= 0, 'Image width is not numeric')
+    assertCondition(result, typeof height === 'number' && height >= 0, 'Image height is not numeric')
+    assertCondition(result, hasIsNull, 'Image isNull method is not available')
+    assertCondition(result, isNull, 'Default Image should be null before image data is loaded')
+}
+
 action({ text: 'Framework Compatibility Smoke Test', menuPath: false }, () => {
     const args = getStringScriptArguments()
     const resultPath = args.length > 0 ? args[0] : ''
@@ -106,6 +142,7 @@ action({ text: 'Framework Compatibility Smoke Test', menuPath: false }, () => {
     try {
         runSyntaxChecks(result)
         runDazChecks(result)
+        runImageChecks(result)
     }
     catch (error) {
         addFailure(result, String(error))
