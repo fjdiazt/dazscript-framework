@@ -166,17 +166,22 @@ export const getActionPixmap = (action: string, icon: string, maxSize?: number):
                 } else {
                     pixmap = new Pixmap(image.getFilename())
                 }
-                return pixmap
+                return isEmptyPixmap(pixmap) ? null : pixmap
             }
         }
         else if (!isCustom) {
             let pixmap = App.getStyle().actionPixmap(action, 0, 0)
-            return pixmap?.height === 0 ? null : pixmap
+            return isEmptyPixmap(pixmap) ? null : pixmap
         }
     } catch (error) {
         warn(`Error while trying to get icon pixmap: ${error}`)
     }
     return null
 }
+
+const isEmptyPixmap = (pixmap: Pixmap | null | undefined): boolean =>
+    !pixmap
+    || (typeof (pixmap as any).isNull === 'function' && (pixmap as any).isNull())
+    || pixmap.height === 0
 
 
