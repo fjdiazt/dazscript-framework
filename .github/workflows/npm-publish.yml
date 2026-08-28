@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
@@ -54,7 +54,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add package.json package-lock.json
           git commit -m "chore(release): bump version to ${VERSION} [skip ci]"
-          git tag "v${VERSION}"
+          git tag -a "v${VERSION}" -m "v${VERSION}"
           git push --follow-tags origin HEAD:main
 
       - name: Publish package
