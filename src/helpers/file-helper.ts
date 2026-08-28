@@ -32,22 +32,26 @@ export const readFromFile = <T>(filePath: string, cache: boolean = false): T | n
  * @returns
  */
 export const saveToFile = (filePath: string, content: string): boolean => {
+    let fileInfo: DzFileInfo | null = null
+    let file: DzFile | null = null
+    let opened = false
     try {
         if (!filePath || !content) return false
-        let fileInfo = new DzFileInfo(filePath)
+        fileInfo = new DzFileInfo(filePath)
         let path = fileInfo.absolutePath()
         var dzDir = new DzDir(path)
         dzDir.mkpath(path)
-        var file = new DzFile(`${filePath}`)
-        file.open(DzFile.WriteOnly)
-        file.write(content)
-        file.close()
-        fileInfo.deleteLater()
-        file.deleteLater()
-        return true
+        file = new DzFile(`${filePath}`)
+        opened = file.open(DzFile.WriteOnly)
+        if (!opened) return false
+        return file.write(content) > 0
     } catch (error) {
         log.error(`Error while saving file ${filePath}`)
         return false
+    } finally {
+        if (opened) file?.close()
+        fileInfo?.deleteLater()
+        file?.deleteLater()
     }
 }
 

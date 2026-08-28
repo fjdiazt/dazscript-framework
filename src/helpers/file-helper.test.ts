@@ -36,11 +36,39 @@ vi.stubGlobal('DzDir', FakeDir)
 import { saveToFile } from './file-helper'
 
 describe('saveToFile', () => {
-    beforeEach(() => vi.clearAllMocks())
+    beforeEach(() => {
+        vi.clearAllMocks()
+        open.mockReturnValue(false)
+        write.mockReturnValue(-1)
+    })
 
     it('fails without writing when the file cannot be opened', () => {
         expect(saveToFile('C:/temp/settings.json', '{}')).toBe(false)
         expect(open).toHaveBeenCalledWith(FakeFile.WriteOnly)
         expect(write).not.toHaveBeenCalled()
+    })
+
+    it('fails when writing reports an error', () => {
+        open.mockReturnValue(true)
+
+        expect(saveToFile('C:/temp/settings.json', '{}')).toBe(false)
+        expect(write).toHaveBeenCalledWith('{}')
+        expect(close).toHaveBeenCalledOnce()
+    })
+
+    it('fails when writing stores no bytes', () => {
+        open.mockReturnValue(true)
+        write.mockReturnValue(0)
+
+        expect(saveToFile('C:/temp/settings.json', '{}')).toBe(false)
+        expect(close).toHaveBeenCalledOnce()
+    })
+
+    it('succeeds when the file opens and writes', () => {
+        open.mockReturnValue(true)
+        write.mockReturnValue(2)
+
+        expect(saveToFile('C:/temp/settings.json', '{}')).toBe(true)
+        expect(close).toHaveBeenCalledOnce()
     })
 })
