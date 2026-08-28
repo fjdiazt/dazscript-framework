@@ -480,6 +480,20 @@ action({ text: 'My Dialog Script' }, () => {
 });
 ```
 
+#### 4. Prepare without opening modally
+
+`prepare()` builds the dialog and returns its native `DzBasicDialog` without entering the modal event loop. Use it when code must inspect or configure the completed native dialog before showing it.
+
+```typescript
+const dialog = new MyDialog(new MyModel());
+const nativeDialog = dialog.prepare();
+
+nativeDialog.minWidth = 600;
+const accepted = nativeDialog.exec();
+```
+
+Each call builds the dialog. After `prepare()`, execute the returned native dialog directly instead of calling `run()` or `ok()`, which would build it again.
+
 ---
 
 ### Observables
