@@ -21,10 +21,14 @@ export abstract class BasicDialog {
         })
     }
 
-    run(): boolean {
+    prepare(): DzBasicDialog {
         this.init()
         this.builder.restoreObjectName()
-        return this.dialog.exec()
+        return this.dialog
+    }
+
+    run(): boolean {
+        return this.prepare().exec()
     }
 
     ok(): boolean {
