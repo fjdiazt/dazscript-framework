@@ -536,6 +536,7 @@ Use `this.add` inside `build()` to construct the UI declaratively.
 | `add.radio(text)` | Radio button |
 | `add.comboBox()` | Drop-down list |
 | `add.listBox()` | Scrollable list |
+| `add.list.view<T>()` | Tree/list view; chain `.tabFocusWhenPopulated()` to skip empty or fully filtered lists during keyboard navigation |
 | `add.slider(min, max)` | Numeric slider |
 | `add.colorPicker()` | Color picker |
 | `add.nodeSelection()` | Daz Studio node selector |

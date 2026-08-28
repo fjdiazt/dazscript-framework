@@ -15,10 +15,13 @@ const listView = vi.hoisted(() => ({
     setSorting: vi.fn(),
     hide: vi.fn(),
     show: vi.fn(),
+    getWidget: vi.fn(() => focusWidget),
     selectedItem: vi.fn(() => null),
     doubleClicked: { scriptConnect: vi.fn() },
     contextMenuRequested: { scriptConnect: vi.fn() }
 }))
+
+const focusWidget = vi.hoisted(() => ({ focusPolicy: 15 }))
 
 vi.mock('./widget-builder', () => ({
     createWidget: () => ({ build: () => listView })
@@ -35,6 +38,7 @@ class FakeListViewItem {
     data: any
     open = false
     selectable = true
+    visible = true
     textByColumn: Record<number, string> = {}
 
     constructor(parent: any, public id: number) {
@@ -48,13 +52,17 @@ class FakeListViewItem {
 
 vi.stubGlobal('DzListView', { All: 0, Extended: 1 })
 vi.stubGlobal('DzListViewItem', FakeListViewItem)
+vi.stubGlobal('QtFocusPolicy', { NoFocus: 0 })
 
-import { ListViewBuilder } from './list-view-builder'
+import { filter } from '@dsf/helpers/list-view-helper'
+import { ListViewBuilder, ListViewRefreshOptions } from './list-view-builder'
 
 describe('ListViewBuilder item updates', () => {
     beforeEach(() => {
         listView.items = []
         vi.clearAllMocks()
+        vi.mocked(filter).mockReset()
+        focusWidget.focusPolicy = 15
     })
 
     it('keeps unchanged rows when data has no explicit id', () => {
@@ -74,5 +82,47 @@ describe('ListViewBuilder item updates', () => {
         items.value = [new TreeNode('Action B', '', { name: 'ActionB' })]
 
         expect(listView.items.map(item => item.textByColumn[0])).toEqual(['Action B'])
+    })
+
+    it('removes empty lists from tab focus and restores populated lists', () => {
+        const items = new Observable<TreeNode<any>[]>([])
+
+        new ListViewBuilder<any, any>({ dialog: {}, layout: null } as any)
+            .tabFocusWhenPopulated()
+            .items(items)
+            .rebuildOnItemsChanged()
+            .columns(['Name'])
+            .text(item => [item.name])
+            .data(item => item.value)
+            .build()
+
+        expect(focusWidget.focusPolicy).toBe(0)
+
+        items.value = [new TreeNode('Action A', '', { name: 'ActionA' })]
+        expect(focusWidget.focusPolicy).toBe(15)
+
+        items.value = []
+        expect(focusWidget.focusPolicy).toBe(0)
+    })
+
+    it('removes fully filtered lists from tab focus', () => {
+        const refresh = new Observable<void>()
+
+        new ListViewBuilder<any, any>({ dialog: {}, layout: null } as any)
+            .tabFocusWhenPopulated()
+            .refresh(refresh, ListViewRefreshOptions.Filters)
+            .items(new Observable([new TreeNode('Action A', '', { name: 'ActionA' })]))
+            .filter({ keywords: new Observable(''), field: item => item.textByColumn[0] })
+            .columns(['Name'])
+            .text(item => [item.name])
+            .data(item => item.value)
+            .build()
+
+        vi.mocked(filter).mockImplementation((view: any) => {
+            view.items.forEach((item: any) => item.visible = false)
+        })
+        refresh.trigger()
+
+        expect(focusWidget.focusPolicy).toBe(0)
     })
 })

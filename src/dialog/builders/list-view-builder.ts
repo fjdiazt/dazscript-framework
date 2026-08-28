@@ -51,6 +51,12 @@ export class ListViewBuilder<TItem, TData> implements IWidgetBuilder<DzListView>
         return this
     }
 
+    /** Removes the list from keyboard tab focus when it has no visible selectable rows. */
+    tabFocusWhenPopulated(): this {
+        this.context.tabFocusWhenPopulated = true
+        return this
+    }
+
     /**
      * Binds the list rows to a collection of items
      * @param items
@@ -156,6 +162,7 @@ class ListViewBuilderContext<TItem, TData> {
     flat: Observable<boolean>
     refreshWhat: ListViewRefreshOptions = ListViewRefreshOptions.All
     itemsChangeMode: ListViewItemsChangeMode = 'update'
+    tabFocusWhenPopulated: boolean = false
     constructor(public readonly dialogContext: WidgetBuilderContext) { }
 }
 
@@ -235,7 +242,16 @@ class ListViewBindBuilder<TItem, TData> {
 
 const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzListView => {
     const listView = createWidget(context.dialogContext).build(DzListView)
+    const focusWidget = context.tabFocusWhenPopulated ? listView.getWidget() : null
+    const populatedFocusPolicy = focusWidget?.focusPolicy
     let rowId = -1
+
+    const syncTabFocus = () => {
+        if (!focusWidget) return
+        const hasNavigableRow = listView.getItems(DzListView.All)
+            .some(item => item.visible !== false && item.selectable !== false)
+        focusWidget.focusPolicy = hasNavigableRow ? populatedFocusPolicy : QtFocusPolicy.NoFocus
+    }
 
     if (context.visible) {
         if (context.visible.value === false)
@@ -294,6 +310,7 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
 
     const filterList = (keywords?: string) => {
         filter(listView, context.filter.field, keywords ?? context.filter?.keywords?.value, { selectOnFilter: context.filter.selectOnFilter ?? true, filters: context.filter.filters })
+        syncTabFocus()
     }
     let delayedFilter: Delayed | null = null
 
@@ -310,10 +327,15 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
         })
         listView.allColumnsShowFocus = true
 
-        if (context.visible.value === false)
+        if (context.visible.value === false) {
+            syncTabFocus()
             return
+        }
 
-        if (!items) return
+        if (!items) {
+            syncTabFocus()
+            return
+        }
 
         items.forEach((item) => {
             buildItem(item, listView)
@@ -334,6 +356,8 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
 
         if (context.filter?.keywords.value || context.filter?.filters)
             filterList()
+        else
+            syncTabFocus()
 
         if (selectedId) {
             listView.getItems(DzListView.All).forEach(item => {
@@ -399,6 +423,8 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
             const path = data?.id ?? String(li.id)
             if (!incomingPaths[path]) listView.deleteItem(li)
         })
+
+        syncTabFocus()
 
     }
 
