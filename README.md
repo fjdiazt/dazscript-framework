@@ -643,37 +643,7 @@ The `test/unit/` files are generated only when you run `dazscript init --unit-te
 
 ### Development & Publishing
 
-This package uses **semantic-release** for automatic versioning and npm publishing.
-
-#### Commit message conventions
-
-| Prefix | Effect |
-|---|---|
-| `fix: ...` | Patch bump (`1.0.0` → `1.0.1`) |
-| `feat: ...` | Minor bump (`1.0.0` → `1.1.0`) |
-| `BREAKING CHANGE: ...` in commit body | Major bump (`1.0.0` → `2.0.0`) |
-| No prefix | No version bump |
-
-Examples:
-```
-fix: resolve layout overflow in group builder
-feat: add tree view builder
-feat: refactor action entrypoint
-
-BREAKING CHANGE: action() now requires an explicit menuPath
-```
-
-#### Publishing
-
-Every push to `master` automatically:
-
-1. Analyzes commit messages since the last release
-2. Updates the version in `package.json`
-3. Builds the project
-4. Creates a GitHub release with changelog
-5. Publishes to npm
-
-No manual steps required.
+Every eligible push to `main` runs the npm publishing workflow. It installs from the lockfile, builds the package, increments the patch version, commits the version update with an annotated tag, and publishes the package to npm. Bot commits and commits containing `[skip ci]` do not start another release.
 
 ---
 
