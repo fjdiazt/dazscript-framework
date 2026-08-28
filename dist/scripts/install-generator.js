@@ -37,6 +37,29 @@ function replaceEntryOutputSuffix(filePath, suffix) {
   return `${filePath}${suffix}`;
 }
 
+function removeSetupArtifacts(workdir, outDir, scriptsPath, sourceFilePath) {
+  const absoluteSourcePath = path.resolve(workdir, sourceFilePath);
+  if (fs.existsSync(absoluteSourcePath)) {
+    fs.unlinkSync(absoluteSourcePath);
+  }
+
+  const relativeSourcePath = path.relative(
+    path.resolve(workdir, scriptsPath),
+    absoluteSourcePath
+  );
+  if (relativeSourcePath.startsWith('..') || path.isAbsolute(relativeSourcePath)) {
+    return;
+  }
+
+  const outputFilePath = path.join(
+    path.resolve(workdir, outDir),
+    replaceEntrySourceSuffix(relativeSourcePath, '.dsa')
+  );
+  if (fs.existsSync(outputFilePath)) {
+    fs.unlinkSync(outputFilePath);
+  }
+}
+
 function getActionIconPath(filePath, decorator) {
   if (decorator.icon) {
     return decorator.icon;
@@ -64,9 +87,10 @@ function getActionIconPath(filePath, decorator) {
       : replaceEntryOutputSuffix(getPartialPath(filePath), '.png');
   }
 
-  return isBundleAction
-    ? path.parse(filePath).name.replace('.dsa', '.dsa.png')
-    : `${getPartialPath(filePath)}.png`;
+  return replaceEntryOutputSuffix(
+    isBundleAction ? path.parse(filePath).name : getPartialPath(filePath),
+    '.png'
+  );
 }
 
 function generateInstallerTemplate(data, options) {
@@ -200,7 +224,7 @@ function findActionEntryFiles(workdir, options) {
   });
 }
 
-function processScript(filePath, container, defaultMenuPath, setupOptions) {
+function processScript(workdir, filePath, container, defaultMenuPath, setupOptions, options) {
   const fileInfo = path.parse(filePath);
   const content = fs.readFileSync(filePath, 'utf-8').toString();
   const actionCall = findTopLevelActionCall(content, filePath);
@@ -251,11 +275,12 @@ function processScript(filePath, container, defaultMenuPath, setupOptions) {
   container.scripts.push(script);
 
   if (decorator.bundle !== undefined) {
-    let packageSetupFilePath = `Setup.dsa.ts`;
-
-    if (decorator.bundle !== true) {
-      packageSetupFilePath = `Setup ${decorator.bundle}.dsa.ts`;
-    }
+    const packageSetupFilePath = decorator.bundle === true
+      ? `${setupOptions.bundleName ? `${setupOptions.bundleName} ` : ''}Setup.dsa.ts`
+      : `${decorator.bundle} Setup.dsa.ts`;
+    const legacySetupFilePath = decorator.bundle === true
+      ? 'Setup.dsa.ts'
+      : `Setup ${decorator.bundle}.dsa.ts`;
 
     let bundleScriptContent = generateInstallerTemplate(
       JSON.stringify(container.scripts, null, 4),
@@ -265,14 +290,22 @@ function processScript(filePath, container, defaultMenuPath, setupOptions) {
       path.parse(filePath).dir,
       packageSetupFilePath
     );
+    if (legacySetupFilePath !== packageSetupFilePath) {
+      removeSetupArtifacts(
+        workdir,
+        options.outDir,
+        options.scriptsPath,
+        path.join(path.parse(filePath).dir, legacySetupFilePath)
+      );
+    }
     fs.writeFileSync(bundleScriptFilePath, bundleScriptContent);
   }
 }
 
-function processScripts(paths, container, defaultMenuPath, setupOptions) {
+function processScripts(workdir, paths, container, defaultMenuPath, setupOptions, options) {
   paths.forEach((filePath) => {
     console.log(`Processing ${filePath}`);
-    processScript(filePath, container, defaultMenuPath, setupOptions);
+    processScript(workdir, filePath, container, defaultMenuPath, setupOptions, options);
   });
 }
 
@@ -377,6 +410,10 @@ function generateInstallerFiles(workdir, options) {
     ? options.defaultMenuPath
     : `${options.defaultMenuPath}/`;
   const { config } = loadConfig(workdir);
+  const generatorOptions = {
+    scriptsPath: options.scriptsPath,
+    outDir: config.outDir || './out',
+  };
   const appDataPath = validateAppDataPath(options.appDataPath || config.appDataPath, workdir);
   const settingsPath = `${appDataPath}/Installer`;
   const bundleName = typeof config.bundleName === 'string' && config.bundleName.trim()
@@ -396,7 +433,7 @@ function generateInstallerFiles(workdir, options) {
   const container = { scripts: [] };
   const matches = findActionEntryFiles(workdir, options);
 
-  processScripts(matches, container, defaultMenuPath, setupOptions);
+  processScripts(workdir, matches, container, defaultMenuPath, setupOptions, generatorOptions);
 
   container.scripts = container.scripts.sort((a, b) => {
     const aKey = a.menuPath + a.filePath;
@@ -408,7 +445,11 @@ function generateInstallerFiles(workdir, options) {
     JSON.stringify(container.scripts, null, 4),
     setupOptions
   );
-  fs.writeFileSync(path.join(workdir, 'src', 'Setup.dsa.ts'), installerScriptContent);
+  const setupFileName = `${bundleName ? `${bundleName} ` : ''}Setup.dsa.ts`;
+  if (setupFileName !== 'Setup.dsa.ts') {
+    removeSetupArtifacts(workdir, generatorOptions.outDir, './src', path.join(workdir, 'src', 'Setup.dsa.ts'));
+  }
+  fs.writeFileSync(path.join(workdir, 'src', setupFileName), installerScriptContent);
 
   const installPath = path.join(workdir, 'src', 'Install.dsa.ts');
   const uninstallPath = path.join(workdir, 'src', 'Uninstall.dsa.ts');

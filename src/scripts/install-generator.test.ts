@@ -7,13 +7,13 @@ const { generateInstallerFiles } = require('../../dist/scripts/install-generator
 
 const tempDirs: string[] = []
 
-const makeProject = (): string => {
+const makeProject = (bundleName?: string): string => {
     const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dsf-install-generator-'))
     tempDirs.push(projectDir)
     fs.mkdirSync(path.join(projectDir, 'src'), { recursive: true })
     fs.writeFileSync(
         path.join(projectDir, 'dazscript.config.cjs'),
-        "module.exports = { appDataPath: 'Test/ActionIcons' }\n"
+        `module.exports = { appDataPath: 'Test/ActionIcons'${bundleName ? `, bundleName: '${bundleName}'` : ''} }\n`
     )
     return projectDir
 }
@@ -33,7 +33,7 @@ const writeText = (projectDir: string, fileName: string, content: string): void 
     fs.writeFileSync(path.join(projectDir, 'src', fileName), content)
 }
 
-const generateSetup = (projectDir: string): string => {
+const runGenerator = (projectDir: string): void => {
     const previousCwd = process.cwd()
     process.chdir(projectDir)
     try {
@@ -45,6 +45,10 @@ const generateSetup = (projectDir: string): string => {
     } finally {
         process.chdir(previousCwd)
     }
+}
+
+const generateSetup = (projectDir: string): string => {
+    runGenerator(projectDir)
     return fs.readFileSync(path.join(projectDir, 'src', 'Setup.dsa.ts'), 'utf8')
 }
 
@@ -53,6 +57,54 @@ afterEach(() => {
         const dir = tempDirs.pop()
         if (dir) fs.rmSync(dir, { recursive: true, force: true })
     }
+})
+
+describe('install generator setup naming', () => {
+    it('emits only the product-prefixed project setup name', () => {
+        const projectDir = makeProject('Power Menu')
+        writeScript(projectDir, 'power-menu')
+        fs.mkdirSync(path.join(projectDir, 'out'), { recursive: true })
+        fs.writeFileSync(path.join(projectDir, 'src', 'Setup.dsa.ts'), 'legacy source')
+        fs.writeFileSync(path.join(projectDir, 'out', 'Setup.dsa'), 'legacy output')
+
+        runGenerator(projectDir)
+
+        expect(fs.existsSync(path.join(projectDir, 'src', 'Power Menu Setup.dsa.ts'))).toBe(true)
+        expect(fs.existsSync(path.join(projectDir, 'src', 'Setup.dsa.ts'))).toBe(false)
+        expect(fs.existsSync(path.join(projectDir, 'out', 'Setup.dsa'))).toBe(false)
+    })
+
+    it('emits only the prefix-first action bundle setup name', () => {
+        const projectDir = makeProject('Power Menu')
+        writeScript(projectDir, 'utilities', ", bundle: 'Utilities'")
+        fs.mkdirSync(path.join(projectDir, 'out'), { recursive: true })
+        fs.writeFileSync(path.join(projectDir, 'src', 'Setup Utilities.dsa.ts'), 'legacy source')
+        fs.writeFileSync(path.join(projectDir, 'out', 'Setup Utilities.dsa'), 'legacy output')
+
+        runGenerator(projectDir)
+
+        expect(fs.existsSync(path.join(projectDir, 'src', 'Utilities Setup.dsa.ts'))).toBe(true)
+        expect(fs.existsSync(path.join(projectDir, 'src', 'Setup Utilities.dsa.ts'))).toBe(false)
+        expect(fs.existsSync(path.join(projectDir, 'out', 'Setup Utilities.dsa'))).toBe(false)
+    })
+
+    it('uses the project prefix for an unnamed action bundle setup', () => {
+        const projectDir = makeProject('Power Menu')
+        fs.mkdirSync(path.join(projectDir, 'src', 'tools'), { recursive: true })
+        fs.mkdirSync(path.join(projectDir, 'out', 'tools'), { recursive: true })
+        fs.writeFileSync(
+            path.join(projectDir, 'src', 'tools', 'utilities.dsa.ts'),
+            "action({ text: 'utilities', bundle: true }, function() {})\n"
+        )
+        fs.writeFileSync(path.join(projectDir, 'src', 'tools', 'Setup.dsa.ts'), 'legacy source')
+        fs.writeFileSync(path.join(projectDir, 'out', 'tools', 'Setup.dsa'), 'legacy output')
+
+        runGenerator(projectDir)
+
+        expect(fs.existsSync(path.join(projectDir, 'src', 'tools', 'Power Menu Setup.dsa.ts'))).toBe(true)
+        expect(fs.existsSync(path.join(projectDir, 'src', 'tools', 'Setup.dsa.ts'))).toBe(false)
+        expect(fs.existsSync(path.join(projectDir, 'out', 'tools', 'Setup.dsa'))).toBe(false)
+    })
 })
 
 describe('install generator action icons', () => {
@@ -82,14 +134,15 @@ describe('install generator action icons', () => {
         expect(setup).not.toContain('"icon": "./power-menu.dsa.png"')
     })
 
-    it('keeps the dsa-named script icon as a legacy fallback', () => {
+    it('normalizes the dsa-named legacy icon in generated setup', () => {
         const projectDir = makeProject()
         writeScript(projectDir, 'legacy-icon')
         writePng(projectDir, 'legacy-icon.dsa.png')
 
         const setup = generateSetup(projectDir)
 
-        expect(setup).toContain('"icon": "./legacy-icon.dsa.png"')
+        expect(setup).toContain('"icon": "./legacy-icon.png"')
+        expect(setup).not.toContain('"icon": "./legacy-icon.dsa.png"')
     })
 
     it('lets explicit action icon metadata override discovered icon files', () => {

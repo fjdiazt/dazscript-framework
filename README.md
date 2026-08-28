@@ -256,10 +256,18 @@ export default defineConfig({
     defaultMenuPath: '/MyScripts',
     appDataPath: 'YourName/my-project',  // required
     bundleName: 'My Project',            // optional — used in the setup dialog title
+    assets: [
+        { from: './publishing/manual/User Guide.pdf', to: 'User Guide.pdf' },
+        { from: './licenses/NOTICE.txt', to: 'docs/NOTICE.txt' },
+    ],
 });
 ```
 
 `appDataPath` is required for builds that generate launcher shims and must be unique across your projects.
+
+Each `assets` entry copies one completed file during the existing postbuild asset stage. `from` is relative to the project root; `to` is relative to `outDir`. Nested destination directories are created automatically. Mappings are explicit—directories and globs are not expanded—and every declared source file is required. A missing source fails the build with its configured path. Both paths must remain inside their respective roots.
+
+Assets use the same stage as PNG icons, so `npm run build`, `npm run build:release`, and `npm run icons` copy them without product-specific scripts. The framework copies files only; it does not generate or convert PDFs.
 
 ---
 
@@ -301,7 +309,7 @@ action({ text: 'My Script' }, MyScript);
 | `group` | Grouping label for related actions in Daz Studio |
 | `description` | Longer description for the action |
 | `icon` | Image path used for the installed custom action. Overrides discovered icon files. |
-| `bundle` | Generates a setup script beside the action. `true` → `Setup.dsa.ts`, a string → `Setup <name>.dsa.ts` |
+| `bundle` | Generates a setup script beside the action. `true` → `<bundleName> Setup.dsa.ts`, a string → `<name> Setup.dsa.ts` |
 
 ---
 
@@ -334,7 +342,7 @@ Individual script packages can wrap this command in `package.json` scripts such 
 npm run installer
 ```
 
-This scans all `.dsa.ts` entry files, reads each top-level `action(...)` call, and generates `src/Setup.dsa.ts` automatically. No installer code to maintain by hand.
+This scans all `.dsa.ts` entry files, reads each top-level `action(...)` call, and generates `src/<bundleName> Setup.dsa.ts` automatically. Projects without a `bundleName` retain the legacy `src/Setup.dsa.ts` name. No installer code to maintain by hand.
 
 The generated setup dialog:
 
@@ -359,16 +367,16 @@ Custom action icons are selected from `action(...)` metadata and sibling image f
 3. `scriptname.png`
 4. `scriptname.dsa.png` legacy fallback
 
-`scriptname.action.png` is the installed custom action icon. Daz Studio uses the same action icon for menu and toolbar placements. `scriptname.png` is the preferred script/content icon fallback. `scriptname.dsa.png` is a legacy fallback kept for older projects and will be removed in a future breaking release.
+`scriptname.action.png` is the installed custom action icon. Daz Studio uses the same action icon for menu and toolbar placements. `scriptname.png` is the preferred script/content icon fallback. `scriptname.dsa.png` remains supported as legacy source input, but builds copy and reference it as `scriptname.png`.
 
-Setup dialog header assets are optional and are discovered beside `src/Setup.dsa.ts`:
+Setup dialog header assets are optional and are discovered in `src`:
 
 1. `src/Setup.header.png`
 2. `src/Setup.tip.png`
 3. `src/Setup.png`
 4. `src/Setup.dsa.png` legacy fallback
 
-Header text can be placed in `src/Setup.header.html`, `src/Setup.header.md`, or `src/Setup.header.txt`, with `src/Setup.html`, `src/Setup.md`, and `src/Setup.txt` as script-named fallbacks. The installer generator embeds that text into `Setup.dsa.ts`, so Daz Studio does not need to read the text file at setup time. The setup dialog renders the header body with `DzTextBrowser` rich text support; no Markdown conversion is performed. The image remains a deployed PNG asset and is resolved relative to the generated setup script at runtime.
+Header text can be placed in `src/Setup.header.html`, `src/Setup.header.md`, or `src/Setup.header.txt`, with `src/Setup.html`, `src/Setup.md`, and `src/Setup.txt` as script-named fallbacks. The installer generator embeds that text into the generated setup script, so Daz Studio does not need to read the text file at setup time. The setup dialog renders the header body with `DzTextBrowser` rich text support; no Markdown conversion is performed. The image remains a deployed PNG asset and is resolved relative to the generated setup script at runtime.
 
 The same layout is available to custom dialogs through `add.header({ imagePath, html, text, height, imageWidth }).build()`. Use `html` for rich text, or `text` for escaped plain text.
 
@@ -398,7 +406,7 @@ The JSON can be an array or an object containing `actions`, `shortcuts`, or `acc
 
 Accepted shortcut fields are `shortcut`, `accelerator`, or `key`. Accepted action-name fields are `name` or `action`.
 
-At build time the JSON is embedded into generated `Setup.dsa.ts`; Daz Studio does not need to read the original JSON file at setup time. During setup, the `Keyboard Shortcuts` tab shows the action label, current shortcut, new shortcut, action type, and conflicts. The user chooses which shortcut rows to apply.
+At build time the JSON is embedded into the generated setup script; Daz Studio does not need to read the original JSON file at setup time. During setup, the `Keyboard Shortcuts` tab shows the action label, current shortcut, new shortcut, action type, and conflicts. The user chooses which shortcut rows to apply.
 
 Before changing a non-custom Daz Studio action shortcut, setup writes the original value to:
 
@@ -416,8 +424,8 @@ The `bundle` property on `action(...)` is separate from the project-level `bundl
 
 When `bundle` is set, the installer generator also writes a setup script beside that action:
 
-- `bundle: true` → writes `Setup.dsa.ts`
-- `bundle: 'Utilities'` → writes `Setup Utilities.dsa.ts`
+- `bundle: true` → writes `<bundleName> Setup.dsa.ts`, or `Setup.dsa.ts` when no project `bundleName` exists
+- `bundle: 'Utilities'` → writes `Utilities Setup.dsa.ts`
 
 Those bundle-scoped setup files use the same setup dialog helper and also receive the project `bundleName`.
 
@@ -636,7 +644,7 @@ The `test/unit/` files are generated only when you run `dazscript init --unit-te
 | `npm run build:release` | Build with `--log-level warn`, then encrypt implementation bundles |
 | `npm run watch` | Recompile on every save |
 | `npm run installer` | Generate the setup dialog |
-| `npm run icons` | Copy icon assets to the output folder |
+| `npm run icons` | Copy PNG icons and configured assets to the output folder |
 | `npm test` | Run fast Node/Vitest tests |
 | `npm run test:integration` | Run a DAZ Studio headless integration fixture |
 
