@@ -314,7 +314,7 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
     }
     let delayedFilter: Delayed | null = null
 
-    const buildList = (items: TreeNode<TItem>[], selectedId?: number) => {
+    const buildListRows = (items: TreeNode<TItem>[], selectedId?: number) => {
         rowId = -1
         context.decorated = false
         if (!context.text)
@@ -367,6 +367,15 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
                     listView.ensureItemVisible(item)
                 }
             })
+        }
+    }
+
+    const buildList = (items: TreeNode<TItem>[], selectedId?: number) => {
+        listView.setSorting(-1, context.sortAscending)
+        try {
+            buildListRows(items, selectedId)
+        } finally {
+            listView.setSorting(context.sorting, context.sortAscending)
         }
     }
 
@@ -440,7 +449,6 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
     })
 
     listView.showSortIndicator = context.sorting >= 0
-    listView.setSorting(context.sorting, context.sortAscending)
     if (context.selectionMode !== null) {
         listView.selectionMode = context.selectionMode
     }

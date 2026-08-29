@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Observable } from '@dsf/lib/observable'
 import { TreeNode } from '@dsf/lib/tree-node'
 
+const buildEvents = vi.hoisted(() => [] as string[])
+
 const listView = vi.hoisted(() => ({
     items: [] as any[],
     addColumn: vi.fn(),
@@ -12,7 +14,7 @@ const listView = vi.hoisted(() => ({
     deleteItem: vi.fn(function (this: any, item: any) {
         this.items = this.items.filter((candidate: any) => candidate !== item)
     }),
-    setSorting: vi.fn(),
+    setSorting: vi.fn((column: number) => buildEvents.push(`sorting:${column}`)),
     hide: vi.fn(),
     show: vi.fn(),
     getWidget: vi.fn(() => focusWidget),
@@ -42,6 +44,7 @@ class FakeListViewItem {
     textByColumn: Record<number, string> = {}
 
     constructor(parent: any, public id: number) {
+        buildEvents.push('item')
         parent.items.push(this)
     }
 
@@ -63,6 +66,19 @@ describe('ListViewBuilder item updates', () => {
         vi.clearAllMocks()
         vi.mocked(filter).mockReset()
         focusWidget.focusPolicy = 15
+        buildEvents.length = 0
+    })
+
+    it('suspends sorting while building rows and restores it afterward', () => {
+        new ListViewBuilder<any, any>({ dialog: {}, layout: null } as any)
+            .sorting(true)
+            .items(new Observable([new TreeNode('Action A', '', { name: 'ActionA' })]))
+            .columns(['Name'])
+            .text(item => [item.name])
+            .data(item => item.value)
+            .build()
+
+        expect(buildEvents).toEqual(['sorting:-1', 'item', 'sorting:0'])
     })
 
     it('keeps unchanged rows when data has no explicit id', () => {
