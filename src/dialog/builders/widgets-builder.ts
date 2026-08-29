@@ -14,6 +14,7 @@ import { ListViewBuilder } from './list-view-builder'
 import { NodeSelectionComboBoxBuilder } from './node-selection-builder'
 import { PopupMenuBuilder } from './popup-menu-builder'
 import RadioButtonBuilder from './radio-builder'
+import ScrollAreaBuilder from './scroll-area-builder'
 import SliderBuilder from './slider-builder'
 import { SplitterBuilder, SplitterBuilderContext } from './splitter-builder'
 import { TabBuilder, TabBuilderContext } from './tab-builder'
@@ -94,6 +95,10 @@ export class WidgetsBuilder {
 
     splitter(...items: DzWidget[]): SplitterBuilder {
         return new SplitterBuilder(this.splitterContext).items(...items)
+    }
+
+    scroll(): ScrollAreaBuilder {
+        return new ScrollAreaBuilder(this.context)
     }
 
     contextMenu(): PopupMenuBuilder {

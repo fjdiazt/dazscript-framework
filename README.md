@@ -557,6 +557,7 @@ Use `this.add` inside `build()` to construct the UI declaratively.
 | `add.tab(text)` | Tab page |
 | `add.horizontal(fn)` | Horizontal layout row |
 | `add.splitter()` | Resizable splitter |
+| `add.scroll()` | Scrollable vertical or horizontal layout |
 
 Most widget builders expose a fluent chain:
 
@@ -574,6 +575,16 @@ add.tab('Options').build(() => {
         add.colorPicker().value(model.color$);
     });
 });
+
+add.scroll()
+    .horizontal()
+    .flat()
+    .build(() => {
+        add.group('Display').horizontal().build(() => {
+            add.checkbox('Icons');
+            add.checkbox('Details');
+        });
+    });
 ```
 
 ---
