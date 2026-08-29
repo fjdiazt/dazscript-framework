@@ -284,8 +284,14 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
     }
 
     const buildItem = (item: TreeNode<TItem>, parent: DzListView | DzListViewItem) => {
+        const flat = context.flat?.value === true
+        if (flat && !item.isLeaf) {
+            item.children.forEach(child => buildItem(child, listView))
+            return
+        }
+
         rowId++
-        parent = context.flat?.value === true ? listView : parent
+        parent = flat ? listView : parent
 
         let listItem = context.rowBuilder ? context.rowBuilder(item, parent, rowId) : new DzListViewItem(parent, rowId)
         if (!listItem) return
@@ -403,6 +409,11 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
         items.forEach(markIncoming)
 
         const updateItem = (item: TreeNode<TItem>, parent: DzListView | DzListViewItem) => {
+            if (context.flat?.value === true && !item.isLeaf) {
+                item.children.forEach(child => updateItem(child, listView))
+                return
+            }
+
             const key = itemKey(item)
             const existing = existingByPath[key]
             if (existing) {

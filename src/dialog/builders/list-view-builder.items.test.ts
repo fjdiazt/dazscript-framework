@@ -81,6 +81,49 @@ describe('ListViewBuilder item updates', () => {
         expect(buildEvents).toEqual(['sorting:-1', 'item', 'sorting:0'])
     })
 
+    it('builds only leaf rows in flat mode', () => {
+        const items = new Observable([
+            new TreeNode('Folder', 'Folder', { id: 'folder' }, [
+                new TreeNode('Action A', 'Folder', { id: 'action-a' })
+            ])
+        ])
+
+        new ListViewBuilder<any, any>({ dialog: {}, layout: null } as any)
+            .flat(true)
+            .items(items)
+            .columns(['Name'])
+            .text(item => [item.name])
+            .data(item => item.value)
+            .build()
+
+        expect(listView.items.map(item => item.textByColumn[0])).toEqual(['Action A'])
+    })
+
+    it('updates flat leaf rows without duplicating existing actions', () => {
+        const items = new Observable([
+            new TreeNode('Folder', 'Folder', { id: 'folder' }, [
+                new TreeNode('Action A', 'Folder', { id: 'action-a' })
+            ])
+        ])
+
+        new ListViewBuilder<any, any>({ dialog: {}, layout: null } as any)
+            .flat(true)
+            .items(items)
+            .columns(['Name'])
+            .text(item => [item.name])
+            .data(item => item.value)
+            .build()
+
+        items.value = [
+            new TreeNode('Folder', 'Folder', { id: 'folder' }, [
+                new TreeNode('Action A', 'Folder', { id: 'action-a' }),
+                new TreeNode('Action B', 'Folder', { id: 'action-b' })
+            ])
+        ]
+
+        expect(listView.items.map(item => item.textByColumn[0])).toEqual(['Action A', 'Action B'])
+    })
+
     it('keeps unchanged rows when data has no explicit id', () => {
         const items = new Observable([
             new TreeNode('Action A', '', { name: 'ActionA' }),
