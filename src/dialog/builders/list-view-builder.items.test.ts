@@ -53,8 +53,15 @@ class FakeListViewItem {
     }
 }
 
+class FakeTimer {
+    timeout = { connect: vi.fn() }
+    start = vi.fn()
+    stop = vi.fn()
+}
+
 vi.stubGlobal('DzListView', { All: 0, Extended: 1 })
 vi.stubGlobal('DzListViewItem', FakeListViewItem)
+vi.stubGlobal('DzTimer', FakeTimer)
 vi.stubGlobal('QtFocusPolicy', { NoFocus: 0 })
 
 import { filter } from '@dsf/helpers/list-view-helper'
@@ -183,5 +190,25 @@ describe('ListViewBuilder item updates', () => {
         refresh.trigger()
 
         expect(focusWidget.focusPolicy).toBe(0)
+    })
+
+    it('flushes a pending filter synchronously on request', () => {
+        const keywords = new Observable('')
+        const flush = new Observable<void>()
+
+        new ListViewBuilder<any, any>({ dialog: {}, layout: null } as any)
+            .items(new Observable([new TreeNode('Action A', '', { name: 'ActionA' })]))
+            .filter({ keywords, field: item => item.textByColumn[0], flush })
+            .columns(['Name'])
+            .text(item => [item.name])
+            .data(item => item.value)
+            .build()
+
+        keywords.value = 'current search'
+        expect(filter).not.toHaveBeenCalled()
+
+        flush.trigger()
+
+        expect(filter).toHaveBeenCalledWith(listView, expect.any(Function), 'current search', expect.any(Object))
     })
 })

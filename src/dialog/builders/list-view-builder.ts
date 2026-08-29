@@ -11,7 +11,8 @@ type ListViewFilterOptions = {
     field: (listItem: DzListViewItem) => string,
     selectOnFilter?: boolean,
     filters?: (viewItem: DzListViewItem) => boolean,
-    delay?: { min: number, max: number }
+    delay?: { min: number, max: number },
+    flush?: Observable<void>
 }
 
 export enum ListViewRefreshOptions {
@@ -495,6 +496,7 @@ const build = <TItem, TData>(context: ListViewBuilderContext<TItem, TData>): DzL
             }
             delayedFilter.trigger()
         })
+        context.filter.flush?.connect(() => delayedFilter?.flush())
     }
 
     if (context.doubleClicked) {

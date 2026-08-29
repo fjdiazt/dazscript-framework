@@ -30,6 +30,12 @@ export class Delayed {
         }
     }
 
+    public flush() {
+        if (this.timeout === undefined) return;
+        this.reset();
+        this.action();
+    }
+
     private reset() {
         if (this.timeout !== undefined) {
             this.timeout.stop();

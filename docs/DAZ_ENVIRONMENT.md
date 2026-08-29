@@ -166,6 +166,7 @@ const delayed = new Delayed(() => {
 
 delayed.trigger()  // Schedule action, can be re-triggered
 delayed.trigger()  // Resets timer
+delayed.flush()    // Run a pending action now and cancel its timer
 
 // For reactive changes, use Observable instead
 import { Observable } from '@dsf/lib/observable'
