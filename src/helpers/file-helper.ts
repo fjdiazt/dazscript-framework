@@ -8,19 +8,35 @@ import * as log from '@dsf/common/log'
  * @returns the deserialized object or null of the file cannot be deserialized
  */
 export const readFromFile = <T>(filePath: string, cache: boolean = false): T | null => {
+    let file: DzFile | null = null
+    let opened = false
     try {
-        var file = new DzFile(filePath)
-        if (!file.exists()) return null
-        file.open(DzFile.ReadOnly)
+        file = new DzFile(filePath)
+        if (!file.exists()) {
+            file.deleteLater()
+            file = null
+
+            const backup = new DzFile(`${filePath}.bak`)
+            if (!backup.exists() || !backup.rename(filePath)) {
+                backup.deleteLater()
+                return null
+            }
+            backup.deleteLater()
+            file = new DzFile(filePath)
+        }
+
+        opened = file.open(DzFile.ReadOnly)
+        if (!opened) return null
         file.setCaching(cache)
         var content = file.read().toString()
         var items: T = JSON.parse(content)
-        file.close()
-        file.deleteLater()
         return items
     } catch (error) {
         log.error(`Error while reading file ${filePath}`)
         return null
+    } finally {
+        if (opened) file?.close()
+        file?.deleteLater()
     }
 }
 
@@ -33,25 +49,68 @@ export const readFromFile = <T>(filePath: string, cache: boolean = false): T | n
  */
 export const saveToFile = (filePath: string, content: string): boolean => {
     let fileInfo: DzFileInfo | null = null
-    let file: DzFile | null = null
+    let tempFile: DzFile | null = null
+    let verifyFile: DzFile | null = null
+    let targetFile: DzFile | null = null
+    let backupFile: DzFile | null = null
     let opened = false
+    let verifyOpened = false
+    let committed = false
     try {
         if (!filePath || !content) return false
         fileInfo = new DzFileInfo(filePath)
         let path = fileInfo.absolutePath()
         var dzDir = new DzDir(path)
         dzDir.mkpath(path)
-        file = new DzFile(`${filePath}`)
-        opened = file.open(DzFile.WriteOnly)
+
+        const tempPath = `${filePath}.tmp`
+        const backupPath = `${filePath}.bak`
+        tempFile = new DzFile(tempPath)
+        if (tempFile.exists() && !tempFile.remove()) return false
+
+        opened = tempFile.open(DzFile.WriteOnly)
         if (!opened) return false
-        return file.write(content) > 0
+        const written = tempFile.write(content)
+        tempFile.close()
+        opened = false
+        if (written < content.length) return false
+
+        verifyFile = new DzFile(tempPath)
+        verifyOpened = verifyFile.open(DzFile.ReadOnly)
+        if (!verifyOpened) return false
+        const verified = verifyFile.read().toString() === content
+        verifyFile.close()
+        verifyOpened = false
+        if (!verified) return false
+
+        targetFile = new DzFile(filePath)
+        backupFile = new DzFile(backupPath)
+        const hadTarget = targetFile.exists()
+        if (hadTarget) {
+            if (backupFile.exists() && !backupFile.remove()) return false
+            if (!targetFile.rename(backupPath)) return false
+        }
+
+        if (!tempFile.rename(filePath)) {
+            if (hadTarget) backupFile.rename(filePath)
+            return false
+        }
+
+        committed = true
+        if (hadTarget && backupFile.exists()) backupFile.remove()
+        return true
     } catch (error) {
         log.error(`Error while saving file ${filePath}`)
         return false
     } finally {
-        if (opened) file?.close()
+        if (opened) tempFile?.close()
+        if (verifyOpened) verifyFile?.close()
+        if (!committed && tempFile?.exists()) tempFile.remove()
         fileInfo?.deleteLater()
-        file?.deleteLater()
+        tempFile?.deleteLater()
+        verifyFile?.deleteLater()
+        targetFile?.deleteLater()
+        backupFile?.deleteLater()
     }
 }
 
