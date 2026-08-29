@@ -587,6 +587,8 @@ add.scroll()
     });
 ```
 
+List search is case-insensitive. Unquoted terms match partial text; quote an exact word or phrase when needed, such as `"face"` or `render "face rig"`. Unmatched quotes remain literal.
+
 ---
 
 ### Available Helpers

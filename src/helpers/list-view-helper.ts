@@ -1,5 +1,3 @@
-import { contains } from './string-helper'
-
 let filterRunId = 0
 
 export const clearColumns = (listView: DzListView) => {
@@ -16,27 +14,67 @@ export const getDataItem = <T>(listItem: DzListViewItem): T | null => {
     return (listItem?.getDataItem('data') ?? null) as T | null
 }
 
+type SearchTerm = { value: string, exact: boolean }
+
+const isWordCharacter = (character: string): boolean => {
+    const code = character?.charCodeAt(0) ?? 0
+    return code >= 48 && code <= 57 || code >= 97 && code <= 122 || character === '_'
+}
+
+const containsBounded = (text: string, phrase: string): boolean => {
+    let index = text.indexOf(phrase)
+    while (index >= 0) {
+        const startsAtBoundary = !isWordCharacter(phrase.charAt(0)) || !isWordCharacter(text.charAt(index - 1))
+        const endsAtBoundary = !isWordCharacter(phrase.charAt(phrase.length - 1)) || !isWordCharacter(text.charAt(index + phrase.length))
+        if (startsAtBoundary && endsAtBoundary) return true
+        index = text.indexOf(phrase, index + 1)
+    }
+    return false
+}
+
+const parseSearchTerms = (keywords: string): SearchTerm[] => {
+    const terms: SearchTerm[] = []
+    const pattern = /"((?:""|[^"])*)"|(\S+)/g
+    let match: RegExpExecArray | null
+    while ((match = pattern.exec(keywords)) !== null) {
+        const quoted = match[1]
+        terms.push(quoted
+            ? { value: quoted.replace(/""/g, '"'), exact: true }
+            : { value: match[0], exact: false })
+    }
+    return terms
+}
+
+export const createSearchMatcher = (keywords: string): ((text: string) => boolean) => {
+    const normalizedKeywords = keywords?.toLowerCase() ?? ''
+    if (!normalizedKeywords.trim()) return () => true
+
+    if (normalizedKeywords.indexOf('"') < 0) {
+        const words = normalizedKeywords.split(' ').filter(Boolean)
+        return (text) => {
+            const normalizedText = text.toLowerCase()
+            return words.every(word => normalizedText.indexOf(word) >= 0)
+        }
+    }
+
+    const terms = parseSearchTerms(normalizedKeywords)
+    return (text) => {
+        const normalizedText = text.toLowerCase()
+        return terms.every(term => term.exact
+            ? containsBounded(normalizedText, term.value)
+            : normalizedText.indexOf(term.value) >= 0)
+    }
+}
+
 export const filter = (listView: DzListView, filterOn: (viewItem: DzListViewItem) => string, keywords: string, options?: { selectOnFilter?: boolean, filters?: (viewItem: DzListViewItem) => boolean }) => {
     filterRunId++
     const currentRunId = filterRunId
     const visitKey = '__dsfFilterVisitId'
 
     listView.clearSelection()
-    const normalizedKeywords = keywords?.toLowerCase() ?? ''
-    const words = normalizedKeywords.split(" ")
+    const matchFilter = createSearchMatcher(keywords)
 
     listView.getItems(DzListView.All).forEach(item => item.visible = true)
-
-    const matchFilter = (text: string): boolean => {
-        text = text.toLowerCase()
-
-        return !keywords || keywords.trim() == "" ||
-            words.every(w => {
-                return w.length >= 1 || !isNaN(Number(w))
-                    ? contains(text, w)
-                    : text.startsWith(w)
-            });
-    }
 
     const setListViewItemVisibility = (viewItem: DzListViewItem): boolean => {
         let keywordMatch = matchFilter(filterOn(viewItem))
