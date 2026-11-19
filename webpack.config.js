@@ -12,11 +12,14 @@ class ActionLauncherPlugin {
   }
 
   apply(compiler) {
-    compiler.hooks.done.tap('ActionLauncherPlugin', () => {
+    compiler.hooks.done.tap('ActionLauncherPlugin', (stats) => {
+      if (stats.hasErrors()) return;
+
       createActionLaunchers(this.options.workdir, {
         outDir: this.options.outDir,
         scriptsPath: this.options.scriptsPath,
         appDataPath: this.options.appDataPath,
+        emittedAssets: stats.compilation.emittedAssets,
       });
     });
   }

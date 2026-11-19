@@ -132,6 +132,8 @@ function createActionLaunchers(workdir, options) {
 
   actionEntryFiles.forEach((sourceFile) => {
     const outputRelativePath = getActionOutputPath(workdir, outDir, sourceFile);
+    if (!options.emittedAssets.has(outputRelativePath)) return;
+
     const launcherPath = path.join(outDir, outputRelativePath);
     const implementationRelativePath = getImplementationRelativePath(outputRelativePath);
     const implementationPath = path.join(outDir, implementationRelativePath);
